@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ego Tweaks</title>
+  <meta name="description" content="Ego Tweaks scans your Windows PC, matches 87 tweaks to your hardware and applies the ones that help. Every change is backed up and can be undone.">
+  <meta name="theme-color" content="#000000">
+  <meta property="og:title" content="Ego Tweaks">
+  <meta property="og:description" content="Tune Windows. Undo anything. 87 reversible tweaks matched to your hardware.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <!-- ───────────── boot sequence (same as the app) ───────────── -->
+  <div id="boot" class="boot" role="status" aria-live="polite" aria-label="Loading Ego Tweaks">
+    <div class="boot-grid" aria-hidden="true"></div>
+    <div class="boot-sweep" aria-hidden="true"></div>
+    <div class="boot-flash" aria-hidden="true"></div>
+
+    <div class="boot-stage">
+      <svg class="boot-rings" viewBox="-300 -300 600 600" aria-hidden="true">
+        <circle class="ring ring-outer" r="286"></circle>
+        <g class="ring-ticks" id="boot-ticks"></g>
+        <circle class="ring ring-seg" r="226"></circle>
+        <circle class="ring ring-thin" r="206"></circle>
+        <g class="ring-sweep"><path d="M 0 -206 A 206 206 0 0 1 145.66 -145.66"></path></g>
+        <g class="ring-cross">
+          <line x1="-300" y1="0" x2="-246" y2="0"></line><line x1="246" y1="0" x2="300" y2="0"></line>
+          <line x1="0" y1="-300" x2="0" y2="-246"></line><line x1="0" y1="246" x2="0" y2="300"></line>
+        </g>
+      </svg>
+
+      <div class="boot-mark">
+        <div class="boot-line" aria-hidden="true"></div>
+        <h1 class="wordmark" aria-label="Ego"><span>E</span><span>G</span><span>O</span></h1>
+        <div class="boot-sub" id="boot-sub" aria-label="Tweaks">TWEAKS</div>
+      </div>
+    </div>
+
+    <div class="boot-log" id="boot-log" aria-hidden="true"></div>
+
+    <div class="boot-foot">
+      <div class="boot-step" id="boot-step">Starting</div>
+      <div class="boot-bar"><i id="boot-bar"></i></div>
+      <div class="boot-pct" id="boot-pct">0%</div>
+    </div>
+  </div>
+
+  <!-- ───────────── site ───────────── -->
+  <div id="app" class="app" hidden>
+    <header class="tb">
+      <a class="tb-brand" href="#/" aria-label="Ego Tweaks home">
+        <span class="tb-logo">EGO</span>
+        <span class="tb-name">Tweaks</span>
+      </a>
+      <div class="tb-status" id="tb-status"></div>
+    </header>
+
+    <nav class="rail" id="rail" aria-label="Sections"></nav>
+    <main class="view" id="view" tabindex="-1"></main>
+  </div>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <div id="modal" class="modal-host"></div>
+
+  <noscript>
+    <div style="position:fixed;inset:0;display:grid;place-items:center;background:#000;color:#fff;font:14px/1.5 sans-serif;text-align:center;padding:24px;z-index:999">
+      <div>Ego Tweaks needs JavaScript turned on to show this page.</div>
+    </div>
+  </noscript>
+
+  <script src="assets/catalog.js"></script>
+  <script src="assets/auth.js"></script>
+  <script src="assets/site.js"></script>
+</body>
+</html>
