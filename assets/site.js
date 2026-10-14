@@ -19,9 +19,8 @@
   // file and GitHub counts every download. Leave '' to hand out downloads/EgoTweaks.exe (not counted).
   const GITHUB_REPO = '';
   if (GITHUB_REPO) BUILD.href = `https://github.com/${GITHUB_REPO}/releases/latest/download/${BUILD.file}`;
-  // Hidden admin panel: click the © at the very bottom of the page. The password is stored only as
-  // a salted PBKDF2 hash. To change it, ask Claude or see README.txt.
-  const ADMIN_PASS = { salt: 'd75ebe901f8a4431f017e235dd401f98', iter: 150000, hash: '6323df8c41114a0a5b0f2beb0840a5e93d7fc9e93c38ca690933161cdc56a72f' };
+  // Admin panel uses Supabase Auth and a server-assigned app_metadata.role=admin.
+  // Never put an admin password or service-role key in this file.
 
   // ───────────── helpers ─────────────
   const $ = (s, el = document) => el.querySelector(s);
@@ -583,7 +582,7 @@
           ? field('username', 'Username', 'user', 'text', 'autocomplete="username" maxlength="20" spellcheck="false" autocapitalize="off" autofocus', '3–20 letters, numbers, dots, dashes or underscores')
             + field('email', 'Email', 'at', 'email', 'autocomplete="email" spellcheck="false" autocapitalize="off"')
             + field('password', 'Password', 'lock', 'password', 'autocomplete="new-password" minlength="8"', 'At least 8 characters')
-          : field('login', 'Username or email', 'user', 'text', 'autocomplete="username" spellcheck="false" autocapitalize="off" autofocus')
+          : field('login', 'Email address', 'user', 'email', 'autocomplete="email" spellcheck="false" autocapitalize="off" autofocus')
             + field('password', 'Password', 'lock', 'password', 'autocomplete="current-password"')}
         <button type="button" class="check" data-act="check" aria-pressed="true"><span class="tg on"></span><span><b>Keep me signed in</b><small>Turn off on a shared PC</small></span></button>
         <div class="form-err" id="form-err" role="alert"></div>
@@ -708,123 +707,83 @@
   AUTH.onChange(() => { if (!S.busy) refresh(); });
 
 
-  // ───────────── hidden admin panel (download counts from GitHub) ─────────────
+  // ───────────── hidden admin panel (Supabase registrations + downloads) ─────────────
   const ADM = { timer: 0, data: null };
-  const admKey = () => 'egoAdmin.' + ADMIN_PASS.hash.slice(0, 12);
-  const adminUnlocked = () => { try { return sessionStorage.getItem(admKey()) === '1'; } catch (_) { return false; } };
-  async function pbkdf2Hex(pass, salt, iter) {
-    const enc = new TextEncoder();
-    const key = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveBits']);
-    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(salt), iterations: iter }, key, 256);
-    return [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, '0')).join('');
-  }
-
   function openAdmin() {
     closeMenu();
-    if (adminUnlocked()) return showAdmin();
+    const user = AUTH.current();
+    if (user && user.isAdmin) return showAdmin();
     openModal(`
       <div class="adm-lockmark">${svg('lock')}</div>
       <h2 class="h2">Admin</h2>
-      <p>Enter the password.</p>
+      <p>Sign in with your admin email and Supabase Auth password.</p>
       <form class="form" id="admin-form" novalidate>
-        ${field('adminpass', 'Password', 'lock', 'password', 'autocomplete="current-password" autofocus')}
+        ${field('adminuser', 'Admin email', 'user', 'email', 'autocomplete="username" autofocus')}
+        ${field('adminpass', 'Password', 'lock', 'password', 'autocomplete="current-password"')}
         <div class="form-err" id="adm-err" role="alert"></div>
-        <div class="modal-actions"><button type="button" class="btn btn-ghost" data-act="close">Cancel</button><button type="submit" class="btn btn-primary">Unlock</button></div>
+        <div class="modal-actions"><button type="button" class="btn btn-ghost" data-act="close">Cancel</button><button type="submit" class="btn btn-primary">Sign in</button></div>
       </form>`);
   }
-
   async function submitAdmin(form) {
     const btn = $('button[type="submit"]', form), err = $('#adm-err');
-    const pass = form.adminpass.value;
+    const email = String(form.adminuser.value || '').trim();
+    const password = form.adminpass.value;
     err.textContent = '';
-    if (!pass) { err.textContent = 'Enter the password.'; return; }
-    if (!(window.crypto && crypto.subtle)) { err.textContent = 'Open the site over https to use the admin panel.'; return; }
+    if (!email || !password) { err.textContent = 'Enter your admin email and password.'; return; }
     btn.classList.add('busy');
-    const h = await pbkdf2Hex(pass, ADMIN_PASS.salt, ADMIN_PASS.iter).catch(() => '');
-    if (h !== ADMIN_PASS.hash) {
-      await sleep(700);
+    try {
+      const { data, error } = await AUTH.client.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (data.user?.app_metadata?.role !== 'admin') {
+        await AUTH.signOut();
+        throw new Error('This account is not marked as an admin. Run the admin-role SQL in Supabase, then sign in again.');
+      }
+      await AUTH.whenReady();
+      showAdmin();
+    } catch (e) {
       btn.classList.remove('busy');
-      err.textContent = 'Wrong password.';
+      err.textContent = e.message || 'Could not sign in.';
       form.adminpass.value = ''; form.adminpass.focus();
-      return;
     }
-    try { sessionStorage.setItem(admKey(), '1'); } catch (_) { /* this tab only */ }
-    showAdmin();
   }
-
   function showAdmin() {
     setModal(`<div id="adm"></div>`);
     $('#modal .modal').classList.add('wide');
-    if (!GITHUB_REPO) return renderAdminSetup();
     renderAdmin(null, true);
     loadAdmin();
     clearInterval(ADM.timer);
-    ADM.timer = setInterval(() => { if ($('#adm') && !document.hidden) loadAdmin(); else if (!$('#adm')) clearInterval(ADM.timer); }, 120000);
+    ADM.timer = setInterval(() => { if ($('#adm') && !document.hidden) loadAdmin(); else if (!$('#adm')) clearInterval(ADM.timer); }, 60000);
   }
-
-  const admHead = (sub) => `
-    <div class="adm-top"><div><span class="eyebrow">Admin</span><h2 class="adm-h">Downloads</h2><p class="adm-sub">${sub}</p></div>
-      <button type="button" class="nav-burger" style="display:grid" data-act="close" aria-label="Close">${svg('x')}</button></div>`;
-
-  function renderAdminSetup() {
-    $('#adm').innerHTML = `${admHead('Not counting yet — one-time setup, about 3 minutes.')}
-      <div class="card adm-card"><ol class="steps">
-        <li><div><b>Make a GitHub Release with the exe</b><p>On github.com, open the repo your site is in → <b>Releases</b> → <b>Draft a new release</b>. Tag it <span class="mono">v${esc(BUILD.version)}</span>, drag in <span class="mono">${esc(BUILD.file)}</span> (keep that exact name), then <b>Publish release</b>.</p></div></li>
-        <li><div><b>Tell the site where it is</b><p>In <span class="mono">assets/site.js</span>, near the top, set <span class="mono">GITHUB_REPO = 'your-username/your-repo'</span> and upload the file.</p></div></li>
-        <li><div><b>Done</b><p>The Download button now hands out the release file, GitHub counts every download, and the numbers show up right here.</p></div></li>
-      </ol></div>
-      <div class="modal-actions"><button type="button" class="btn btn-ghost" data-act="admin-lock">Lock</button><span class="sp"></span><button type="button" class="btn btn-primary" data-act="close">Done</button></div>`;
-  }
-
+  const admHead = (sub) => `<div class="adm-top"><div><span class="eyebrow">Ego Tweaks · Admin</span><h2 class="adm-h">Site statistics</h2><p class="adm-sub">${sub}</p></div><button type="button" class="nav-burger" style="display:grid" data-act="close" aria-label="Close">${svg('x')}</button></div>`;
   async function loadAdmin() {
-    const host = $('#adm');
-    if (!host) return;
+    const host = $('#adm'); if (!host) return;
     host.classList.add('loading');
-    let res, err = '';
     try {
-      res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases?per_page=100`, { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' });
-      if (res.status === 404) err = `Couldn’t find ${GITHUB_REPO}. Check the name in GITHUB_REPO, and that the repo is public.`;
-      else if (res.status === 403 || res.status === 429) err = 'GitHub is limiting requests right now. Try again in a few minutes.';
-      else if (!res.ok) err = `GitHub answered ${res.status}. Try again shortly.`;
-    } catch (_) { err = 'Couldn’t reach GitHub. Check your connection.'; }
-    if (!$('#adm')) return;
-    if (err) { renderAdmin(null, false, err); return; }
-    const list = (await res.json()).filter((r) => !r.draft).map((r) => {
-      const exe = r.assets.filter((a) => /\.exe$/i.test(a.name));
-      return { tag: r.tag_name, name: r.name || r.tag_name, date: r.published_at, pre: r.prerelease, n: exe.reduce((t, a) => t + (a.download_count || 0), 0), has: exe.length > 0 };
-    });
-    ADM.data = { list, at: new Date() };
-    renderAdmin(ADM.data);
+      const { data: { user } } = await AUTH.client.auth.getUser();
+      if (!user || user.app_metadata?.role !== 'admin') throw new Error('Admin access required. Sign in with the admin account.');
+      const { data, error } = await AUTH.client.rpc('ego_get_admin_stats');
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row) throw new Error('No statistics returned. Run the latest supabase-setup.sql in the Supabase SQL Editor.');
+      ADM.data = { accounts: Number(row.registered_accounts || 0), total: Number(row.tracked_download_clicks || 0), recent: Number(row.downloads_last_30_days || 0), at: new Date() };
+      renderAdmin(ADM.data);
+    } catch (e) { renderAdmin(null, false, e.message || 'Could not load statistics.'); }
   }
-
   function renderAdmin(d, loading = false, err = '') {
-    const host = $('#adm');
-    if (!host) return;
-    const first = !host.firstElementChild;
-    const list = d ? d.list : [];
-    const total = list.reduce((t, r) => t + r.n, 0);
-    const latest = list.find((r) => !r.pre && r.has) || list[0];
-    const oldest = list.length ? list[list.length - 1] : null;
-    const max = Math.max(1, ...list.map((r) => r.n));
-    const upd = d ? d.at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '—';
-    const rows = !d ? '' : list.length ? list.map((r) => `
-        <div class="adm-row"><span class="nm">${esc(r.tag)}${r.pre ? ' <span class="chip">pre-release</span>' : ''}${!r.has ? ' <span class="chip">no .exe</span>' : ''}<small>${esc(fmtDate(r.date, false))}</small></span>
-          <span class="tr"><i data-w="${Math.max(r.n ? 2 : 0, Math.round((r.n / max) * 100))}"></i></span><span class="ct">${r.n.toLocaleString()}</span></div>`).join('')
-      : `<div class="none">No published releases yet. Publish one with ${esc(BUILD.file)} attached.</div>`;
-    host.innerHTML = `${admHead(`Counted by GitHub for <span class="mono">${esc(GITHUB_REPO)}</span>`)}
-      ${err ? `<div class="form-err" style="margin:6px 0 16px">${esc(err)}</div>` : ''}
-      <div class="adm-big"><span class="num" id="adm-total">${loading ? '—' : total.toLocaleString()}</span><span class="lbl">total downloads of ${esc(BUILD.file)}</span></div>
+    const host = $('#adm'); if (!host) return;
+    const n = (v) => Number(v || 0).toLocaleString();
+    host.innerHTML = `${admHead(d ? `Updated ${esc(d.at.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}))}` : 'Shared registration and download analytics')}
+      ${err ? `<div class="form-err" style="margin:12px 0">${esc(err)}</div>` : ''}
+      <div class="adm-big"><span class="num">${loading ? '—' : n(d?.accounts)}</span><span class="lbl">registered accounts</span></div>
       <div class="adm-tiles">
-        <div><span>Latest release</span><b>${latest ? esc(latest.tag) : '—'}</b><small>${latest ? `${latest.n.toLocaleString()} download${latest.n === 1 ? '' : 's'}` : 'none yet'}</small></div>
-        <div><span>Releases</span><b>${d ? list.length : '—'}</b><small>${oldest ? `since ${esc(fmtDate(oldest.date, false))}` : '&nbsp;'}</small></div>
-        <div><span>Updated</span><b>${esc(upd)}</b><small>refreshes every 2 minutes</small></div>
+        <div><span>Tracked downloads</span><b>${loading ? '—' : n(d?.total)}</b><small>All recorded download clicks</small></div>
+        <div><span>Last 30 days</span><b>${loading ? '—' : n(d?.recent)}</b><small>Recorded download clicks</small></div>
+        <div><span>Data source</span><b>Supabase</b><small>Shared database</small></div>
       </div>
-      <div class="adm-rows">${loading ? '<div class="prog"><i></i></div>' : rows}</div>
-      <p class="adm-note">GitHub counts every download of the release file, including direct links — downloads, not unique people. Counts on public releases are visible to anyone through GitHub.</p>
+      <p class="adm-note">Download numbers count clicks recorded by this website, not guaranteed completed downloads or unique people. Old downloads from before tracking was installed are not included.</p>
+      <p class="adm-note">If this is your first setup, create an account at the site first, then assign its admin role using the SQL in <span class="mono">supabase-setup.sql</span>.</p>
       <div class="modal-actions"><button type="button" class="btn btn-ghost" data-act="admin-lock">Lock</button><span class="sp"></span><button type="button" class="btn btn-line" data-act="admin-refresh">Refresh</button><button type="button" class="btn btn-primary" data-act="close">Done</button></div>`;
     host.classList.remove('loading');
-    requestAnimationFrame(() => $$('.adm-row .tr i', host).forEach((i) => (i.style.width = i.dataset.w + '%')));
-    if (d && first === false && !loading) { /* keep frame */ }
   }
 
   // ───────────── events ─────────────
@@ -901,8 +860,7 @@
       case 'admin': openAdmin(); break;
       case 'admin-refresh': loadAdmin(); break;
       case 'admin-lock':
-        try { sessionStorage.removeItem(admKey()); } catch (_) { /* ignore */ }
-        closeModal(); toast('Admin locked', { dark: true }); break;
+        clearInterval(ADM.timer); AUTH.signOut().catch(() => {}); closeModal(); toast('Admin signed out', { dark: true }); break;
     }
   });
 

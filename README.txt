@@ -6,7 +6,7 @@ Open index.html to view the site. Everything it needs is in this folder.
   index.html              the site: landing page + Download page
   assets/styles.css       the look (same fonts and tokens as the app)
   assets/site.js          page content, intro, app tour, demos, sign-up -> download
-  assets/auth.js          accounts (saved in each visitor's own browser)
+  assets/auth.js          Supabase Auth adapter (shared accounts)
   assets/catalog.js       the 87 tweak names used on the page
   assets/shots/           real screenshots of the app (taken with its demo data)
   assets/fonts/           Unbounded, Geist, JetBrains Mono (SIL Open Font License 1.1)
@@ -48,31 +48,40 @@ Upload everything in this folder to your repo (keep the folder layout) and repla
 old files. Pages serves it as before at egotweaks.com.
 
 
-HIDDEN ADMIN PANEL (download count)
------------------------------------
-Scroll to the very bottom of any page and click the "©" in "© 2026 Ego Tweaks".
-It looks like plain text. Enter the password, and the panel shows total downloads
-and downloads per version. It stays unlocked in that browser tab until you click Lock.
+SUPABASE ACCOUNTS + ADMIN STATISTICS
+------------------------------------
+This version uses Supabase for shared account registrations and tracked download clicks.
+The hidden admin panel is opened by clicking the tiny © at the very bottom of the site.
+It shows registered accounts, all recorded download clicks, and clicks in the last 30 days.
+These are click events, not proof that a file finished downloading or unique people.
 
-The counts come from GitHub, which counts every download of a file attached to a
-Release. One-time setup:
-  1. On github.com, open the repo your site is in -> Releases -> Draft a new release.
-     Tag it v1.2.0, drag in EgoTweaks.exe (keep that exact name), Publish release.
-  2. In assets/site.js, near the top, set
-        const GITHUB_REPO = 'your-username/your-repo';
-     and upload the file.
-From then on the Download button hands out the release file and every download is
-counted. For each new version, publish a new release with the new EgoTweaks.exe.
+ONE-TIME SETUP (required before publishing this version)
+  1. In your Supabase project, open SQL Editor -> New query.
+  2. Open supabase-setup.sql from this folder, copy all of it into the SQL editor, and Run.
+  3. In Supabase -> Authentication -> Users, register the admin email you own
+     (kellanevers100@gmail.com) using the site's Sign up form, or create that user in Supabase.
+  4. In SQL Editor, run this separate query after that account exists:
+       update auth.users
+       set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb
+       where lower(email) = lower('kellanevers100@gmail.com');
+  5. In Supabase -> Authentication settings, if you want new users to be able to sign in
+     immediately without confirming email, disable email confirmations. Otherwise users must
+     confirm their email before signing in.
+  6. Upload the contents of this folder to the root of your GitHub Pages repository, preserving
+     the assets/ and downloads/ folders. Do not upload the enclosing folder itself.
+  7. Open the live site over HTTPS. Sign in to the admin panel with the admin email and its
+     Supabase Auth password. If you were already signed in, sign out and back in after setting
+     the admin role so the new role is included in the session.
 
-Good to know: this is a static site, so the password check runs in the visitor's
-browser. It keeps people out of the panel, but someone determined could read the
-counts anyway. That's fine, because GitHub shows download counts on public releases
-to anyone. Don't put anything secret in the panel.
-
+SECURITY
+--------
+The frontend contains only the Supabase publishable key. Never put a Supabase secret or
+service_role key in any website file. Admin permissions are checked using the trusted
+app_metadata role set through SQL, not user-editable profile metadata. The SQL setup enables
+Row Level Security. Do not remove those policies.
 
 ABOUT THE ACCOUNTS
 ------------------
-Accounts are saved in the visitor's own browser, so they don't follow people to other
-devices, and you can't see a list of sign-ups. Visitor counts (how many people
-reached the site) need the Cloudflare version of the site; on GitHub Pages only
-downloads are counted, through GitHub Releases as described above.
+Accounts are stored in Supabase, so registered users are shared across browsers and devices.
+A registration count appears in the admin panel once the SQL setup is complete. Existing accounts
+that lived only in visitors' localStorage cannot be automatically migrated into Supabase.
