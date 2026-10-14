@@ -17,7 +17,7 @@
   // Download counter for the hidden admin panel. Put EgoTweaks.exe in a GitHub Release on your site's
   // repo, then set this to 'your-username/your-repo'. The Download button then hands out the release
   // file and GitHub counts every download. Leave '' to hand out downloads/EgoTweaks.exe (not counted).
-  const GITHUB_REPO = '';
+  const GITHUB_REPO = 'synn2qd/ego-tweaks';
   if (GITHUB_REPO) BUILD.href = `https://github.com/${GITHUB_REPO}/releases/latest/download/${BUILD.file}`;
   // Admin panel uses Supabase Auth and a server-assigned app_metadata.role=admin.
   // Never put an admin password or service-role key in this file.
