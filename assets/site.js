@@ -23,10 +23,10 @@
   //   price:   price of one month, only shown on this site (Payhip charges what you set there). '' hides it.
   //   perks:   the list on the Premium card. Make it say what your key unlocks.
   const PREMIUM = {
-    payhip: '',
-    discord: '',
+    payhip: 'https://payhip.com/buy?s=1&qty%5BPAIZv%5D=1&cart_links%5B%5D=PAIZv',
+    discord: 'https://discord.gg/gtPggZ9zpz',
     price: '$10',
-    perks: ['Everything in the free version', 'Your own Ego Tweaks Premium key', 'Each key lasts one month', 'No auto-charge — renew when you want', 'Key sent to you in a Discord ticket', 'Secure checkout by Payhip'],
+    perks: ['Everything in the free version, plus 200 tweaks', 'Your own Ego Tweaks Premium key', 'Each key lasts one month', 'No auto-charge — renew when you want', 'Key sent to you in a Discord ticket', 'Secure checkout by Payhip'],
   };
   const PER_MONTH = PREMIUM.price ? `${PREMIUM.price} a month` : 'one month at a time';
   // Download counter for the hidden admin panel. Put EgoTweaks.exe in a GitHub Release on your site's
