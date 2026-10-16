@@ -14,10 +14,25 @@
   };
   // Paste your links here and they show up in the footer and menu. Leave '' to hide.
   const LINKS = { discord: '', x: '' };
+  // Ego Tweaks Premium — a one-month key, paid through a Payhip checkout that opens on this site; buyers
+  // then open a ticket in your Discord to get their key, and buy again for another month.
+  // In Payhip, make Premium a normal digital product priced $10 — NOT a membership (Payhip's on-site
+  // checkout doesn't work for memberships, and this site tells buyers nothing renews automatically).
+  //   payhip:  your Payhip product link or just its key (payhip.com/b/AbC12 → 'AbC12'). '' = Buy is switched off.
+  //   discord: where buyers open a ticket — your invite, or a link to the tickets channel. '' = uses LINKS.discord.
+  //   price:   price of one month, only shown on this site (Payhip charges what you set there). '' hides it.
+  //   perks:   the list on the Premium card. Make it say what your key unlocks.
+  const PREMIUM = {
+    payhip: '',
+    discord: '',
+    price: '$10',
+    perks: ['Everything in the free version', 'Your own Ego Tweaks Premium key', 'Each key lasts one month', 'No auto-charge — renew when you want', 'Key sent to you in a Discord ticket', 'Secure checkout by Payhip'],
+  };
+  const PER_MONTH = PREMIUM.price ? `${PREMIUM.price} a month` : 'one month at a time';
   // Download counter for the hidden admin panel. Put EgoTweaks.exe in a GitHub Release on your site's
   // repo, then set this to 'your-username/your-repo'. The Download button then hands out the release
   // file and GitHub counts every download. Leave '' to hand out downloads/EgoTweaks.exe (not counted).
-  const GITHUB_REPO = 'synn2qd/ego-tweaks';
+  const GITHUB_REPO = '';
   if (GITHUB_REPO) BUILD.href = `https://github.com/${GITHUB_REPO}/releases/latest/download/${BUILD.file}`;
   // Admin panel uses Supabase Auth and a server-assigned app_metadata.role=admin.
   // Never put an admin password or service-role key in this file.
@@ -34,6 +49,8 @@
   const fmtMB = (b) => (b / 1048576).toFixed(1) + ' MB';
   const fmtDate = (iso, time = true) => { try { return new Date(iso).toLocaleString(undefined, Object.assign({ month: 'short', day: 'numeric', year: 'numeric' }, time ? { hour: 'numeric', minute: '2-digit' } : {})); } catch (_) { return iso; } };
   const YEAR = new Date().getFullYear();
+  const PAYHIP_KEY = (String(PREMIUM.payhip).trim().match(/([A-Za-z0-9]+)\/?$/) || [])[1] || '';
+  const TICKET = PREMIUM.discord || LINKS.discord;
 
   const GAMES = ['Fortnite', 'VALORANT', 'Counter-Strike 2', 'Apex Legends', 'Overwatch 2', 'Call of Duty', 'Rainbow Six Siege', 'Marvel Rivals', 'Rust', 'PUBG: Battlegrounds', 'Rocket League', 'League of Legends', 'Dota 2', 'Grand Theft Auto V', 'FiveM', 'Roblox', 'Minecraft: Java Edition'];
 
@@ -55,6 +72,8 @@
     spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/>',
     scan: '<path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M4 12h16"/>',
     menu: '<path d="M4 8h16M4 16h16"/>',
+    key: '<circle cx="8" cy="15.5" r="4"/><path d="M11 12.5l8.5-8.5M16.5 7l2.5 2.5M14 9.5l2 2"/>',
+    chat: '<path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5h-8.5L6 20v-3.5H5A1.5 1.5 0 0 1 3.5 15V6.5A1.5 1.5 0 0 1 5 5z"/>',
   };
   const svg = (name, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[name]}</svg>`;
 
@@ -197,7 +216,8 @@
 
   function renderNav() {
     $('#nav-links').innerHTML = SECTIONS.map(([id, n]) => `<button type="button" data-to="${id}">${n}</button>`).join('')
-      + `<button type="button" data-nav="download" class="${S.page === 'download' ? 'on' : ''}">Download</button>`;
+      + `<button type="button" data-nav="download" class="${S.page === 'download' ? 'on' : ''}">Download</button>`
+      + `<button type="button" data-nav="premium" class="${S.page === 'premium' || S.page === 'thanks' ? 'on' : ''}">Premium</button>`;
     $('#nav-cta').innerHTML = S.user
       ? `<button class="pill hide-sm" data-act="account" title="Your account"><span class="dot"></span>@${esc(S.user.username)}</button><button class="btn btn-primary btn-sm" data-nav="download">${svg('download')}Download</button>`
       : `<button class="btn btn-ghost btn-sm hide-sm" data-act="signin">Sign in</button><button class="btn btn-primary btn-sm" data-nav="download">Get Ego Tweaks</button>`;
@@ -209,7 +229,7 @@
     m.innerHTML = `
       <div class="menu-top"><a class="brand" href="#/" data-nav="home"><span class="brand-logo">EGO</span><span class="brand-name">Tweaks</span></a>
         <button class="nav-burger" style="display:grid" data-act="menu-close" aria-label="Close menu">${svg('x')}</button></div>
-      <ol>${SECTIONS.map(([id, n]) => `<li><button type="button" data-to="${id}">${n}</button></li>`).join('')}<li><button type="button" data-nav="download">Download</button></li></ol>
+      <ol>${SECTIONS.map(([id, n]) => `<li><button type="button" data-to="${id}">${n}</button></li>`).join('')}<li><button type="button" data-nav="download">Download</button></li><li><button type="button" data-nav="premium">Premium</button></li></ol>
       <div class="menu-cta">${community}
         ${S.user ? `<button class="btn btn-glass" data-act="account">Account · @${esc(S.user.username)}</button>` : `<button class="btn btn-glass" data-act="signin">Sign in</button>`}
         <button class="btn btn-primary btn-lg" data-nav="download">${svg('download')}Get Ego Tweaks — free</button></div>`;
@@ -231,7 +251,7 @@
       <div class="foot-in" style="${community ? 'grid-template-columns:1.4fr repeat(3,minmax(0,.6fr))' : ''}">
         <div><a class="brand" href="#/" data-nav="home"><span class="brand-logo">EGO</span><span class="brand-name">Tweaks</span></a>
           <p>A completely free Windows tweaking utility. ${TWEAKS.length} tweaks for FPS, input delay and ping — every one reversible.</p></div>
-        <div><h4>Product</h4><ul>${SECTIONS.map(([id, n]) => `<li><button type="button" data-to="${id}">${n}</button></li>`).join('')}<li><button type="button" data-nav="download">Download</button></li></ul></div>
+        <div><h4>Product</h4><ul>${SECTIONS.map(([id, n]) => `<li><button type="button" data-to="${id}">${n}</button></li>`).join('')}<li><button type="button" data-nav="download">Download</button></li><li><button type="button" data-nav="premium">Premium</button></li></ul></div>
         <div><h4>Account</h4><ul>${S.user
           ? `<li><button type="button" data-act="account">Your account</button></li><li><button type="button" data-nav="download">Your downloads</button></li>`
           : `<li><button type="button" data-act="signup">Create account</button></li><li><button type="button" data-act="signin">Sign in</button></li>`}</ul></div>
@@ -242,16 +262,23 @@
   }
 
   // ───────────── routing ─────────────
-  const routeFromHash = () => (/^#\/?download/.test(location.hash) ? 'download' : 'home');
+  const routeFromHash = () => {
+    const h = location.hash;
+    if (/^#\/?download/.test(h)) return 'download';
+    if (/^#\/?premium\/thanks/.test(h)) return 'thanks';
+    if (/^#\/?premium/.test(h)) return 'premium';
+    return 'home';
+  };
+  const TITLES = { home: 'Ego Tweaks — free Windows tweaking utility', download: 'Download · Ego Tweaks', premium: 'Premium · Ego Tweaks', thanks: 'Thanks for buying Premium · Ego Tweaks' };
   function go(page) {
-    const hash = page === 'home' ? '#/' : `#/${page}`;
+    const hash = page === 'home' ? '#/' : page === 'thanks' ? '#/premium/thanks' : `#/${page}`;
     if (location.hash !== hash) location.hash = hash; else route(true);
   }
   function route(force = false) {
     const page = routeFromHash();
     const changed = page !== S.page;
     S.page = page;
-    document.title = page === 'home' ? 'Ego Tweaks — free Windows tweaking utility' : 'Download · Ego Tweaks';
+    document.title = TITLES[page];
     if ($('#site').hidden) return;
     renderNav();
     if (changed || force || !$('#view').firstElementChild) { renderPage(); window.scrollTo({ top: 0, behavior: 'auto' }); }
@@ -265,7 +292,7 @@
   let io = null;
   function renderPage() {
     const view = $('#view');
-    view.innerHTML = S.page === 'download' ? pageDownload() : pageHome();
+    view.innerHTML = S.page === 'download' ? pageDownload() : S.page === 'premium' || S.page === 'thanks' ? pagePremium() : pageHome();
     if (io) io.disconnect();
     const els = $$('.rv', view);
     if (REDUCED || !('IntersectionObserver' in window)) els.forEach((e) => e.classList.add('in'));
@@ -388,26 +415,24 @@
     </section>
 
     <section class="sec wrap" id="free">
-      <div class="sec-hd rv"><span class="eyebrow">Pricing</span><h2>Free. <span class="dim">Actually free.</span></h2><p>No plans, no tiers, no “pro” unlock. You get the whole thing.</p></div>
+      <div class="sec-hd rv"><span class="eyebrow">Pricing</span><h2>Free. <span class="dim">Premium if you want it.</span></h2><p>The app is free to download and use. Premium is an optional upgrade, ${esc(PER_MONTH)} — pay through Payhip and get your own key.</p></div>
       <div class="compare">
         <div class="card plan us rv">
-          <div class="name"><span>Ego Tweaks</span><span class="chip rec">Everything included</span></div>
-          <div class="price">$0<small>for everything</small></div>
+          <div class="name"><span>Ego Tweaks</span><span class="chip rec">Free</span></div>
+          <div class="price">$0<small>free download</small></div>
           <ul>${[`All ${TWEAKS.length} tweaks`, 'Games and BIOS guides', 'Live network tools', 'Undo history and restore points', 'Every update', 'No subscription, no ads'].map((x) => `<li>${svg('check')}<span>${x}</span></li>`).join('')}</ul>
           <button class="btn btn-primary btn-lg" data-nav="download">${svg('download')}Get Ego Tweaks</button>
         </div>
-        <div class="card plan them rv" style="--d:1">
-          <div class="name"><span>Typical paid tweakers</span></div>
-          <div class="price">$$$</div>
-          <ul>${['Monthly subscription or per-session fees', 'Best tools locked behind a higher plan', 'Remote “tuning sessions” that cost extra', 'Pay again to keep it working'].map((x) => `<li>${svg('x')}<span>${x}</span></li>`).join('')}</ul>
-        </div>
+        ${premiumPlan('rv', 'style="--d:1"')}
       </div>
     </section>
 
     <section class="sec wrap" id="faq">
       <div class="sec-hd rv"><span class="eyebrow">FAQ</span><h2>Straight answers.</h2></div>
       <div class="faq rv">
-        ${faq('Is it really free?', 'Yes. Every tweak and every page in the app is free. You make a free account on this site to download — that’s it.', true)}
+        ${faq('Is it really free?', 'Yes. The app is free to download and use — you make a free account on this site to download, that’s it. Premium is an optional paid upgrade.', true)}
+        ${faq('How do I get my Premium key?', `Buy Premium on the <a href="#/premium" data-nav="premium">Premium page</a> — checkout opens right on this site and is handled by Payhip, who email you a receipt. Then open a ticket in our ${TICKET ? `<a href="${esc(TICKET)}" target="_blank" rel="noopener">Discord</a>` : 'Discord'} with the email you paid with or your order number, and we’ll send your key there.`)}
+        ${faq('Does Premium renew automatically?', `No. Premium is ${esc(PER_MONTH)}, and each purchase gives you a key that lasts one month. Nothing is charged automatically — when your month is up, buy again and open a new ticket to keep Premium.`)}
         ${faq('Is it safe? Can I undo changes?', 'Before any tweak changes a setting, Ego Tweaks saves the original value. Turn the tweak off and it’s written back. There’s also Undo all, a history of every change, and one-click Windows restore points.')}
         ${faq('Why does Windows SmartScreen warn me?', 'New apps that Windows hasn’t seen much yet can trigger it. Choose <b>More info → Run anyway</b>. You can check the file’s SHA-256 fingerprint on the Download page.')}
         ${faq('Why does it need administrator access?', 'Many tweaks change system-wide settings — services, power plans, network adapter settings — that Windows only lets administrators change. Windows asks when the app opens.')}
@@ -519,6 +544,71 @@
         </ol>
       </div>
     </div>`;
+  }
+
+  // ───────────── premium ─────────────
+  // The Buy button is a real link to Payhip's checkout. When payhip.js has loaded, the click opens Payhip's
+  // checkout on top of this page instead; after paying, Payhip sends the buyer back to #/premium/thanks.
+  const buyBtn = (cls) => `<a class="btn ${cls}" href="${PAYHIP_KEY ? `https://payhip.com/buy?link=${PAYHIP_KEY}` : '#/premium'}" target="_blank" rel="noopener" data-act="buy-premium">${svg('key')}Buy Premium</a>`;
+  const ticketBtn = (cls) => (TICKET ? `<a class="btn ${cls}" href="${esc(TICKET)}" target="_blank" rel="noopener">${svg('chat')}Open a ticket in Discord</a>` : '');
+  const thanksUrl = () => location.href.split(/[?#]/)[0] + '?premium=thanks#/premium/thanks';
+
+  function premiumPlan(extra = '', attrs = '', btn = 'btn-line btn-lg') {
+    return `<div class="card plan pm ${extra}" ${attrs}>
+      <div class="name"><span>Ego Tweaks Premium</span><span class="chip">Key via Discord</span></div>
+      ${PREMIUM.price ? `<div class="price">${esc(PREMIUM.price)}<small>per month</small></div>` : '<div class="price word">Premium</div>'}
+      <ul>${PREMIUM.perks.map((x) => `<li>${svg('check')}<span>${esc(x)}</span></li>`).join('')}</ul>
+      ${buyBtn(btn)}
+    </div>`;
+  }
+
+  function pagePremium() {
+    const steps = [
+      ['Buy Premium', 'Checkout opens right here on the site. Payhip handles the payment — your card details never touch this site.'],
+      ['Check your email', 'Payhip emails you a receipt for your order.'],
+      ['Open a ticket in our Discord', 'Join the server, open a ticket and send the email you paid with or your order number.'],
+      ['Get your key', 'We check your order and send your Premium key in the ticket.'],
+      ['Renew when it runs out', 'Each key lasts one month and nothing is charged automatically. For another month, buy again and open a new ticket.'],
+    ];
+    const thanks = S.page !== 'thanks' ? '' : `
+      <div class="card pm-thanks rv">
+        <div class="done-mark">${svg('check')}</div>
+        <h2>Thanks for buying Premium</h2>
+        <p>Payhip is emailing you a receipt. To get your key, open a ticket in our Discord and send us the email you paid with or your order number. Your key lasts one month.</p>
+        <div class="hero-cta">${ticketBtn('btn-primary btn-lg') || '<p>Join our Discord and open a ticket to get your key.</p>'}</div>
+      </div>`;
+    return `<div class="wrap dl-page pm-page">
+      <header class="dl-head rv"><span class="eyebrow">Premium</span><h1>Ego Tweaks Premium</h1><p>${esc(PER_MONTH[0].toUpperCase() + PER_MONTH.slice(1))}. Pay through a secure Payhip checkout right here, then open a ticket in our Discord to get your key.</p></header>
+      ${thanks}
+      <div class="dl-cols">
+        ${premiumPlan('us rv', '', 'btn-primary btn-lg')}
+        <div class="card rv" style="--d:1"><h3>How you get your key<span>after you pay</span></h3>
+          <ol class="steps">${steps.map(([b, p]) => `<li><div><b>${b}</b><p>${p}</p></div></li>`).join('')}</ol>
+          ${TICKET ? `<div class="pm-ticket">${ticketBtn('btn-glass')}</div>` : ''}
+        </div>
+      </div>
+      <div class="dl-note rv"><span class="dot"></span>Already paid? Open a ticket in our Discord with the email you paid with or your order number.</div>
+    </div>`;
+  }
+
+  function buyPremium(e) {
+    closeMenu();
+    if (!PAYHIP_KEY) { e.preventDefault(); toast('Premium checkout isn’t open yet — check back soon.', { dark: true, icon: 'alert' }); return; }
+    const checkout = window.Payhip && window.Payhip.Checkout;
+    if (checkout && typeof checkout.open === 'function') {
+      try {
+        checkout.open({ product: PAYHIP_KEY, message: 'After paying, open a ticket in our Discord to get your key.', successUrl: thanksUrl() });
+        e.preventDefault();
+        return;
+      } catch (_) { /* fall back to the new tab below */ }
+    }
+    // payhip.js didn't load (ad blocker, offline): the link opens Payhip's checkout in a new tab, and this
+    // tab says what to do after paying.
+    openModal(`
+      <div class="adm-lockmark">${svg('key')}</div>
+      <h2 class="h2">Finish paying in the new tab</h2>
+      <p>Payhip’s checkout opened in a new tab. Once you’ve paid, open a ticket in our Discord with the email you paid with or your order number, and we’ll send your key there.</p>
+      <div class="modal-actions"><button type="button" class="btn btn-ghost" data-act="close">Close</button>${ticketBtn('btn-primary') || '<button type="button" class="btn btn-primary" data-act="close">Got it</button>'}</div>`);
   }
 
   // ───────────── toasts ─────────────
@@ -854,6 +944,7 @@
           AUTH.recordDownload({ file: BUILD.file, version: BUILD.version }).then((u) => (S.user = u)).catch(() => {});
         }
         break;
+      case 'buy-premium': buyPremium(e); break;
       case 'demo-tweak': demoTweak(el); break;
       case 'demo-restore': demoRestore(el); break;
       case 'replay': window.scrollTo({ top: 0 }); runBoot(); break;
@@ -874,6 +965,10 @@
 
   // ───────────── start ─────────────
   buildBootTicks();
+  // Back from a Payhip purchase (see thanksUrl): show the thanks page and tidy the address bar.
+  if (/[?&]premium=thanks\b/.test(location.search)) {
+    try { history.replaceState(null, '', location.pathname + '#/premium/thanks'); } catch (_) { location.hash = '#/premium/thanks'; }
+  }
   S.page = routeFromHash();
   if (S.user && S.user.prefs.intro === false) {
     $('#boot').hidden = true;

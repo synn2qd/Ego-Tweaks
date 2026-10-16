@@ -33,6 +33,40 @@ Paste your links between the quotes, e.g.
 They then appear in the footer (and Discord in the phone menu). Empty = hidden.
 
 
+SET UP EGO TWEAKS PREMIUM (Payhip + Discord)
+--------------------------------------------
+Premium is $10 a month: each purchase is a key that lasts one month, and buyers buy again
+to renew. Nothing charges them automatically, and the site says so.
+
+Premium has its own page (egotweaks.com/#/premium) and a card in the Pricing section.
+"Buy Premium" opens Payhip's checkout right on the page. After paying, Payhip sends the
+buyer back to a thanks page that tells them to open a ticket in your Discord for their key.
+
+1. In Payhip, add a NEW DIGITAL PRODUCT (not a membership), e.g. "Ego Tweaks Premium —
+   1 month", priced $10. Payhip's on-site checkout does not work for memberships, courses,
+   coaching or bundles. If Payhip asks for a file, a small text file saying "Open a ticket
+   in our Discord to get your key" works.
+2. Open assets/site.js. Near the top:
+
+    const PREMIUM = {
+      payhip: '',
+      discord: '',
+      price: '$10',
+      perks: [ ... ],
+    };
+
+  payhip   your Payhip product link, e.g. 'https://payhip.com/b/AbC12' (or just 'AbC12').
+           Until this is filled in, Buy Premium only says checkout isn't open yet.
+  discord  where buyers open a ticket: your invite link, or a link straight to your tickets
+           channel. Leave '' to use the Discord link in LINKS.
+  price    the price of one month, shown on the site only. Payhip charges whatever you set
+           in Payhip, so keep the two the same.
+  perks    the list on the Premium card. Change it to say what the key unlocks.
+
+Keys are handed out by you in Discord, so check the order in Payhip before sending one, and
+make each key stop working after a month. Premium does not touch Supabase.
+
+
 SHIPPING A NEW VERSION
 ----------------------
 1. Replace downloads/EgoTweaks.exe with the new build.

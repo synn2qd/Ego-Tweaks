@@ -565,3 +565,18 @@ button.pill:hover { border-color: var(--w55); }
 }
 
 .steps p b { display: inline; font-size: inherit; }
+
+/* ═══════════════════════ premium ═══════════════════════ */
+.plan .price.word { font-size: 40px; padding: 12px 0; }
+.plan .btn svg, .pm-thanks .btn svg, .pm-ticket .btn svg { flex: none; }
+.pm-page .dl-cols { align-items: start; }
+.pm-ticket { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--w06); }
+.pm-thanks { margin-bottom: 16px; padding: 34px 26px; text-align: center; border-color: var(--w40); box-shadow: 0 0 80px -20px rgba(255,255,255,.18); }
+.pm-thanks .done-mark { margin: 0 auto 18px; }
+.pm-thanks h2 { margin: 0; font: 700 clamp(24px, 3.6vw, 34px)/1.1 var(--display); letter-spacing: -.03em; }
+.pm-thanks p { margin: 12px auto 0; color: var(--w55); max-width: 56ch; }
+.pm-thanks .hero-cta { margin-top: 24px; }
+@media (max-width: 760px) {
+  .pm-ticket .btn { width: 100%; }
+  .pm-thanks { padding: 26px 18px; }
+}
