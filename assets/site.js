@@ -34,7 +34,7 @@
   //   guildId:  your server's ID. Buyers must be in it for the bot to DM them. '' = don't check.
   // Also add this site's address (https://egotweaks.com/) under OAuth2 → Redirects in the Developer Portal.
   // The bot prints both values when it starts.
-  const DISCORD_LOGIN = { clientId: '', guildId: '' };
+  const DISCORD_LOGIN = { clientId: '1560070865599598804', guildId: '1560058897329426573' };
   const PER_MONTH = PREMIUM.price ? `${PREMIUM.price} a month` : 'one month at a time';
   // Reviews from real customers (for example vouches posted in your Discord). They appear in a Reviews
   // section on the home page; leave the list empty and the section stays hidden. Only add real ones.
