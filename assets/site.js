@@ -37,7 +37,7 @@
   //             'https://ego-tweaks-bot-production.up.railway.app'. It adds people to the server. '' = they get
   //             a "Join our Discord" button instead. The bot needs the "Create Invite" permission for this.
   // Also add this site's address (https://egotweaks.com/) under OAuth2 → Redirects in the Developer Portal.
-  const DISCORD_LOGIN = { clientId: '1560070865599598804', guildId: '1560058897329426573', botUrl: '' };
+  const DISCORD_LOGIN = { clientId: '1560070865599598804', guildId: '1560058897329426573', botUrl: 'https://ego-tweaks-bot-production.up.railway.app' };
   const PER_MONTH = PREMIUM.price ? `${PREMIUM.price} a month` : 'one month at a time';
   // Reviews from real customers (for example vouches posted in your Discord). They appear in a Reviews
   // section on the home page; leave the list empty and the section stays hidden. Only add real ones.
