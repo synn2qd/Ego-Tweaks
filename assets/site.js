@@ -954,7 +954,7 @@
     const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
     keep.set('ego-oauth-state', state, sessionStorage);
     location.href = 'https://discord.com/oauth2/authorize?' + new URLSearchParams({
-      client_id: DISCORD_LOGIN.clientId, response_type: 'token', redirect_uri: location.origin + location.pathname,
+      client_id: DISCORD_LOGIN.clientId, response_type: 'token', redirect_uri: location.origin + '/',
       scope: DISCORD_LOGIN.guildId ? 'identify guilds' : 'identify', state, prompt: 'none',
     });
   }
