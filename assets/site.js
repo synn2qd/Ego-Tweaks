@@ -29,12 +29,15 @@
     price: '$10',
     perks: ['Everything in the free version, plus 200 tweaks', 'Your own Ego Tweaks Premium key', 'Each key lasts one month', 'No auto-charge — renew when you want', 'Key sent straight to your Discord DMs', 'Secure checkout by Payhip'],
   };
-  // "Continue with Discord" before checkout, so the Ego Tweaks bot can DM buyers the moment they pay.
-  //   clientId: Discord Developer Portal → your app → OAuth2 → Client ID. '' = no Discord step.
-  //   guildId:  your server's ID. Buyers must be in it for the bot to DM them. '' = don't check.
+  // "Continue with Discord": visitors log in with Discord to download (and to buy Premium, so the bot can
+  // DM them the moment they pay). The bot then adds them to your Discord server.
+  //   clientId: Discord Developer Portal → your app → OAuth2 → Client ID. '' = no Discord login (email accounts).
+  //   guildId:  your server's ID.
+  //   botUrl:   your bot's Railway address (Railway → the bot → Settings → Networking), e.g.
+  //             'https://ego-tweaks-bot-production.up.railway.app'. It adds people to the server. '' = they get
+  //             a "Join our Discord" button instead. The bot needs the "Create Invite" permission for this.
   // Also add this site's address (https://egotweaks.com/) under OAuth2 → Redirects in the Developer Portal.
-  // The bot prints both values when it starts.
-  const DISCORD_LOGIN = { clientId: '1560070865599598804', guildId: '1560058897329426573' };
+  const DISCORD_LOGIN = { clientId: '1560070865599598804', guildId: '1560058897329426573', botUrl: '' };
   const PER_MONTH = PREMIUM.price ? `${PREMIUM.price} a month` : 'one month at a time';
   // Reviews from real customers (for example vouches posted in your Discord). They appear in a Reviews
   // section on the home page; leave the list empty and the section stays hidden. Only add real ones.
@@ -212,7 +215,7 @@
       { k: 'Loading catalog', v: `${TWEAKS.length} tweaks · ${CATEGORIES.length} categories` },
       ...CATEGORIES.map((c) => ({ k: c.name, ms: 110, v: `${perCat(c.id)} tweaks · ${c.blurb.toLowerCase()}` })),
       { k: 'Games', ms: 110, v: `${GAMES.length} recognised` },
-      { k: 'Account', v: () => (S.user ? `Signed in · @${S.user.username}` : 'Guest') },
+      { k: 'Account', v: () => (DC_LOGIN ? (S.dc ? `Discord · @${S.dc.username}` : 'Guest') : S.user ? `Signed in · @${S.user.username}` : 'Guest') },
       { k: 'Latest build', v: `${BUILD.file} · ${fmtMB(BUILD.bytes)}` },
     ];
     await runLog(log, steps, { fast, onProgress: setBootProgress });
@@ -245,6 +248,12 @@
       + SECTIONS.map(([id, n]) => `<button type="button" data-to="${id}" class="${S.page === 'home' && S.spy === id ? 'on' : ''}">${n}</button>`).join('')
       + `<button type="button" data-nav="premium" class="${S.page === 'premium' || S.page === 'thanks' ? 'on' : ''}">Premium</button>`;
     const dc = DISCORD ? `<a class="icon-btn hide-sm" href="${esc(DISCORD)}" target="_blank" rel="noopener" aria-label="Join our Discord" title="Join our Discord">${BRAND.discord}</a>` : '';
+    if (DC_LOGIN) {
+      $('#nav-cta').innerHTML = S.dc
+        ? `${dc}<button class="pill dc-pill hide-sm" data-act="discord-me" title="Logged in with Discord"><img src="${esc(dcAvatar(S.dc))}" alt="" width="20" height="20">${esc(dcName())}</button><button class="btn btn-primary btn-sm mag" data-nav="download">${svg('download')}Download</button>`
+        : `${dc}<button class="btn btn-ghost btn-sm hide-sm" data-act="discord-me">Log in</button><button class="btn btn-primary btn-sm mag" data-nav="download">Get Ego Tweaks</button>`;
+      return;
+    }
     $('#nav-cta').innerHTML = S.user
       ? `${dc}<button class="pill hide-sm" data-act="account" title="Your account"><span class="dot"></span>@${esc(S.user.username)}</button><button class="btn btn-primary btn-sm mag" data-nav="download">${svg('download')}Download</button>`
       : `${dc}<button class="btn btn-ghost btn-sm hide-sm" data-act="signin">Sign in</button><button class="btn btn-primary btn-sm mag" data-nav="download">Get Ego Tweaks</button>`;
@@ -258,7 +267,9 @@
         <button class="icon-btn" data-act="menu-close" aria-label="Close menu">${svg('x')}</button></div>
       <ol>${SECTIONS.map(([id, n], i) => `<li style="--i:${i}"><button type="button" data-to="${id}">${n}</button></li>`).join('')}<li style="--i:${SECTIONS.length}"><button type="button" data-nav="download">Download</button></li><li style="--i:${SECTIONS.length + 1}"><button type="button" data-nav="premium">Premium</button></li></ol>
       <div class="menu-cta">${community}
-        ${S.user ? `<button class="btn btn-glass btn-lg" data-act="account">Account · @${esc(S.user.username)}</button>` : `<button class="btn btn-glass btn-lg" data-act="signin">Sign in</button>`}
+        ${DC_LOGIN
+          ? (S.dc ? `<button class="btn btn-glass btn-lg" data-act="discord-me">Logged in · @${esc(S.dc.username)}</button>` : `<button class="btn btn-glass btn-lg" data-act="discord-me">${BRAND.discord}Log in with Discord</button>`)
+          : S.user ? `<button class="btn btn-glass btn-lg" data-act="account">Account · @${esc(S.user.username)}</button>` : `<button class="btn btn-glass btn-lg" data-act="signin">Sign in</button>`}
         <button class="btn btn-primary btn-lg" data-nav="download">${svg('download')}Get Ego Tweaks — free</button></div>`;
     m.hidden = false;
     const burger = $('#burger') || $('.nav-burger'); burger && burger.setAttribute('aria-expanded', 'true');
@@ -285,9 +296,13 @@
           <p>A Windows tweaking utility. ${TWEAKS.length} tweaks for FPS, input delay and ping — every one reversible. Free to download, Premium if you want more.</p>
           ${socials ? `<div class="socials">${socials}</div>` : ''}</div>
         <div><h4>Product</h4><ul>${SECTIONS.map(([id, n]) => `<li><button type="button" data-to="${id}">${n}</button></li>`).join('')}<li><button type="button" data-nav="download">Download</button></li><li><button type="button" data-nav="premium">Premium</button></li></ul></div>
-        <div><h4>Account</h4><ul>${S.user
-          ? `<li><button type="button" data-act="account">Your account</button></li><li><button type="button" data-nav="download">Your downloads</button></li>`
-          : `<li><button type="button" data-act="signup">Create account</button></li><li><button type="button" data-act="signin">Sign in</button></li>`}</ul></div>
+        <div><h4>Account</h4><ul>${DC_LOGIN
+          ? (S.dc
+            ? `<li><button type="button" data-act="discord-me">@${esc(S.dc.username)}</button></li><li><button type="button" data-act="discord-forget">Log out</button></li>`
+            : `<li><button type="button" data-act="discord-me">Log in with Discord</button></li><li><button type="button" data-nav="download">Download</button></li>`)
+          : S.user
+            ? `<li><button type="button" data-act="account">Your account</button></li><li><button type="button" data-nav="download">Your downloads</button></li>`
+            : `<li><button type="button" data-act="signup">Create account</button></li><li><button type="button" data-act="signin">Sign in</button></li>`}</ul></div>
         ${community ? `<div><h4>Community</h4><ul>${community}</ul></div>` : ''}
       </div>
       <div class="foot-mark" aria-hidden="true">EGO</div>
@@ -546,7 +561,7 @@
     <section class="sec wrap" id="how">
       ${secHead('05', 'How it works', 'Up and running in a minute.')}
       <div class="steps3">
-        <div class="card step spot rv"><span class="ico">${svg('download')}</span><h3>Get it</h3><p>Make a free account here and download the ${fmtMB(BUILD.bytes)} app. Nothing to install.</p></div>
+        <div class="card step spot rv"><span class="ico">${svg('download')}</span><h3>Get it</h3><p>${DC_LOGIN ? 'Log in with Discord' : 'Make a free account here'} and download the ${fmtMB(BUILD.bytes)} app. Nothing to install.</p></div>
         <div class="card step spot rv" style="--d:1"><span class="ico">${svg('scan')}</span><h3>Scan</h3><p>It reads your CPU, GPU, memory, drives, display and network, then matches the tweaks that fit.</p></div>
         <div class="card step spot rv" style="--d:2"><span class="ico">${svg('check')}</span><h3>Apply</h3><p>Apply everything recommended in one click, or pick tweaks one by one. Turn any of them off later.</p></div>
       </div>
@@ -577,7 +592,9 @@
           <p>Everything people ask before they download. Still stuck? ${DISCORD ? `<a href="${esc(DISCORD)}" target="_blank" rel="noopener">Ask in our Discord</a>.` : 'Ask us.'}</p>
         </div>
         <div class="faq rv" style="--d:1">
-          ${faq('Is it really free?', 'Yes. The app is free to download and use — you make a free account on this site to download, that’s it. Premium is an optional paid upgrade.', true)}
+          ${faq('Is it really free?', DC_LOGIN
+            ? 'Yes. The app is free to download and use — you just log in with Discord to download, which also puts you in our Discord server for updates and help. Premium is an optional paid upgrade.'
+            : 'Yes. The app is free to download and use — you make a free account on this site to download, that’s it. Premium is an optional paid upgrade.', true)}
           ${faq('How do I get my Premium key?', DC_LOGIN
             ? `On the <a href="#/premium" data-nav="premium">Premium page</a>, press <b>Continue with Discord</b>, then buy — checkout is handled by Payhip. The moment you’ve paid, our bot DMs you on Discord and a team member sends your key there. You need to be in our ${DISCORD ? `<a href="${esc(DISCORD)}" target="_blank" rel="noopener">Discord server</a>` : 'Discord server'} so the bot can message you.`
             : `Buy Premium on the <a href="#/premium" data-nav="premium">Premium page</a> — checkout opens right on this site and is handled by Payhip, who email you a receipt. Then open a ticket in our ${TICKET ? `<a href="${esc(TICKET)}" target="_blank" rel="noopener">Discord</a>` : 'Discord'} with the email you paid with or your order number, and we’ll send your key there.`)}
@@ -596,7 +613,7 @@
         <div class="cta-rings" aria-hidden="true">${heroRings()}</div>
         <span class="eyebrow"><b>GO</b>Ready when you are</span>
         <h2>Your PC, tuned<br>in about a minute.</h2>
-        <p>Free account, ${fmtMB(BUILD.bytes)} download, every tweak reversible.</p>
+        <p>${DC_LOGIN ? 'Log in with Discord' : 'Free account'}, ${fmtMB(BUILD.bytes)} download, every tweak reversible.</p>
         <div class="hero-cta"><button class="btn btn-primary btn-lg mag" data-nav="download">${svg('download')}Get Ego Tweaks</button><button class="btn btn-glass btn-lg mag" data-to="features">See what it tunes</button></div>
         <div class="fine">FREE · v${esc(BUILD.version)} · WINDOWS 10 &amp; 11 · ${fmtMB(BUILD.bytes).toUpperCase()}</div>
       </div>
@@ -785,9 +802,14 @@
   // ───────────── download ─────────────
   function pageDownload() {
     const u = S.user;
-    const note = u
-      ? `<span class="dot"></span>Signed in as <b>@${esc(u.username)}</b> — your download starts right away.`
-      : `<span class="dot"></span>You’ll make a free account first. It takes a few seconds and saves your downloads.`;
+    const note = DC_LOGIN
+      ? (S.dc
+        ? `<span class="dot"></span>Logged in with Discord as <b>@${esc(S.dc.username)}</b> — your download starts right away.`
+        : `<span class="dot"></span>You’ll log in with Discord first — one click. It also puts you in our Discord server, where updates and help happen.`)
+      : u
+        ? `<span class="dot"></span>Signed in as <b>@${esc(u.username)}</b> — your download starts right away.`
+        : `<span class="dot"></span>You’ll make a free account first. It takes a few seconds and saves your downloads.`;
+    const ready = DC_LOGIN ? !!S.dc : !!u;
     const hist = u && u.downloads.length ? `
       <div class="card dl-block rv"><h2>Your downloads <span class="muted" style="font:400 12px var(--body)">saved to your account</span></h2>
         <div>${u.downloads.slice(0, 6).map((d) => `<div class="log-row"><time datetime="${esc(d.at)}">${esc(fmtDate(d.at))}</time><span>${esc(d.file)} · v${esc(d.version)}</span><button class="btn btn-ghost btn-sm" data-act="get">Download again</button></div>`).join('')}</div>
@@ -800,7 +822,7 @@
         <i class="beam" aria-hidden="true"></i>
         <span class="logo" aria-hidden="true">EGO</span>
         <span class="t"><b>${esc(BUILD.name)}</b><small>${esc(BUILD.file)} · v${esc(BUILD.version)} · ${fmtMB(BUILD.bytes)} · Windows 10 &amp; 11</small></span>
-        <span class="go">${u ? 'Download' : 'Get it free'}${svg('download')}</span>
+        <span class="go">${ready ? `Download${svg('download')}` : DC_LOGIN ? `${BRAND.discord}Continue with Discord` : `Get it free${svg('download')}`}</span>
       </button>
       <div class="dl-note rv" style="--d:2">${note}</div>
       ${hist}
@@ -938,11 +960,13 @@
       <div class="modal-actions"><button type="button" class="btn btn-ghost" data-act="close">Close</button>${ticketBtn('btn-primary') || '<button type="button" class="btn btn-primary" data-act="close">Got it</button>'}</div>`);
   }
 
-  // ───────────── Continue with Discord (before checkout) ─────────────
-  // Discord's OAuth "implicit grant": Discord sends the buyer back here with a short-lived token in the
-  // address bar, which the browser uses to read their Discord ID (and check they're in the server).
-  // Nothing is sent to our servers; the ID only goes into the Payhip checkout link.
-  const DC_LOGIN = !!(DISCORD_LOGIN.clientId && PAYHIP_KEY);
+  // ───────────── Continue with Discord (downloads and Premium) ─────────────
+  // Discord's OAuth "implicit grant": Discord sends the visitor back here with a short-lived token in the
+  // address bar. The browser uses it to read their Discord ID and check they're in the server; if they
+  // aren't, the token goes to the bot (botUrl), which adds them. For Premium, the ID goes into the
+  // Payhip checkout link so the bot can DM them the moment they pay.
+  const DC_LOGIN = !!DISCORD_LOGIN.clientId;
+  const DC_JOIN = !!(DISCORD_LOGIN.botUrl && DISCORD_LOGIN.guildId);
   const keep = {
     get(k, area = localStorage) { try { return JSON.parse(area.getItem(k) || 'null'); } catch (_) { return null; } },
     set(k, v, area = localStorage) { try { if (v === null) area.removeItem(k); else area.setItem(k, JSON.stringify(v)); } catch (_) { /* storage blocked */ } },
@@ -950,13 +974,31 @@
   S.dc = DC_LOGIN ? keep.get('ego-discord') : null;
   const dcAvatar = (d) => (d.avatar ? `https://cdn.discordapp.com/avatars/${d.id}/${d.avatar}.png?size=64` : `https://cdn.discordapp.com/embed/avatars/${Number((BigInt(d.id) >> 22n) % 6n)}.png`);
 
-  function discordConnect() {
+  // page: where to come back to. then: 'download' starts the download once they're back.
+  function discordConnect(page = 'premium', then = '') {
     const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
     keep.set('ego-oauth-state', state, sessionStorage);
+    keep.set('ego-oauth-after', { page, then }, sessionStorage);
     location.href = 'https://discord.com/oauth2/authorize?' + new URLSearchParams({
       client_id: DISCORD_LOGIN.clientId, response_type: 'token', redirect_uri: location.origin + '/',
-      scope: DISCORD_LOGIN.guildId ? 'identify guilds' : 'identify', state, prompt: 'none',
+      scope: ['identify', DISCORD_LOGIN.guildId && 'guilds', DC_JOIN && 'guilds.join'].filter(Boolean).join(' '), state, prompt: 'none',
     });
+  }
+  // Ask the bot to add this visitor to the Discord server.
+  async function dcJoin(token) {
+    if (!DC_JOIN) return false;
+    try {
+      const r = await fetch(DISCORD_LOGIN.botUrl.replace(/\/+$/, '') + '/join', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ access_token: token }) });
+      const j = await r.json().catch(() => ({}));
+      return Boolean(r.ok && j.ok);
+    } catch (_) { return false; }
+  }
+  const dcName = () => (S.dc ? S.dc.name || S.dc.username : '');
+  function dcChanged() {
+    refreshBuy();
+    if ($('#site').hidden) return;
+    renderNav(); renderFooter();
+    if (S.page === 'download') renderPage();
   }
   async function dcFetch(path, token) {
     const r = await fetch('https://discord.com/api/v10' + path, { headers: { authorization: `Bearer ${token}` } });
@@ -970,8 +1012,12 @@
   // Back from Discord: the address bar holds #access_token=…&state=… (or #error=…).
   async function finishDiscordLogin(params) {
     const expected = keep.get('ego-oauth-state', sessionStorage);
+    const after = keep.get('ego-oauth-after', sessionStorage) || { page: 'premium' };
     keep.set('ego-oauth-state', null, sessionStorage);
-    try { history.replaceState(null, '', location.pathname + '#/premium'); } catch (_) { location.hash = '#/premium'; }
+    keep.set('ego-oauth-after', null, sessionStorage);
+    const page = ['home', 'download', 'premium'].includes(after.page) ? after.page : 'premium';
+    const hash = page === 'home' ? '#/' : `#/${page}`;
+    try { history.replaceState(null, '', location.pathname + hash); } catch (_) { location.hash = hash; }
     const token = params.get('access_token');
     if (!token || params.get('state') !== expected) {
       S.dcNote = params.get('error') === 'access_denied' ? 'Discord login was cancelled — press the button to try again.' : 'Discord login didn’t finish — press the button to try again.';
@@ -980,27 +1026,51 @@
     S.dcBusy = true;
     try {
       const me = await dcFetch('/users/@me', token);
-      const inGuild = await dcInGuild(token).catch(() => true);
+      let inGuild = await dcInGuild(token).catch(() => true);
+      const joinedNow = !inGuild && (await dcJoin(token));
+      if (joinedNow) inGuild = true;
       S.dc = { id: me.id, username: me.username, name: me.global_name || me.username, avatar: me.avatar, inGuild };
       keep.set('ego-discord', S.dc);
       keep.set('ego-discord-token', { token, exp: Date.now() + (Number(params.get('expires_in')) || 3600) * 1000 }, sessionStorage);
       S.dcNote = '';
-      toast(`Connected as @${me.username}`, { icon: 'check' });
+      toast(joinedNow ? `Logged in as @${me.username} — you’re in our Discord now` : `Logged in as @${me.username}`, { icon: 'check' });
     } catch (_) {
       S.dcNote = 'Couldn’t reach Discord — press the button to try again.';
     }
     S.dcBusy = false;
-    refreshBuy();
+    dcChanged();
+    if (after.then === 'download' && S.dc) startDownload();
   }
   async function discordRecheck(quiet = false) {
     const t = keep.get('ego-discord-token', sessionStorage);
     if (!S.dc || !t || t.exp < Date.now()) return discordConnect();
-    try { S.dc.inGuild = await dcInGuild(t.token); } catch (_) { return discordConnect(); }
+    try { S.dc.inGuild = (await dcInGuild(t.token)) || (await dcJoin(t.token)); } catch (_) { return discordConnect(); }
     keep.set('ego-discord', S.dc);
     if (S.dc.inGuild) S.dcAwaitJoin = false;
     else if (!quiet) toast('You’re not in the server yet — join it, then press continue.', { dark: true, icon: 'alert' });
     refreshBuy();
   }
+  function discordLogout() {
+    S.dc = null;
+    keep.set('ego-discord', null);
+    keep.set('ego-discord-token', null, sessionStorage);
+    closeModal(); closeMenu();
+    dcChanged();
+    toast('Logged out', { dark: true });
+  }
+  function openDiscordMe() {
+    closeMenu();
+    if (!S.dc) return discordConnect(S.page === 'thanks' ? 'premium' : S.page);
+    openModal(`
+      <div class="acct-id"><img class="av" src="${esc(dcAvatar(S.dc))}" alt=""><div><b>${esc(dcName())}</b><small>@${esc(S.dc.username)} · logged in with Discord</small></div></div>
+      <p>${S.dc.inGuild ? 'You’re in the Ego Tweaks Discord — updates, help and Premium keys all happen there.' : 'Join the Ego Tweaks Discord for updates, help and Premium keys.'}</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-line" data-act="discord-forget">Log out</button><span class="sp"></span>
+        ${DISCORD ? `<a class="btn btn-ghost" href="${esc(DISCORD)}" target="_blank" rel="noopener">Open Discord</a>` : ''}
+        <button type="button" class="btn btn-primary" data-act="close">Done</button>
+      </div>`);
+  }
+
   // After "Join our Discord first", check again as soon as they come back to this tab.
   document.addEventListener('visibilitychange', () => { if (!document.hidden && S.dcAwaitJoin) discordRecheck(true); });
 
@@ -1142,6 +1212,15 @@
   }
 
   // ── preparing → download ──
+  // With Discord login on, downloading needs a Discord login (which also puts them in the server);
+  // otherwise it needs a free account on this site.
+  function startDownload() {
+    if (DC_LOGIN) {
+      if (!S.dc) return discordConnect('download', 'download');
+    } else if (!S.user) return openAuth({ mode: 'signup', then: 'download' });
+    openModal('<div></div>');
+    prepareDownload();
+  }
   async function prepareDownload({ fresh = false } = {}) {
     S.busy = true;
     setModal(`
@@ -1151,7 +1230,7 @@
       <div class="prog" id="mini-prog"><i></i></div>`);
     const log = $('#mini-log');
     await runLog(log, [
-      { k: 'Account', ms: 140, v: () => `Saved · @${S.user.username}` },
+      DC_LOGIN && S.dc ? { k: 'Discord', ms: 140, v: () => `@${S.dc.username}${S.dc.inGuild ? ' · in the server' : ''}` } : { k: 'Account', ms: 140, v: () => (S.user ? `Saved · @${S.user.username}` : 'Guest') },
       { k: 'Build', ms: 160, v: `v${BUILD.version} · latest` },
       { k: 'Package', ms: 200, v: `${BUILD.file} · ${fmtMB(BUILD.bytes)}` },
       { k: 'SHA-256', ms: 160, v: BUILD.sha256.slice(0, 16) + '…' },
@@ -1171,8 +1250,9 @@
       <div class="done-mark">${svg('check')}</div>
       <h2 class="h2">${auto ? 'Your download has started' : 'Your download is ready'}</h2>
       <p>${auto ? `Look for <b>${esc(BUILD.file)}</b> in your downloads. If it didn’t start, use the button below.` : `Click below to save <b>${esc(BUILD.file)}</b>.`}</p>
-      <p class="muted" style="font-size:12.5px">If Windows SmartScreen appears, choose <b>More info → Run anyway</b>. Saved to your account as @${esc(user.username)}.</p>
+      <p class="muted" style="font-size:12.5px">If Windows SmartScreen appears, choose <b>More info → Run anyway</b>.${DC_LOGIN && S.dc ? (S.dc.inGuild ? ' You’re in our Discord — updates and help happen there.' : ' Join our Discord for updates and help.') : user ? ` Saved to your account as @${esc(user.username)}.` : ''}</p>
       <div class="modal-actions">
+        ${DC_LOGIN && DISCORD ? `<a class="btn btn-ghost" href="${esc(DISCORD)}" target="_blank" rel="noopener">${BRAND.discord}Open Discord</a>` : ''}
         <button type="button" class="btn btn-ghost" data-act="close">Close</button>
         <a class="btn btn-primary" href="${BUILD.href}" download="${BUILD.file}" data-act="manual-dl" autofocus>${svg('download')}${auto ? 'Download again' : 'Download ' + esc(BUILD.file)}</a>
       </div>`);
@@ -1405,9 +1485,7 @@
     const el = e.target.closest('[data-act]');
     if (!el) return;
     switch (el.dataset.act) {
-      case 'get':
-        if (S.user) { openModal('<div></div>'); prepareDownload(); } else openAuth({ mode: 'signup', then: 'download' });
-        break;
+      case 'get': startDownload(); break;
       case 'signup': openAuth({ mode: 'signup' }); break;
       case 'signin': openAuth({ mode: 'signin' }); break;
       case 'account': openAccount(); break;
@@ -1446,8 +1524,9 @@
         }
         break;
       case 'buy-premium': buyPremium(e); break;
-      case 'discord-connect': discordConnect(); break;
-      case 'discord-forget': S.dc = null; keep.set('ego-discord', null); keep.set('ego-discord-token', null, sessionStorage); refreshBuy(); break;
+      case 'discord-connect': discordConnect(S.page === 'home' ? 'home' : 'premium'); break;
+      case 'discord-me': openDiscordMe(); break;
+      case 'discord-forget': discordLogout(); break;
       case 'discord-join': S.dcAwaitJoin = true; break;
       case 'discord-recheck': discordRecheck(); break;
       case 'demo-tweak': demoTweak(el); break;
