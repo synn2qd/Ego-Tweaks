@@ -27,8 +27,14 @@
     payhip: 'https://payhip.com/buy?s=1&qty%5BPAIZv%5D=1&cart_links%5B%5D=PAIZv',
     discord: 'https://discord.gg/gtPggZ9zpz',
     price: '$10',
-    perks: ['Everything in the free version, plus 200 tweaks', 'Your own Ego Tweaks Premium key', 'Each key lasts one month', 'No auto-charge — renew when you want', 'Key sent to you in a Discord ticket', 'Secure checkout by Payhip'],
+    perks: ['Everything in the free version, plus 200 tweaks', 'Your own Ego Tweaks Premium key', 'Each key lasts one month', 'No auto-charge — renew when you want', 'Key sent straight to your Discord DMs', 'Secure checkout by Payhip'],
   };
+  // "Continue with Discord" before checkout, so the Ego Tweaks bot can DM buyers the moment they pay.
+  //   clientId: Discord Developer Portal → your app → OAuth2 → Client ID. '' = no Discord step.
+  //   guildId:  your server's ID. Buyers must be in it for the bot to DM them. '' = don't check.
+  // Also add this site's address (https://egotweaks.com/) under OAuth2 → Redirects in the Developer Portal.
+  // The bot prints both values when it starts.
+  const DISCORD_LOGIN = { clientId: '', guildId: '' };
   const PER_MONTH = PREMIUM.price ? `${PREMIUM.price} a month` : 'one month at a time';
   // Reviews from real customers (for example vouches posted in your Discord). They appear in a Reviews
   // section on the home page; leave the list empty and the section stays hidden. Only add real ones.
@@ -572,7 +578,9 @@
         </div>
         <div class="faq rv" style="--d:1">
           ${faq('Is it really free?', 'Yes. The app is free to download and use — you make a free account on this site to download, that’s it. Premium is an optional paid upgrade.', true)}
-          ${faq('How do I get my Premium key?', `Buy Premium on the <a href="#/premium" data-nav="premium">Premium page</a> — checkout opens right on this site and is handled by Payhip, who email you a receipt. Then open a ticket in our ${TICKET ? `<a href="${esc(TICKET)}" target="_blank" rel="noopener">Discord</a>` : 'Discord'} with the email you paid with or your order number, and we’ll send your key there.`)}
+          ${faq('How do I get my Premium key?', DC_LOGIN
+            ? `On the <a href="#/premium" data-nav="premium">Premium page</a>, press <b>Continue with Discord</b>, then buy — checkout is handled by Payhip. The moment you’ve paid, our bot DMs you on Discord and a team member sends your key there. You need to be in our ${DISCORD ? `<a href="${esc(DISCORD)}" target="_blank" rel="noopener">Discord server</a>` : 'Discord server'} so the bot can message you.`
+            : `Buy Premium on the <a href="#/premium" data-nav="premium">Premium page</a> — checkout opens right on this site and is handled by Payhip, who email you a receipt. Then open a ticket in our ${TICKET ? `<a href="${esc(TICKET)}" target="_blank" rel="noopener">Discord</a>` : 'Discord'} with the email you paid with or your order number, and we’ll send your key there.`)}
           ${faq('Does Premium renew automatically?', `No. Premium is ${esc(PER_MONTH)}, and each purchase gives you a key that lasts one month. Nothing is charged automatically — when your month is up, buy again and open a new ticket to keep Premium.`)}
           ${faq('Is it safe? Can I undo changes?', 'Before any tweak changes a setting, Ego Tweaks saves the original value. Turn the tweak off and it’s written back. There’s also Undo all, a history of every change, and one-click Windows restore points.')}
           ${faq('Why does Windows SmartScreen warn me?', 'New apps that Windows hasn’t seen much yet can trigger it. Choose <b>More info → Run anyway</b>. You can check the file’s SHA-256 fingerprint on the Download page.')}
@@ -829,7 +837,14 @@
   // ───────────── premium ─────────────
   // The Buy button is a real link to Payhip's checkout. When payhip.js has loaded, the click opens Payhip's
   // checkout on top of this page instead; after paying, Payhip sends the buyer back to #/premium/thanks.
-  const buyBtn = (cls) => `<a class="btn ${cls}" href="${PAYHIP_KEY ? `https://payhip.com/buy?link=${PAYHIP_KEY}` : '#/premium'}" target="_blank" rel="noopener" data-act="buy-premium">${svg('key')}Buy Premium</a>`;
+  // With Discord login on, the link carries the buyer's Discord ID as Payhip metadata (which Payhip passes
+  // to the bot's webhook), and it opens in a new tab so that metadata is kept.
+  const checkoutUrl = () => {
+    const q = new URLSearchParams({ link: PAYHIP_KEY });
+    if (DC_LOGIN && S.dc) { q.set('metadata[discord_id]', S.dc.id); q.set('metadata[discord_name]', S.dc.username); }
+    return 'https://payhip.com/buy?' + q;
+  };
+  const buyBtn = (cls) => `<a class="btn ${cls}" href="${PAYHIP_KEY ? esc(checkoutUrl()) : '#/premium'}" target="_blank" rel="noopener" data-act="buy-premium">${svg('key')}Buy Premium</a>`;
   const ticketBtn = (cls) => (TICKET ? `<a class="btn ${cls}" href="${esc(TICKET)}" target="_blank" rel="noopener">${BRAND.discord}Open a ticket in Discord</a>` : '');
   const thanksUrl = () => location.href.split(/[?#]/)[0] + '?premium=thanks#/premium/thanks';
 
@@ -840,12 +855,32 @@
       ${PREMIUM.price ? `<div class="price">${esc(PREMIUM.price)}<small>per month</small></div>` : '<div class="price word">Premium</div>'}
       <p class="plan-sub">One key, one month. Buy again whenever you want more.</p>
       <ul>${PREMIUM.perks.map((x) => `<li>${svg('check')}<span>${esc(x)}</span></li>`).join('')}</ul>
-      ${buyBtn(btn)}
+      <div class="buy-area" data-cls="${btn}">${buyArea(btn)}</div>
     </div>`;
   }
 
+  // Connect Discord → (join the server) → Buy. Without Discord login it's just the Buy button.
+  function buyArea(cls) {
+    if (!DC_LOGIN) return buyBtn(cls);
+    if (S.dcBusy) return `<button class="btn ${cls} busy" disabled>Connecting to Discord</button>`;
+    const note = S.dcNote ? `<p class="dc-why">${esc(S.dcNote)}</p>` : '';
+    if (!S.dc) return `<button type="button" class="btn ${cls} btn-discord" data-act="discord-connect">${BRAND.discord}Continue with Discord to buy</button>${note || '<p class="dc-why">So our bot can DM you your key the moment you pay.</p>'}`;
+    const who = `<div class="dc-who"><img src="${esc(dcAvatar(S.dc))}" alt="" width="28" height="28"><span>Buying as <b>${esc(S.dc.name || S.dc.username)}</b> <small>@${esc(S.dc.username)}</small></span><button type="button" data-act="discord-forget">Not you?</button></div>`;
+    if (DISCORD_LOGIN.guildId && !S.dc.inGuild) {
+      return `${who}<a class="btn ${cls} btn-discord" href="${esc(DISCORD)}" target="_blank" rel="noopener" data-act="discord-join">${BRAND.discord}Join our Discord first</a><button type="button" class="btn btn-ghost btn-sm dc-recheck" data-act="discord-recheck">I’ve joined — continue</button><p class="dc-why">Our bot can only DM you if you’re in the server.</p>`;
+    }
+    return `${who}${buyBtn(cls)}`;
+  }
+  const refreshBuy = () => $$('.buy-area').forEach((el) => { el.innerHTML = buyArea(el.dataset.cls); });
+
   function pagePremium() {
-    const steps = [
+    const steps = DC_LOGIN ? [
+      ['Continue with Discord', 'One click, so our bot knows who to message. You’ll need to be in our Discord server.'],
+      ['Buy Premium', 'Checkout opens in a new tab. Payhip handles the payment — your card details never touch this site.'],
+      ['Check your Discord DMs', 'The moment you’ve paid, the Ego Tweaks bot messages you.'],
+      ['Get your key', 'A team member sends your Premium key right there in your DMs.'],
+      ['Renew when it runs out', 'Each key lasts one month and nothing is charged automatically. For another month, just buy again.'],
+    ] : [
       ['Buy Premium', 'Checkout opens right here on the site. Payhip handles the payment — your card details never touch this site.'],
       ['Check your email', 'Payhip emails you a receipt for your order.'],
       ['Open a ticket in our Discord', 'Join the server, open a ticket and send the email you paid with or your order number.'],
@@ -856,12 +891,12 @@
       <div class="card pm-thanks rv">
         <div class="done-mark">${svg('check')}</div>
         <h2>Thanks for buying Premium</h2>
-        <p>Payhip is emailing you a receipt. To get your key, open a ticket in our Discord and send us the email you paid with or your order number. Your key lasts one month.</p>
+        <p>${DC_LOGIN ? 'Payhip is emailing you a receipt, and the Ego Tweaks bot is messaging you on Discord now — your key arrives in your DMs.' : 'Payhip is emailing you a receipt. To get your key, open a ticket in our Discord and send us the email you paid with or your order number.'} Your key lasts one month.</p>
         <div class="hero-cta">${ticketBtn('btn-primary btn-lg mag') || '<p>Join our Discord and open a ticket to get your key.</p>'}</div>
       </div>`;
     return `<div class="page-fx" aria-hidden="true"><div class="hero-beam"></div><div class="hero-grid"></div></div>
     <div class="wrap page pm-page">
-      <header class="page-hd rv"><span class="eyebrow"><b>★</b>Premium</span><h1>Ego Tweaks Premium</h1><p>${esc(PER_MONTH[0].toUpperCase() + PER_MONTH.slice(1))}. Pay through a secure Payhip checkout right here, then open a ticket in our Discord to get your key.</p></header>
+      <header class="page-hd rv"><span class="eyebrow"><b>★</b>Premium</span><h1>Ego Tweaks Premium</h1><p>${esc(PER_MONTH[0].toUpperCase() + PER_MONTH.slice(1))}. ${DC_LOGIN ? 'Continue with Discord, pay through a secure Payhip checkout, and your key arrives in your Discord DMs.' : 'Pay through a secure Payhip checkout right here, then open a ticket in our Discord to get your key.'}</p></header>
       ${thanks}
       <div class="pm-cols">
         ${premiumPlan('rv', 'style="--d:1"')}
@@ -870,13 +905,22 @@
           ${TICKET ? `<div class="pm-ticket">${ticketBtn('btn-glass')}</div>` : ''}
         </div>
       </div>
-      <div class="dl-note rv"><span class="dot"></span>Already paid? Open a ticket in our Discord with the email you paid with or your order number.</div>
+      <div class="dl-note rv"><span class="dot"></span>${DC_LOGIN ? 'Already paid? Check your Discord DMs from the Ego Tweaks bot — or DM the bot yourself.' : 'Already paid? Open a ticket in our Discord with the email you paid with or your order number.'}</div>
     </div>`;
   }
 
   function buyPremium(e) {
     closeMenu();
     if (!PAYHIP_KEY) { e.preventDefault(); toast('Premium checkout isn’t open yet — check back soon.', { dark: true, icon: 'alert' }); return; }
+    if (DC_LOGIN && S.dc) {
+      // Let the link open Payhip in a new tab (it carries the Discord ID); this tab explains what happens next.
+      openModal(`
+        <div class="adm-lockmark">${BRAND.discord}</div>
+        <h2 class="h2">Finish paying in the new tab</h2>
+        <p>The moment you’ve paid, the Ego Tweaks bot DMs you on Discord as <b>@${esc(S.dc.username)}</b>. A team member sends your Premium key right there.</p>
+        <div class="modal-actions">${DISCORD ? `<a class="btn btn-ghost" href="${esc(DISCORD)}" target="_blank" rel="noopener">Open Discord</a>` : ''}<button type="button" class="btn btn-primary" data-act="close">Got it</button></div>`);
+      return;
+    }
     const checkout = window.Payhip && window.Payhip.Checkout;
     if (checkout && typeof checkout.open === 'function') {
       try {
@@ -893,6 +937,72 @@
       <p>Payhip’s checkout opened in a new tab. Once you’ve paid, open a ticket in our Discord with the email you paid with or your order number, and we’ll send your key there.</p>
       <div class="modal-actions"><button type="button" class="btn btn-ghost" data-act="close">Close</button>${ticketBtn('btn-primary') || '<button type="button" class="btn btn-primary" data-act="close">Got it</button>'}</div>`);
   }
+
+  // ───────────── Continue with Discord (before checkout) ─────────────
+  // Discord's OAuth "implicit grant": Discord sends the buyer back here with a short-lived token in the
+  // address bar, which the browser uses to read their Discord ID (and check they're in the server).
+  // Nothing is sent to our servers; the ID only goes into the Payhip checkout link.
+  const DC_LOGIN = !!(DISCORD_LOGIN.clientId && PAYHIP_KEY);
+  const keep = {
+    get(k, area = localStorage) { try { return JSON.parse(area.getItem(k) || 'null'); } catch (_) { return null; } },
+    set(k, v, area = localStorage) { try { if (v === null) area.removeItem(k); else area.setItem(k, JSON.stringify(v)); } catch (_) { /* storage blocked */ } },
+  };
+  S.dc = DC_LOGIN ? keep.get('ego-discord') : null;
+  const dcAvatar = (d) => (d.avatar ? `https://cdn.discordapp.com/avatars/${d.id}/${d.avatar}.png?size=64` : `https://cdn.discordapp.com/embed/avatars/${Number((BigInt(d.id) >> 22n) % 6n)}.png`);
+
+  function discordConnect() {
+    const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    keep.set('ego-oauth-state', state, sessionStorage);
+    location.href = 'https://discord.com/oauth2/authorize?' + new URLSearchParams({
+      client_id: DISCORD_LOGIN.clientId, response_type: 'token', redirect_uri: location.origin + location.pathname,
+      scope: DISCORD_LOGIN.guildId ? 'identify guilds' : 'identify', state, prompt: 'none',
+    });
+  }
+  async function dcFetch(path, token) {
+    const r = await fetch('https://discord.com/api/v10' + path, { headers: { authorization: `Bearer ${token}` } });
+    if (!r.ok) throw new Error('Discord said ' + r.status);
+    return r.json();
+  }
+  async function dcInGuild(token) {
+    if (!DISCORD_LOGIN.guildId) return true;
+    return (await dcFetch('/users/@me/guilds', token)).some((g) => g.id === DISCORD_LOGIN.guildId);
+  }
+  // Back from Discord: the address bar holds #access_token=…&state=… (or #error=…).
+  async function finishDiscordLogin(params) {
+    const expected = keep.get('ego-oauth-state', sessionStorage);
+    keep.set('ego-oauth-state', null, sessionStorage);
+    try { history.replaceState(null, '', location.pathname + '#/premium'); } catch (_) { location.hash = '#/premium'; }
+    const token = params.get('access_token');
+    if (!token || params.get('state') !== expected) {
+      S.dcNote = params.get('error') === 'access_denied' ? 'Discord login was cancelled — press the button to try again.' : 'Discord login didn’t finish — press the button to try again.';
+      return;
+    }
+    S.dcBusy = true;
+    try {
+      const me = await dcFetch('/users/@me', token);
+      const inGuild = await dcInGuild(token).catch(() => true);
+      S.dc = { id: me.id, username: me.username, name: me.global_name || me.username, avatar: me.avatar, inGuild };
+      keep.set('ego-discord', S.dc);
+      keep.set('ego-discord-token', { token, exp: Date.now() + (Number(params.get('expires_in')) || 3600) * 1000 }, sessionStorage);
+      S.dcNote = '';
+      toast(`Connected as @${me.username}`, { icon: 'check' });
+    } catch (_) {
+      S.dcNote = 'Couldn’t reach Discord — press the button to try again.';
+    }
+    S.dcBusy = false;
+    refreshBuy();
+  }
+  async function discordRecheck(quiet = false) {
+    const t = keep.get('ego-discord-token', sessionStorage);
+    if (!S.dc || !t || t.exp < Date.now()) return discordConnect();
+    try { S.dc.inGuild = await dcInGuild(t.token); } catch (_) { return discordConnect(); }
+    keep.set('ego-discord', S.dc);
+    if (S.dc.inGuild) S.dcAwaitJoin = false;
+    else if (!quiet) toast('You’re not in the server yet — join it, then press continue.', { dark: true, icon: 'alert' });
+    refreshBuy();
+  }
+  // After "Join our Discord first", check again as soon as they come back to this tab.
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && S.dcAwaitJoin) discordRecheck(true); });
 
   // ───────────── live Discord numbers (from your public invite link) ─────────────
   const DC = { data: null, tried: false };
@@ -1336,6 +1446,10 @@
         }
         break;
       case 'buy-premium': buyPremium(e); break;
+      case 'discord-connect': discordConnect(); break;
+      case 'discord-forget': S.dc = null; keep.set('ego-discord', null); keep.set('ego-discord-token', null, sessionStorage); refreshBuy(); break;
+      case 'discord-join': S.dcAwaitJoin = true; break;
+      case 'discord-recheck': discordRecheck(); break;
       case 'demo-tweak': demoTweak(el); break;
       case 'demo-restore': demoRestore(el); break;
       case 'replay': window.scrollTo({ top: 0, behavior: 'instant' }); runBoot(); break;
@@ -1358,8 +1472,12 @@
   if (/[?&]premium=thanks\b/.test(location.search)) {
     try { history.replaceState(null, '', location.pathname + '#/premium/thanks'); } catch (_) { location.hash = '#/premium/thanks'; }
   }
+  // Back from "Continue with Discord"?
+  const oauthReturn = new URLSearchParams(location.hash.slice(1));
+  const backFromDiscord = DC_LOGIN && oauthReturn.has('state') && (oauthReturn.has('access_token') || oauthReturn.has('error'));
+  if (backFromDiscord) finishDiscordLogin(oauthReturn);
   S.page = routeFromHash();
-  if (S.user && S.user.prefs.intro === false) {
+  if (backFromDiscord || (S.user && S.user.prefs.intro === false)) {
     $('#boot').hidden = true;
     document.body.classList.remove('booting');
     showSite();
