@@ -255,14 +255,14 @@
         ${S.user ? `<button class="btn btn-glass btn-lg" data-act="account">Account · @${esc(S.user.username)}</button>` : `<button class="btn btn-glass btn-lg" data-act="signin">Sign in</button>`}
         <button class="btn btn-primary btn-lg" data-nav="download">${svg('download')}Get Ego Tweaks — free</button></div>`;
     m.hidden = false;
-    $('#burger').setAttribute('aria-expanded', 'true');
+    const burger = $('#burger') || $('.nav-burger'); burger && burger.setAttribute('aria-expanded', 'true');
     document.body.style.overflow = 'hidden';
   }
   function closeMenu() {
     const m = $('#menu');
     if (m.hidden) return;
     m.hidden = true;
-    $('#burger').setAttribute('aria-expanded', 'false');
+    const burger = $('#burger') || $('.nav-burger'); burger && burger.setAttribute('aria-expanded', 'false');
     document.body.style.overflow = '';
   }
 
@@ -1238,7 +1238,7 @@
   $('#nav-links').addEventListener('pointerleave', () => { const hl = $('.nav-hl'); hl && hl.classList.remove('on'); });
 
   // card spotlights, magnetic buttons and the soft cursor glow (mouse only)
-  if (FINE && !REDUCED) {
+  if (FINE && !REDUCED && $('#cursor-glow')) {
     const glow = $('#cursor-glow');
     let gx = innerWidth / 2, gy = innerHeight / 3, tx = gx, ty = gy, gRaf = 0, mag = null;
     const glowLoop = () => {
