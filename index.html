@@ -4,12 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Ego Tweaks — free Windows tweaking utility</title>
-  <meta name="description" content="Ego Tweaks is a completely free Windows tweaking utility: 87 tweaks matched to your hardware for higher FPS, lower input delay and steadier ping. Every change is backed up and can be undone.">
-  <meta name="theme-color" content="#050505">
+  <meta name="description" content="Ego Tweaks is a free Windows tweaking utility: 87 tweaks matched to your hardware for higher FPS, lower input delay and steadier ping. Every change is backed up and can be undone. Premium available.">
+  <meta name="theme-color" content="#000000">
+  <meta property="og:type" content="website">
   <meta property="og:title" content="Ego Tweaks — free Windows tweaking utility">
-  <meta property="og:description" content="87 tweaks for FPS, input delay and ping. Every change reversible. Completely free.">
+  <meta property="og:description" content="87 tweaks for FPS, input delay and ping. Every change reversible. Free download, Premium if you want more.">
   <meta property="og:image" content="assets/shots/home.webp">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/unbounded-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/shots/home.webp" as="image" type="image/webp">
   <link rel="stylesheet" href="assets/styles.css">
   <!-- Payhip checkout for Ego Tweaks Premium (opens on top of the page) -->
   <script src="https://payhip.com/payhip.js" defer></script>
@@ -44,17 +49,19 @@
       <div class="boot-bar"><i id="boot-bar"></i></div>
       <div class="boot-pct" id="boot-pct">0%</div>
     </div>
+    <div class="boot-skip" aria-hidden="true">Click to skip</div>
   </div>
 
   <!-- ───────────── site ───────────── -->
   <div id="site" class="site" hidden>
-    <div class="bg" aria-hidden="true"><div class="bg-glow"></div><div class="bg-grid"></div></div>
+    <div class="progress" aria-hidden="true"><i id="progress"></i></div>
+    <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
     <header class="nav" id="nav">
       <div class="nav-in">
         <a class="brand" href="#/" data-nav="home" aria-label="Ego Tweaks home"><span class="brand-logo">EGO</span><span class="brand-name">Tweaks</span></a>
         <nav class="nav-links" id="nav-links" aria-label="Sections"></nav>
         <div class="nav-cta" id="nav-cta"></div>
-        <button class="nav-burger" data-act="menu" aria-label="Open menu" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/></svg></button>
+        <button class="nav-burger" id="burger" data-act="menu" aria-label="Open menu" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/></svg></button>
       </div>
     </header>
     <div class="menu" id="menu" hidden role="dialog" aria-label="Menu"></div>
@@ -62,6 +69,7 @@
     <footer class="foot" id="foot"></footer>
   </div>
 
+  <div class="grain" aria-hidden="true"></div>
   <div id="toasts" class="toasts" aria-live="polite"></div>
   <div id="modal" class="modal-host"></div>
 

@@ -1,25 +1,57 @@
-EGO TWEAKS — WEBSITE (v2 design)
+EGO TWEAKS — WEBSITE (v3 design)
 ================================
 
 Open index.html to view the site. Everything it needs is in this folder.
 
-  index.html              the site: landing page + Download page
-  assets/styles.css       the look (same fonts and tokens as the app)
-  assets/site.js          page content, intro, app tour, demos, sign-up -> download
-  assets/auth.js          Supabase Auth adapter (shared accounts)
-  assets/catalog.js       the 87 tweak names used on the page
+  index.html              the site: landing page, Download page, Premium page
+  assets/styles.css       the look (same fonts and tokens as the app, black and white only)
+  assets/site.js          page content, intro, app tour, demos, sign-up -> download, Premium, Discord
+  assets/auth.js          Supabase Auth adapter (shared accounts) — unchanged from v2
+  assets/catalog.js       the 87 tweak names used on the page — unchanged from v2
   assets/shots/           real screenshots of the app (taken with its demo data)
   assets/fonts/           Unbounded, Geist, JetBrains Mono (SIL Open Font License 1.1)
   downloads/EgoTweaks.exe the file visitors get after making an account
+  supabase-setup.sql      Supabase tables and security rules — unchanged from v2
 
 
 WHAT'S ON THE PAGE
 ------------------
-Intro (same loading screen as the app) -> hero with the real app -> scrolling list of
-supported games -> six feature cards -> app tour (Home, Tweaks, Games, Network, BIOS)
--> "Made to be undone" with a working tweak demo -> how it works -> free vs paid ->
-FAQ -> final call to action -> footer. "Get Ego Tweaks" buttons go to the Download
-page, where visitors make an account and the download starts.
+Intro (same loading screen as the app) -> spotlight hero with the app's dial behind the headline
+and the real app on a tilted stage that flattens as you scroll -> numbers -> games ticker ->
+01 What it tunes (six areas) -> 02 The full list (search and filter all 87 tweaks) ->
+03 The app (auto-playing tour of Home, Tweaks, Games, Network, BIOS) -> 04 Made to be undone
+(working tweak demo) -> 05 How it works -> 06 Pricing (Free vs Premium) -> Reviews (only if you add
+some, see below) -> Discord -> FAQ -> final call to action -> footer.
+"Get Ego Tweaks" buttons go to the Download page, where visitors make an account and the download
+starts. "Premium" goes to the Premium page; "Buy Premium" opens Payhip's checkout on the page.
+
+Touches: a soft light follows the mouse over cards, buttons lean toward the cursor, sections fade
+in as you scroll, the nav shrinks into a glass bar and marks the section you're in. Everything
+calms down automatically for visitors who turn on "reduce motion" in their system settings.
+
+
+LIVE DISCORD NUMBERS
+--------------------
+The hero and the Discord section show how many people are online and in your server. These come
+from your public invite link (PREMIUM.discord, or LINKS.discord if you fill that in), so keep that
+invite set to never expire. If Discord can't be reached, the numbers simply stay hidden.
+
+
+ADD REVIEWS (optional)
+----------------------
+Open assets/site.js. Near the top:
+
+    const REVIEWS = [];
+
+Add real reviews from customers (for example vouches from your Discord) and a Reviews section
+appears on the home page:
+
+    const REVIEWS = [
+      { name: 'kai', text: 'Input feels instant now.', tag: 'VALORANT' },
+      { name: 'mo', text: 'Easy to set up, and I could undo everything.' },
+    ];
+
+Only add real ones. Leave the list empty and the section stays hidden.
 
 
 ADD YOUR DISCORD AND X LINKS
@@ -30,7 +62,8 @@ Open assets/site.js. Near the top:
 
 Paste your links between the quotes, e.g.
     const LINKS = { discord: 'https://discord.gg/yourcode', x: 'https://x.com/yourname' };
-They then appear in the footer (and Discord in the phone menu). Empty = hidden.
+They then appear in the nav, footer and phone menu. Empty = hidden. If LINKS.discord is empty,
+the site uses your Premium ticket link (PREMIUM.discord) as the Discord link everywhere.
 
 
 SET UP EGO TWEAKS PREMIUM (Payhip + Discord)
