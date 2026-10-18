@@ -56,7 +56,7 @@
 	function setLenis() {
 		if (mode !== 'cine') return void (lenis && safe(() => lenis.destroy(), 'lenis'), (lenis = null)); // destroy() drops its classes
 		if (!lenis && W.Lenis) safe(() => {
-			lenis = new W.Lenis({ autoRaf: false, lerp: 0.1, smoothWheel: true, wheelMultiplier: 1, syncTouch: false, anchors: false, allowNestedScroll: true,
+			lenis = new W.Lenis({ autoRaf: false, lerp: 0.085, smoothWheel: true, wheelMultiplier: 1, syncTouch: false, anchors: false, allowNestedScroll: true,
 				prevent: (n) => !!cl(n, '#modal, #menu, .boot, [data-lenis-prevent]') });
 			lclock = 0; syncLock();
 		}, 'lenis');
@@ -136,12 +136,12 @@
 			const hard = setTimeout(end, 3000);
 			try {
 				cs.visibility = 'visible'; cs.pointerEvents = 'auto'; tog(H, 'is-transitioning', 1);
-				scramble($('#curtain-label'), '' + (label || ''), 420);
-				wipe(['100% 0 0 0', '0 0 0 0'], 460).finished.then(() => ended || (setTimeout(() => {
+				scramble($('#curtain-label'), '' + (label || ''), 320);
+				wipe(['100% 0 0 0', '0 0 0 0'], 340).finished.then(() => ended || (setTimeout(() => {
 					if (ended) return;
 					cs.pointerEvents = 'none'; runOut();
-					wipe(['0 0 0 0', '0 0 100% 0'], 640).finished.then(end, end); setTimeout(end, 650);
-				}, 120), doSwap()), end);
+					wipe(['0 0 0 0', '0 0 100% 0'], 480).finished.then(end, end); setTimeout(end, 490);
+				}, 60), doSwap()), end);
 			} catch (e) { warn(e, 'curtain'); end(); }
 		});
 	}

@@ -266,13 +266,15 @@
   }
 
   // ───────────── nav, menu, footer, dock ─────────────
-  const SECTIONS = [['features', 'Features'], ['app', 'The app'], ['safety', 'Safety'], ['pricing', 'Pricing'], ['faq', 'FAQ']];
+  // Every section has its own page. PAGES is the order of the nav, the menu and the "next page" links.
+  const PAGES = [['features', 'Features'], ['tweaks', 'Tweaks'], ['app', 'The app'], ['safety', 'Safety'], ['pricing', 'Pricing'], ['faq', 'FAQ']];
+  const SECTIONS = PAGES;
   const roll = (t) => `<span class="roll" data-t="${esc(t)}">${esc(t)}</span>`;
 
   function renderNav() {
     const pm = S.page === 'premium' || S.page === 'thanks';
     $('#nav-links').innerHTML = '<span class="nav-hl" aria-hidden="true"></span>'
-      + SECTIONS.map(([id, n]) => `<button type="button" data-to="${id}" class="${S.page === 'home' && S.spy === id ? 'on' : ''}">${roll(n)}</button>`).join('')
+      + PAGES.map(([id, n]) => `<button type="button" data-nav="${id}" class="${S.page === id ? 'on' : ''}"${S.page === id ? ' aria-current="page"' : ''}>${roll(n)}</button>`).join('')
       + `<button type="button" data-nav="premium" class="${pm ? 'on' : ''}"${pm ? ' aria-current="page"' : ''}>${roll('Premium')}</button>`;
     const dc = DISCORD ? `<a class="icon-btn nav-dc hide-sm" href="${esc(DISCORD)}" target="_blank" rel="noopener" aria-label="Join our Discord" title="Join our Discord">${BRAND.discord}<span class="nav-live" data-dc-wrap hidden><i class="pulse"></i><b data-dc="online">—</b></span></a>` : '';
     if (DC_LOGIN) {
@@ -298,7 +300,7 @@
     m.innerHTML = `
       <div class="menu-top"><a class="brand" href="#/" data-nav="home"><span class="brand-logo">EGO</span><span class="brand-name">Tweaks</span></a>
         <button class="icon-btn" data-act="menu-close" aria-label="Close menu">${svg('x')}</button></div>
-      <ol class="menu-list">${SECTIONS.map(([id, n], i) => item(i, `data-to="${id}"`, n, S.page === 'home' && S.spy === id)).join('')}${item(SECTIONS.length, 'data-nav="download"', 'Download', S.page === 'download')}${item(SECTIONS.length + 1, 'data-nav="premium"', 'Premium', S.page === 'premium' || S.page === 'thanks')}</ol>
+      <ol class="menu-list">${item(0, 'data-nav="home"', 'Home', S.page === 'home')}${PAGES.map(([id, n], i) => item(i + 1, `data-nav="${id}"`, n, S.page === id)).join('')}${item(PAGES.length + 1, 'data-nav="download"', 'Download', S.page === 'download')}${item(PAGES.length + 2, 'data-nav="premium"', 'Premium', S.page === 'premium' || S.page === 'thanks')}</ol>
       ${DISCORD ? '<div class="menu-live" data-dc-wrap hidden><i class="pulse"></i><b data-dc="online">—</b> online · <b data-dc="members">—</b> members</div>' : ''}
       <div class="menu-cta">${community}
         ${DC_LOGIN
@@ -344,7 +346,7 @@
         <div class="foot-brand"><a class="brand" href="#/" data-nav="home"><span class="brand-logo">EGO</span><span class="brand-name">Tweaks</span></a>
           <p>A Windows tweaking utility. ${TWEAKS.length} tweaks for FPS, input delay and ping — every one reversible. Free to download, Premium if you want more.</p>
           ${socials ? `<div class="socials">${socials}</div>` : ''}</div>
-        <div><h4>Product</h4><ul>${SECTIONS.map(([id, n]) => `<li><button type="button" data-to="${id}">${n}</button></li>`).join('')}<li><button type="button" data-nav="download">Download</button></li><li><button type="button" data-nav="premium">Premium</button></li></ul></div>
+        <div><h4>Product</h4><ul>${PAGES.map(([id, n]) => `<li><button type="button" data-nav="${id}">${n}</button></li>`).join('')}<li><button type="button" data-nav="download">Download</button></li><li><button type="button" data-nav="premium">Premium</button></li></ul></div>
         <div><h4>Account</h4><ul>${DC_LOGIN
           ? (S.dc
             ? `<li><button type="button" data-act="discord-me">@${esc(S.dc.username)}</button></li><li><button type="button" data-act="discord-forget">Log out</button></li>`
@@ -378,14 +380,17 @@
     if (/^#\/?download/.test(h)) return 'download';
     if (/^#\/?premium\/thanks/.test(h)) return 'thanks';
     if (/^#\/?premium/.test(h)) return 'premium';
+    const m = h.match(/^#\/?([a-z]+)/);
+    if (m && PAGES.some(([id]) => id === m[1])) return m[1];
     return 'home';
   };
-  const TITLES = { home: 'Ego Tweaks — free Windows tweaking utility', download: 'Download · Ego Tweaks', premium: 'Premium · Ego Tweaks', thanks: 'Thanks for buying Premium · Ego Tweaks' };
+  const TITLES = { home: 'Ego Tweaks — free Windows tweaking utility', download: 'Download · Ego Tweaks', premium: 'Premium · Ego Tweaks', thanks: 'Thanks for buying Premium · Ego Tweaks',
+    features: 'What it tunes · Ego Tweaks', tweaks: `All ${TWEAKS.length} tweaks · Ego Tweaks`, app: 'The app · Ego Tweaks', safety: 'Undo anything · Ego Tweaks', pricing: 'Pricing · Ego Tweaks', faq: 'FAQ · Ego Tweaks' };
   function go(page) {
     const hash = page === 'home' ? '#/' : page === 'thanks' ? '#/premium/thanks' : `#/${page}`;
     if (location.hash !== hash) location.hash = hash; else route(true);
   }
-  const CURTAIN = { home: 'Ego Tweaks', download: 'Download', premium: 'Premium', thanks: 'Thank you' };
+  const CURTAIN = { home: 'Ego Tweaks', download: 'Download', premium: 'Premium', thanks: 'Thank you', features: 'What it tunes', tweaks: 'Tweaks', app: 'The app', safety: 'Safety', pricing: 'Pricing', faq: 'FAQ' };
   const toTop = () => {
     try { if (fx()) return void fx().top(); } catch (e) { console.warn('[site] EgoFX.top failed', e); }
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -419,8 +424,15 @@
   }
   // Functions queued here run on the frame after the next renderPage() (e.g. "jump to #pricing once home is up").
   const afterRenderQueue = [];
+  // old in-page links (data-to) still work: each section now lives on a page of its own
+  const SECTION_PAGE = { features: 'features', how: 'features', tweaks: 'tweaks', app: 'app', tour: 'app', safety: 'safety', pricing: 'pricing', community: 'pricing', faq: 'faq', top: 'home' };
   function scrollToSection(id) {
     closeMenu();
+    const pg = SECTION_PAGE[id];
+    if (pg && (pg === id || pg !== S.page)) {
+      if (pg !== id) afterRenderQueue.push(() => { const el = document.getElementById(id); if (el) el.scrollIntoView({ block: 'start' }); });
+      return go(pg);
+    }
     const off = () => -(($('#nav') && $('#nav').offsetHeight) || 64) - 16;
     const doIt = (instant) => {
       const el = document.getElementById(id);
@@ -462,11 +474,15 @@
     cleanups = [];
     const view = $('#view');
     document.title = TITLES[S.page]; // also right on a direct load or refresh, which skips route()
-    view.innerHTML = S.page === 'download' ? pageDownload() : S.page === 'premium' || S.page === 'thanks' ? pagePremium() : pageHome();
+    const P = { download: pageDownload, premium: pagePremium, thanks: pagePremium, features: pageFeatures, tweaks: pageTweaks, app: pageApp, safety: pageSafety, pricing: pagePricing, faq: pageFaq };
+    view.innerHTML = (P[S.page] || pageHome)();
     S.demoOn = false; S.demoBusy = false;
     setupReveal(view);
     setupCounters(view);
     if (S.page === 'home') initHome();
+    if (S.page === 'features') initDial(view);
+    if (S.page === 'app') initViewer(view);
+    if (S.page === 'tweaks') filterXp();
     setupSpy();
     fillDiscord();
     geo = null; scrollFx();
@@ -523,9 +539,6 @@
     { id: 'network', tab: 'Network', title: 'See where your ping comes from', text: 'Live latency, jitter and packet loss, plus how far you are from the cloud regions where game servers run.', pts: ['Live latency graph', 'Average, jitter, best and packet loss', 'Ping to game server regions'], alt: 'Ego Tweaks Network page with a live latency graph' },
     { id: 'bios', tab: 'BIOS', title: 'Guided BIOS steps for your board', text: 'Windows can’t change BIOS settings, so Ego Tweaks gives you step-by-step guides for your exact motherboard, in order of impact.', pts: ['Checks your RAM runs at its rated speed', 'Flags an outdated BIOS', 'Restart straight into BIOS'], alt: 'Ego Tweaks BIOS page with guided steps for the motherboard' },
   ];
-
-  // Phone crops for the film frames (4:3): [transform-origin, zoom], picked so each shot shows its feature.
-  const CROP = { home: ['0% 22%', 2.2], tweaks: ['62% 40%', 1.6], games: ['2% 58%', 2], network: ['100% 59%', 1.5], bios: ['2% 66%', 1.8] };
 
   const tourCopy = (t) => `<div class="k">${String(TOUR.indexOf(t) + 1).padStart(2, '0')} / ${String(TOUR.length).padStart(2, '0')} · ${esc(t.tab)}</div><h3>${esc(t.title)}</h3><p>${esc(t.text)}</p><ul>${t.pts.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>`;
 
@@ -584,40 +597,51 @@
   // five real catalog tweaks for the Undo-all demo (any name missing from the catalog is dropped)
   const UNDO_ROWS = ['Ultimate Performance power plan', 'Turn off background game recording', 'Turn off network throttling', 'Turn off core parking', 'Instant menus'];
 
-  function pageHome() {
-    S.tour = TOUR[0].id; // the film always starts on its first frame
-    const t = TOUR[0];
-    const gameRow = (list, hide = false) => list.map((g) => `<span${hide ? ' aria-hidden="true"' : ''}>${esc(g)}</span>`).join('');
-    const half = Math.ceil(GAMES.length / 2);
-    const rowA = GAMES.slice(0, half), rowB = GAMES.slice(half);
-    const mouse = TWEAKS.find((x) => x.id === 'mouse-accel') || { name: 'Turn off mouse acceleration', impact: 2 };
-    const xpRows = TWEAKS.map((x) => `<div class="xp-row" data-cat="${esc(x.cat)}" data-q="${esc(x.name.toLowerCase())}">${impact(x.impact)}<span class="nm">${esc(x.name)}</span><span class="ct">${esc(catName(x.cat))}</span></div>`).join('');
-    // honest legend: only the impact levels the catalog actually uses
-    const legend = [...new Set(TWEAKS.map((x) => x.impact))].sort((p, q) => p - q).map((v) => `${impact(v)} ${IMPACT_LABEL[v] || ''}`).join(' ');
-    const reviews = REVIEWS.length ? reviewSection() : '';
-    const first = CATEGORIES[0] || { id: '', name: '' };
-    const chapters = CATEGORIES.map((c, k) => {
-      const eg = TWEAKS.filter((x) => x.cat === c.id).sort((p, q) => q.impact - p.impact).slice(0, 4);
-      return `<article class="scan-ch${k === 0 ? ' is-active' : ''}" data-c="${esc(c.id)}" data-k="${k}" data-n="${perCat(c.id)}" data-name="${esc(c.name)}">
-              <span class="scan-k"><b>${pad2(k + 1)}</b> / ${pad2(CATEGORIES.length)} · ${esc(c.name)}</span>
-              <h3>${words((FEAT[c.id] || [c.name])[0])}</h3>
-              <p>${esc(c.blurb)}.</p>
-              <ul class="scan-eg">${eg.map((x) => `<li>${impact(x.impact)}<span>${esc(x.name)}</span></li>`).join('')}</ul>
-            </article>`;
-    }).join('');
-    const rail = CATEGORIES.map((c, k) => `<button type="button" data-scan="${k}"${k === 0 ? ' class="on"' : ''}><span>${pad2(k + 1)}</span> ${esc(c.name)}</button>`).join('');
-    const tabs = TOUR.map((x, i) => `<button type="button" role="tab" class="tour-tab${x.id === t.id ? ' on' : ''}" aria-selected="${x.id === t.id}" data-tour="${x.id}"><span class="bar"><i></i></span><span class="num">${pad2(i + 1)}</span><span class="tt">${esc(x.tab)}</span></button>`).join('');
-    const frames = TOUR.map((x, i) => {
-      const [o, z] = CROP[x.id] || ['50% 50%', 1];
-      return `<figure class="film-frame" data-frame="${x.id}" style="--o:${o};--z:${z}">
-              <div class="film-win"><img class="${x.id === t.id ? 'on' : ''}" data-shot="${x.id}" src="assets/shots/${x.id}.webp" width="1920" height="1200" alt="${esc(x.alt)}" loading="${i === 0 ? 'eager' : 'lazy'}" decoding="async"></div>
-              <figcaption class="film-cap">${tourCopy(x)}</figcaption>
-              <button type="button" class="btn btn-line btn-sm shot-zoom" data-act="shot-zoom" data-src="assets/shots/${x.id}.webp" data-alt="${esc(x.alt)}">${svg('expand')}View full screenshot</button>
-            </figure>`;
-    }).join('');
-    const diffRows = MOUSE_OPS.map(([n, was]) => `<div class="diff-row" data-reg="${n}"><span class="diff-k">${n}</span><span class="diff-saved">—</span><span class="diff-now">${was}</span></div>`).join('');
-    const undoRows = UNDO_ROWS.filter((n) => TWEAKS.some((x) => x.name === n)).map((n) => `<div class="undo-row"><span>${esc(n)}</span><i class="tg on"></i></div>`).join('');
+  // ── shared by the section pages: header, and the "next page" link at the bottom ──
+  const pageIdx = (id) => PAGES.findIndex(([p]) => p === id);
+  const NEXT_LINE = { features: 'Six areas, one dial.', tweaks: `Search all ${TWEAKS.length}.`, app: 'Every page of the app.', safety: 'Flip it. Flip it back.', pricing: 'Free, or Premium.', faq: 'Straight answers.' };
+  const pageTop = (id, l1, l2, sub = '') => `<div class="page-fx" aria-hidden="true"><i class="key-light"></i>${gaugeSvg('reticle')}</div>
+    <div class="wrap page sp-page sp-${id}">
+      <header class="page-hd rv">${secK(pad2(pageIdx(id) + 1), esc(PAGES[pageIdx(id)][1]))}<h1>${hl(l1, l2)}</h1>${sub ? `<p>${sub}</p>` : ''}</header>`;
+  function pager(id) {
+    const i = pageIdx(id), prev = PAGES[i - 1] || ['home', 'Home'], next = PAGES[i + 1];
+    const [to, k, title, line] = next ? [next[0], `[${pad2(i + 2)}] Next`, next[1], NEXT_LINE[next[0]]] : ['download', '[↓] Next', 'Download', 'Free for Windows 10 and 11.'];
+    return `<nav class="wrap pager rv" aria-label="More pages">
+      <button type="button" class="pager-prev" data-nav="${prev[0]}">${svg('arrow')}<span><small>Back</small>${esc(prev[1])}</span></button>
+      <button type="button" class="card pager-next spot" data-nav="${to}" data-lock><span class="pager-k">${k}</span><span class="pager-t">${esc(title)}</span><span class="pager-s">${esc(line)}</span><span class="pager-go">${svg('arrow')}</span></button>
+    </nav>`;
+  }
+  const subHead = (k, label, l1, l2, sub = '') => `<div class="sp-sub rv">${secK(k, label)}<h2>${hl(l1, l2)}</h2>${sub ? `<p>${sub}</p>` : ''}</div>`;
 
+  // ── home: the hero, the numbers, the games, then one card per page ──
+  const HUB = [
+    ['features', 'What it tunes', `Six areas, ${TWEAKS.length} tweaks. Spin the dial.`],
+    ['tweaks', 'Every tweak', 'Search the whole catalog before you download.'],
+    ['app', 'The app', 'Five pages, one scan. Take the tour.'],
+    ['safety', 'Undo anything', 'Every change is saved first, and can go back.'],
+    ['pricing', 'Pricing', PREMIUM.price ? `Free — or Premium at ${PREMIUM.price} a month.` : 'Free — Premium if you want it.'],
+    ['faq', 'FAQ', 'Straight answers before you download.'],
+  ];
+  function hubViz(id) {
+    if (id === 'features') return `<div class="hv hv-dial">${gaugeSvg('mini')}<b>${TWEAKS.length}</b></div>`;
+    if (id === 'tweaks') {
+      const names = TWEAKS.filter((x, i) => i % 7 === 0).slice(0, 10);
+      const row = (hide) => names.map((x) => `<span${hide ? ' aria-hidden="true"' : ''}>${impact(x.impact)}${esc(x.name)}</span>`).join('');
+      return `<div class="hv hv-list"><div>${row()}${row(true)}</div></div>`;
+    }
+    if (id === 'app') return '<div class="hv hv-shot"><img src="assets/shots/tweaks.webp" width="1920" height="1200" alt="" loading="lazy" decoding="async"></div>';
+    if (id === 'safety') return '<div class="hv hv-switch"><i class="hv-sw"><b></b></i><span class="hv-a">Value saved</span><span class="hv-b">Put back</span></div>';
+    if (id === 'pricing') return `<div class="hv hv-price"><b>$0</b>${PREMIUM.price ? `<b>${esc(PREMIUM.price)}</b>` : ''}</div>`;
+    return '<div class="hv hv-faq"><span>Is it really free?</span><span>Can I undo changes?</span><span>Does it touch my games?</span></div>';
+  }
+
+  function pageHome() {
+    const reviews = REVIEWS.length ? reviewSection() : '';
+    const gameRow = (list, hide = false) => list.map((g) => `<span${hide ? ' aria-hidden="true"' : ''}>${esc(g)}</span>`).join('');
+    const half = Math.ceil(GAMES.length / 2), rowA = GAMES.slice(0, half), rowB = GAMES.slice(half);
+    const cards = HUB.map(([id, title, sub], i) => `<a class="card hub-card spot rv" href="#/${id}" data-nav="${id}" data-lock style="--d:${i % 3}">
+        <span class="hub-k">[${pad2(i + 1)}]</span>${hubViz(id)}
+        <h3>${esc(title)}</h3><p>${esc(sub)}</p><span class="hub-go">Open ${svg('arrow')}</span></a>`).join('');
     return `
     <section class="hero" id="top" data-scene="hero">
       <div class="hero-pin" data-pin>
@@ -682,24 +706,146 @@
       <div class="marquee rev" data-dir="1" aria-hidden="true"><div class="marquee-track">${gameRow(rowB)}${gameRow(rowB)}</div></div>
     </section>
 
-    <section class="sec" id="features">${KL}
-      <div class="wrap">${secHead('01', 'What it tunes', 'Built for what', 'slows you down.', `Six areas, ${TWEAKS.length} tweaks. Each one says exactly what it changes — and the scan only recommends the ones that fit your PC.`)}</div>
-      <div class="scan" data-scene="scan" data-k="0" style="--needle:${num(dialDeg(catMid(first.id)))}deg">
-        <div class="scan-pin" data-pin>
-          <div class="wrap scan-grid">
-            <div class="scan-dial">${gaugeSvg('scan')}
-              <div class="scan-readout" aria-hidden="true"><span class="scan-n"><i>${perCat(first.id)}</i></span><span class="scan-unit">Tweaks · ${esc(first.name)}</span></div></div>
-            <div class="scan-copy">
-            ${chapters}
-            </div>
-            <nav class="scan-rail" aria-label="Areas">${rail}</nav>
-          </div>
+    <section class="sec hub-sec" id="explore">${KL}<div class="wrap">
+      ${secHead('→', 'Explore', 'Pick a page.', 'Dive in.', 'Every part of Ego Tweaks has a page of its own — with something to play with on each one.')}
+      <div class="hub" data-live>${cards}</div>
+    </div></section>
+    ${reviews}
+
+    <section class="finale" data-scene="finale" data-live>
+      <div class="finale-rings" aria-hidden="true"><div class="finale-ring">${gaugeSvg('reticle')}</div></div>
+      <div class="wrap finale-in rv">
+        ${secK('GO', 'Ready when you are', ' sec-k--center')}
+        <h2>${hl('Tune your PC.', 'Undo anything.')}</h2>
+        <p>${DC_LOGIN ? 'Log in with Discord' : 'Free account'}, ${fmtMB(BUILD.bytes)} download, every tweak reversible.</p>
+        <div class="hero-cta"><button class="btn btn-primary btn-lg mag" data-nav="download">${svg('download')}Get Ego Tweaks</button><button class="btn btn-line btn-lg mag" data-nav="features">See what it tunes</button></div>
+        <div class="fine">Free · v${esc(BUILD.version)} · Windows 10 &amp; 11 · ${fmtMB(BUILD.bytes)}</div>
+      </div>
+    </section>`;
+  }
+
+  // ── Features: the dial you can spin ──
+  function dxPanel(k) {
+    const c = CATEGORIES[k], all = TWEAKS.filter((x) => x.cat === c.id).sort((p, q) => q.impact - p.impact);
+    return `<div class="dx-ch" data-c="${esc(c.id)}">
+        <span class="scan-k"><b>${pad2(k + 1)}</b> / ${pad2(CATEGORIES.length)} · ${esc(c.name)}</span>
+        <h3>${words((FEAT[c.id] || [c.name])[0])}</h3>
+        <p>${esc(c.blurb)}.</p>
+        <ul class="dx-list">${all.slice(0, 5).map((x) => `<li data-i="${TWEAKS.indexOf(x)}">${impact(x.impact)}<span>${esc(x.name)}</span></li>`).join('')}</ul>
+        <button type="button" class="btn btn-ghost btn-sm dx-all" data-act="xp-go" data-cat="${esc(c.id)}">See all ${all.length} ${esc(c.name.toLowerCase())} tweaks ${svg('arrow')}</button>
+      </div>`;
+  }
+  function pageFeatures() {
+    const first = CATEGORIES[0];
+    const rail = CATEGORIES.map((c, k) => `<button type="button" role="tab" data-dk="${k}" class="${k === 0 ? 'on' : ''}" aria-selected="${k === 0}" tabindex="${k === 0 ? 0 : -1}" data-lock><span class="bar"><i></i></span><span class="num">${pad2(k + 1)}</span><span class="nm">${esc(c.name)}</span><small>${perCat(c.id)}</small></button>`).join('');
+    return `${pageTop('features', 'Built for what', 'slows you down.', `Six areas, ${TWEAKS.length} tweaks. Each one says exactly what it changes — and the scan only recommends the ones that fit your PC.`)}
+      <div class="dx rv" data-k="0" style="--needle:${num(dialDeg(catMid(first.id)))}deg">
+        <div class="dx-dial">
+          ${gaugeSvg('scan')}
+          <div class="dx-read" aria-hidden="true"><span class="dx-n">${perCat(first.id)}</span><span class="dx-unit">Tweaks · ${esc(first.name)}</span></div>
+          <div class="dx-probe" aria-hidden="true"></div>
+          <span class="dx-hint" aria-hidden="true">${FINE ? 'Hover a tick · drag to spin' : 'Tap the dial to pick an area'}</span>
+        </div>
+        <div class="dx-side">
+          <div class="dx-rail" role="tablist" aria-label="Areas">${rail}</div>
+          <div class="dx-panel" aria-live="polite">${dxPanel(0)}</div>
         </div>
       </div>
-    </section>
+      ${subHead('→', 'How it works', 'Three steps.', 'Nothing to install.')}
+      <div class="how" data-scene="how">
+        <i class="how-line" aria-hidden="true"><i></i></i>
+        <div class="how-step rv"><span class="how-n" aria-hidden="true">01</span><span class="ico">${svg('download')}</span><h3>Get it</h3>
+          <p>${DC_LOGIN ? 'Log in with Discord' : 'Make a free account here'} and download the ${fmtMB(BUILD.bytes)} app. Nothing to install.</p></div>
+        <div class="how-step rv" style="--d:1"><span class="how-n" aria-hidden="true">02</span><span class="ico">${svg('scan')}</span><h3>Scan</h3>
+          <p>It reads your CPU, GPU, memory, drives, display and network, then matches the tweaks that fit.</p></div>
+        <div class="how-step rv" style="--d:2"><span class="how-n" aria-hidden="true">03</span><span class="ico">${svg('check')}</span><h3>Apply</h3>
+          <p>Apply everything recommended in one click, or pick tweaks one by one. Turn any of them off later.</p></div>
+      </div>
+    </div>
+    ${pager('features')}`;
+  }
 
-    <section class="sec" id="tweaks">${KL}<div class="wrap">
-      ${secHead('02', 'The full list', 'Every tweak.', 'Nothing hidden.', 'Search the whole catalog before you download. Bars show expected impact — results vary by game and hardware.')}
+  // the dial: pick an area with the rail, a click or a drag on the dial; it also steps through on its own
+  function initDial(view) {
+    const dx = $('.dx', view);
+    if (!dx) return;
+    const dial = $('.dx-dial', dx), svgEl = $('svg', dial), ticks = $$('.g-ticks line', dial), labels = $$('text[data-c]', dial), rail = $$('[data-dk]', dx), probe = $('.dx-probe', dx);
+    const N = CATEGORIES.length;
+    let k = -1, hot = -1, drag = false, seen = false, held = false, holdT = 0;
+    const sync = () => dx.classList.toggle('auto', !REDUCED && seen && !held && !document.hidden);
+    const hold = () => { held = true; sync(); clearTimeout(holdT); holdT = setTimeout(() => { held = false; sync(); }, 9000); };
+    const set = (nk, user) => {
+      if (user) hold();
+      nk = (nk + N) % N;
+      if (nk === k) return;
+      const prev = k, c = CATEGORIES[(k = nk)];
+      dx.dataset.k = k;
+      dx.style.setProperty('--needle', num(dialDeg(catMid(c.id))) + 'deg');
+      labels.forEach((t) => t.classList.toggle('on', t.dataset.c === c.id));
+      let j = 0;
+      ticks.forEach((l) => { const on = l.dataset.c === c.id; if (on) l.style.setProperty('--j', j++); l.classList.toggle('on', on); });
+      rail.forEach((b, i) => { const on = i === k; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+      const n = $('.dx-n', dx), unit = $('.dx-unit', dx);
+      if (n) { if (prev < 0 || REDUCED) n.textContent = perCat(c.id); else scrambleTo(n, String(perCat(c.id)), 300); }
+      if (unit) unit.textContent = 'Tweaks · ' + c.name;
+      const panel = $('.dx-panel', dx);
+      if (panel && prev >= 0) {
+        panel.classList.add('out');
+        clearTimeout(panel.__t);
+        panel.__t = setTimeout(() => { panel.innerHTML = dxPanel(k); panel.classList.remove('out'); markHot(); }, REDUCED ? 0 : 170);
+      }
+    };
+    // which tick is under the pointer (the dial is 270°, ticks clockwise from -135°)
+    const at = (e) => {
+      const r = svgEl.getBoundingClientRect(), sc = r.width / 680;
+      const x = (e.clientX - r.left - r.width / 2) / sc, y = (e.clientY - r.top - r.height / 2) / sc;
+      const d = Math.hypot(x, y), deg = (Math.atan2(x, -y) * 180) / Math.PI;
+      if (d < 130 || d > 335 || Math.abs(deg) > 143) return -1;
+      return clamp(Math.round(((deg + 135) / 270) * (TWEAKS.length - 1)), 0, TWEAKS.length - 1);
+    };
+    const markHot = () => $$('.dx-list li', dx).forEach((li) => li.classList.toggle('hot', +li.dataset.i === hot));
+    const probeAt = (i) => {
+      if (i === hot) return;
+      if (hot >= 0 && ticks[hot]) ticks[hot].classList.remove('hot');
+      hot = i;
+      if (i < 0) { dx.classList.remove('probing'); markHot(); return; }
+      ticks[i].classList.add('hot');
+      const t = TWEAKS[i];
+      probe.innerHTML = `${impact(t.impact)}<b>${esc(t.name)}</b><small>${esc(catName(t.cat))} · ${esc(IMPACT_LABEL[t.impact] || '')} impact</small>`;
+      dx.classList.add('probing');
+      markHot();
+    };
+    const pick = (i) => { if (i >= 0) set(CATEGORIES.findIndex((c) => c.id === TWEAKS[i].cat), true); };
+    dial.addEventListener('pointermove', (e) => { const i = at(e); probeAt(i); if (drag) pick(i); });
+    dial.addEventListener('pointerdown', (e) => {
+      const i = at(e);
+      if (i < 0) return;
+      drag = true; pick(i); probeAt(i);
+      if (e.pointerType !== 'touch') try { dial.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+    });
+    const up = (e) => { drag = false; if (e.pointerType === 'touch') setTimeout(() => probeAt(-1), 1600); };
+    dial.addEventListener('pointerup', up);
+    dial.addEventListener('pointercancel', up);
+    dial.addEventListener('pointerleave', () => { if (!drag) probeAt(-1); });
+    dx.addEventListener('click', (e) => { const b = e.target.closest('[data-dk]'); if (b) set(+b.dataset.dk, true); });
+    // the active rail bar fills up; when it's full the dial moves on (paused while you point at it)
+    dx.addEventListener('animationend', (e) => { if (e.animationName === 'dxFill' && dx.classList.contains('auto')) set(k + 1); });
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((es) => { seen = es[es.length - 1].isIntersecting; sync(); }, { threshold: 0.35 });
+      io.observe(dx); onCleanup(() => io.disconnect());
+    }
+    const vis = () => sync();
+    document.addEventListener('visibilitychange', vis);
+    onCleanup(() => { document.removeEventListener('visibilitychange', vis); clearTimeout(holdT); });
+    set(0);
+  }
+
+  // ── Tweaks: the full list, plus the games ──
+  function pageTweaks() {
+    const xpRows = TWEAKS.map((x) => `<div class="xp-row" data-cat="${esc(x.cat)}" data-q="${esc(x.name.toLowerCase())}">${impact(x.impact)}<span class="nm">${esc(x.name)}</span><span class="ct">${esc(catName(x.cat))}</span></div>`).join('');
+    // honest legend: only the impact levels the catalog actually uses
+    const legend = [...new Set(TWEAKS.map((x) => x.impact))].sort((p, q) => p - q).map((v) => `${impact(v)} ${IMPACT_LABEL[v] || ''}`).join(' ');
+    return `${pageTop('tweaks', 'Every tweak.', 'Nothing hidden.', 'Search the whole catalog before you download. Bars show expected impact — results vary by game and hardware.')}
       <div class="card xp rv">
         <div class="xp-bar">
           <label class="xp-search">${svg('search')}<input id="xp-q" type="search" placeholder="Search ${TWEAKS.length} tweaks…" autocomplete="off" spellcheck="false" aria-label="Search tweaks"></label>
@@ -712,28 +858,93 @@
         <button type="button" class="btn btn-line xp-more" data-act="xp-more" hidden>Show all ${TWEAKS.length} tweaks</button>
         <div class="xp-foot"><span id="xp-count">Showing ${TWEAKS.length} of ${TWEAKS.length}</span><span class="xp-legend">${legend}</span></div>
       </div>
-    </div></section>
+      ${subHead('G', 'Games', 'Settings for', 'your games.', `Ego Tweaks recognises ${GAMES.length} games and gives each one its own Windows settings and in-game advice. Add any other game yourself.`)}
+      <div class="game-grid rv">${GAMES.map((g, i) => `<span style="--i:${i}">${esc(g)}</span>`).join('')}</div>
+    </div>
+    ${pager('tweaks')}`;
+  }
 
-    <section class="sec" id="app">${KL}
-      <div class="wrap">${secHead('03', 'The app', 'Everything in', 'one window.', 'One scan powers every page. Here’s what’s inside.')}</div>
-      <div class="film" id="tour" data-scene="film" data-live>
-        <div class="film-pin" data-pin>
-          <i class="film-beam" aria-hidden="true"></i>
-          <div class="wrap film-head">
-            <div class="tour-tabs" role="tablist" aria-label="App pages">${tabs}</div>
-            <span class="film-count" aria-hidden="true"><b>${pad2(1)}</b> / ${pad2(TOUR.length)} · <span>${esc(t.tab)}</span></span>
+  // ── The app: one window, five pages ──
+  function pageApp() {
+    const t = TOUR.find((x) => x.id === S.tour) || TOUR[0];
+    S.tour = t.id;
+    const tabs = TOUR.map((x, i) => `<button type="button" role="tab" class="tour-tab${x.id === t.id ? ' on' : ''}" aria-selected="${x.id === t.id}" tabindex="${x.id === t.id ? 0 : -1}" data-tour="${x.id}" style="--p:${x.id === t.id ? 1 : 0}"><span class="bar"><i></i></span><span class="num">${pad2(i + 1)}</span><span class="tt">${esc(x.tab)}</span></button>`).join('');
+    const shots = TOUR.map((x) => `<img class="${x.id === t.id ? 'on' : ''}" data-shot="${x.id}" src="assets/shots/${x.id}.webp" width="1920" height="1200" alt="${esc(x.alt)}" loading="${x.id === t.id ? 'eager' : 'lazy'}" decoding="async">`).join('');
+    return `${pageTop('app', 'Everything in', 'one window.', 'One scan powers every page. Click through them — or let the tour play.')}
+      <div class="vw rv" id="tour">
+        <div class="tour-tabs vw-tabs" role="tablist" aria-label="App pages">${tabs}</div>
+        <div class="vw-grid">
+          <div class="vw-win" data-tilt>
+            <div class="vw-shots" id="tour-shots">${shots}</div>
+            <i class="vw-lens" aria-hidden="true"></i>
+            <button type="button" class="icon-btn vw-arrow vw-prev" data-act="vw-prev" aria-label="Previous page of the app">${svg('arrow')}</button>
+            <button type="button" class="icon-btn vw-arrow vw-next" data-act="vw-next" aria-label="Next page of the app">${svg('arrow')}</button>
           </div>
-          <div class="film-view">
-            <div class="film-track tour-shots" id="tour-shots">
-            ${frames}
-            </div>
+          <div class="vw-side">
+            <div class="vw-copy" id="tour-copy">${tourCopy(t)}</div>
+            <button type="button" class="btn btn-line btn-sm vw-zoom" data-act="shot-zoom" data-src="assets/shots/${t.id}.webp" data-alt="${esc(t.alt)}">${svg('expand')}View full screenshot</button>
+            <p class="shot-cap">Shown with demo data. ${FINE ? 'Hover the window to zoom in; drag it to flip pages.' : 'Swipe the window to flip pages.'}</p>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+    ${pager('app')}`;
+  }
+  // the tour plays on its own while it's on screen; any click or swipe pauses it for a while
+  let vwHold = () => {};
+  const stepTour = (d) => { const i = Math.max(0, TOUR.findIndex((x) => x.id === S.tour)); setTour(TOUR[(i + d + TOUR.length) % TOUR.length].id); };
+  function initViewer(view) {
+    const vw = $('.vw', view);
+    if (!vw) return;
+    const win = $('.vw-win', vw), lens = $('.vw-lens', vw), shots = $('.vw-shots', vw);
+    let seen = false, held = false, holdT = 0, x0 = null, dx = 0, moved = false;
+    const sync = () => vw.classList.toggle('auto', !REDUCED && seen && !held && !document.hidden);
+    vwHold = () => { held = true; sync(); clearTimeout(holdT); holdT = setTimeout(() => { held = false; sync(); }, 10000); };
+    vw.addEventListener('animationend', (e) => { if (e.animationName === 'vwFill' && vw.classList.contains('auto')) stepTour(1); });
+    $('.vw-tabs', vw).addEventListener('click', () => vwHold());
+    // drag / swipe the window to flip pages; a plain click opens the full screenshot
+    win.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return; x0 = e.clientX; dx = 0; moved = false; win.classList.add('grab'); });
+    win.addEventListener('pointermove', (e) => {
+      if (FINE && lens) {
+        const r = win.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, z = 2.4;
+        const img = $('img.on', shots);
+        lens.style.transform = `translate3d(${(x - 90).toFixed(0)}px, ${(y - 90).toFixed(0)}px, 0)`;
+        if (img) { lens.style.backgroundImage = `url("${img.getAttribute('src')}")`; lens.style.backgroundSize = `${(r.width * z).toFixed(0)}px ${(r.height * z).toFixed(0)}px`; lens.style.backgroundPosition = `${(90 - x * z).toFixed(0)}px ${(90 - y * z).toFixed(0)}px`; }
+        win.classList.toggle('lens-on', !e.target.closest('button') && x0 == null);
+      }
+      if (x0 == null) return;
+      dx = e.clientX - x0;
+      if (Math.abs(dx) > 6) { moved = true; shots.style.setProperty('--dx', dx.toFixed(0) + 'px'); }
+    });
+    const end = (e) => {
+      if (x0 == null) return;
+      win.classList.remove('grab'); shots.style.removeProperty('--dx');
+      const d = dx; x0 = null;
+      if (Math.abs(d) > 50) { vwHold(); stepTour(d < 0 ? 1 : -1); }
+      else if (!moved && e.type === 'pointerup') { const t = TOUR.find((x) => x.id === S.tour); if (t) { vwHold(); openShot(`assets/shots/${t.id}.webp`, t.alt); } }
+    };
+    win.addEventListener('pointerup', end);
+    win.addEventListener('pointercancel', end);
+    win.addEventListener('pointerleave', (e) => { win.classList.remove('lens-on'); if (x0 != null && e.pointerType !== 'touch') end(e); });
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((es) => { seen = es[es.length - 1].isIntersecting; sync(); }, { threshold: 0.4 });
+      io.observe(vw); onCleanup(() => io.disconnect());
+    }
+    const vis = () => sync();
+    document.addEventListener('visibilitychange', vis);
+    onCleanup(() => { document.removeEventListener('visibilitychange', vis); clearTimeout(holdT); vwHold = () => {}; });
+  }
+  function openShot(src, alt) {
+    openModal(`<div class="shot-zoom"><img src="${esc(src)}" alt="${esc(alt)}" width="1920" height="1200"></div><div class="modal-actions"><button type="button" class="btn btn-primary" data-act="close">Done</button></div>`);
+    $('#modal .modal').classList.add('wide');
+  }
 
-    <section class="sec" id="safety">${KL}<div class="wrap">
-      ${secHead('04', 'Nothing permanent', 'Made to be', 'undone.', 'Try anything. Keep what you like. Everything else goes back exactly how it was.')}
+  // ── Safety: the real registry demo, restore points, undo all ──
+  function pageSafety() {
+    const mouse = TWEAKS.find((x) => x.id === 'mouse-accel') || { name: 'Turn off mouse acceleration', impact: 2 };
+    const diffRows = MOUSE_OPS.map(([n, was]) => `<div class="diff-row" data-reg="${n}"><span class="diff-k">${n}</span><span class="diff-saved">—</span><span class="diff-now">${was}</span></div>`).join('');
+    const undoRows = UNDO_ROWS.filter((n) => TWEAKS.some((x) => x.name === n)).map((n) => `<div class="undo-row"><span>${esc(n)}</span><i class="tg on"></i></div>`).join('');
+    return `${pageTop('safety', 'Made to be', 'undone.', 'Try anything. Keep what you like. Everything else goes back exactly how it was.')}
       <p class="scrub-text" data-scrub>Before a tweak touches anything, Ego Tweaks saves the value it replaces. Turn it off and that value is written back — exactly as it was.</p>
       <div class="undo">
         <div class="card undo-demo spot rv" data-state="off">
@@ -764,23 +975,13 @@
           <div class="row"><button type="button" class="btn btn-line btn-sm" data-act="demo-undoall" aria-pressed="false">${svg('undo')}Undo all</button><span class="state" id="undo-state" aria-live="polite"></span></div>
         </div>
       </div>
-    </div></section>
+    </div>
+    ${pager('safety')}`;
+  }
 
-    <section class="sec" id="how">${KL}<div class="wrap">
-      ${secHead('05', 'How it works', 'Three steps.', 'Nothing to install.')}
-      <div class="how" data-scene="how">
-        <i class="how-line" aria-hidden="true"><i></i></i>
-        <div class="how-step rv"><span class="how-n" aria-hidden="true">01</span><span class="ico">${svg('download')}</span><h3>Get it</h3>
-          <p>${DC_LOGIN ? 'Log in with Discord' : 'Make a free account here'} and download the ${fmtMB(BUILD.bytes)} app. Nothing to install.</p></div>
-        <div class="how-step rv" style="--d:1"><span class="how-n" aria-hidden="true">02</span><span class="ico">${svg('scan')}</span><h3>Scan</h3>
-          <p>It reads your CPU, GPU, memory, drives, display and network, then matches the tweaks that fit.</p></div>
-        <div class="how-step rv" style="--d:2"><span class="how-n" aria-hidden="true">03</span><span class="ico">${svg('check')}</span><h3>Apply</h3>
-          <p>Apply everything recommended in one click, or pick tweaks one by one. Turn any of them off later.</p></div>
-      </div>
-    </div></section>
-
-    <section class="sec" id="pricing">${KL}<div class="wrap">
-      ${secHead('06', 'Pricing', 'Free.', 'Premium if you want it.', `The app is free to download and use. Premium is an optional upgrade, ${esc(PER_MONTH)} — pay through Payhip and get your own key.`)}
+  // ── Pricing: the two plans, then the Discord ──
+  function pagePricing() {
+    return `${pageTop('pricing', 'Free.', 'Premium if you want it.', `The app is free to download and use. Premium is an optional upgrade, ${esc(PER_MONTH)} — pay through Payhip and get your own key.`)}
       <div class="plans">
         <div class="card plan spot rv">
           <div class="name"><span>Ego Tweaks</span><span class="chip">Free</span></div>
@@ -792,16 +993,14 @@
         ${premiumPlan('rv', 'style="--d:1"')}
       </div>
       <div class="pay-row rv"><span>${svg('lock')}Secure checkout by Payhip</span><span>${svg('key')}${DC_LOGIN ? 'Key sent to your Discord DMs' : 'Key sent in a Discord ticket'}</span><span>${svg('undo')}Never renews automatically</span></div>
-    </div></section>
-    ${reviews}
+    </div>
     ${DISCORD ? discordSection() : ''}
+    ${pager('pricing')}`;
+  }
 
-    <section class="sec" id="faq">${KL}<div class="wrap faq-wrap">
-      <div class="faq-side rv">
-        ${secK(REVIEWS.length ? '08' : '07', 'FAQ')}
-        <h2>${hl('Straight', 'answers.')}</h2>
-        <p>Everything people ask before they download. Still stuck? ${DISCORD ? `<a href="${esc(DISCORD)}" target="_blank" rel="noopener">Ask in our Discord</a>.` : 'Ask us.'}</p>
-      </div>
+  // ── FAQ ──
+  function pageFaq() {
+    return `${pageTop('faq', 'Straight', 'answers.', `Everything people ask before they download. Still stuck? ${DISCORD ? `<a href="${esc(DISCORD)}" target="_blank" rel="noopener">Ask in our Discord</a>.` : 'Ask us.'}`)}
       <div class="faq rv" style="--d:1">
         ${faq('Is it really free?', DC_LOGIN
           ? 'Yes. The app is free to download and use — you just log in with Discord to download, which also puts you in our Discord server for updates and help. Premium is an optional paid upgrade.'
@@ -814,18 +1013,8 @@
         ${faq('Does it touch my games?', 'No. Ego Tweaks changes Windows settings: registry values, services, scheduled tasks, power and network adapter settings. It doesn’t modify game files or run inside games. The Games page only sets Windows options for a game’s .exe and shows in-game settings for you to change yourself.')}
         ${faq('Which Windows versions work?', 'Windows 10 and 11, 64-bit. It needs Microsoft Edge WebView2 (built into Windows 11) and .NET Framework 4.7.2 or later (built into Windows 10 version 1803 and newer). On laptops, the scan skips tweaks that would hurt battery life.')}
       </div>
-    </div></section>
-
-    <section class="finale" data-scene="finale" data-live>
-      <div class="finale-rings" aria-hidden="true"><div class="finale-ring">${gaugeSvg('reticle')}</div></div>
-      <div class="wrap finale-in rv">
-        ${secK('GO', 'Ready when you are', ' sec-k--center')}
-        <h2>${hl('Tune your PC.', 'Undo anything.')}</h2>
-        <p>${DC_LOGIN ? 'Log in with Discord' : 'Free account'}, ${fmtMB(BUILD.bytes)} download, every tweak reversible.</p>
-        <div class="hero-cta"><button class="btn btn-primary btn-lg mag" data-nav="download">${svg('download')}Get Ego Tweaks</button><button class="btn btn-line btn-lg mag" data-to="features">See what it tunes</button></div>
-        <div class="fine">Free · v${esc(BUILD.version)} · Windows 10 &amp; 11 · ${fmtMB(BUILD.bytes)}</div>
-      </div>
-    </section>`;
+    </div>
+    ${pager('faq')}`;
   }
   const faq = (q, a, open = false) => `<details${open ? ' open' : ''}><summary>${esc(q)}<i aria-hidden="true"></i></summary><div class="a"><p>${a}</p></div></details>`;
   // shared by the home FAQ and the Premium page's mini-FAQ
@@ -893,20 +1082,18 @@
       }, 2600);
       onCleanup(() => clearInterval(id));
     }
-    setTour(S.tour);
-    filterXp();
   }
 
   // The film strip has no timer: fx.js reports which frame is in view (scroll in cine, swipe on phones).
-  document.addEventListener('ego:tour', (e) => { if (S.page === 'home' && e.detail && e.detail.id) setTour(e.detail.id); });
+  document.addEventListener('ego:tour', (e) => { if (S.page === 'app' && e.detail && e.detail.id) setTour(e.detail.id); });
   function setTour(id) {
     const t = TOUR.find((x) => x.id === id);
     if (!t) return;
     const same = t.id === S.tour;
     S.tour = t.id;
-    // in cine, fx drives each tab's progress bar (--p) from the scroll position
-    const cine = !!(fx() && fx().mode === 'cine');
-    $$('.tour-tab').forEach((b) => { const on = b.dataset.tour === t.id; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); if (!cine) b.style.setProperty('--p', on ? 1 : 0); });
+    $$('.tour-tab').forEach((b) => { const on = b.dataset.tour === t.id; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; b.style.setProperty('--p', on ? 1 : 0); });
+    const zoom = $('.vw-zoom');
+    if (zoom) { zoom.dataset.src = `assets/shots/${t.id}.webp`; zoom.dataset.alt = t.alt; }
     const count = $('.film-count');
     if (count) { const n = $('b', count), name = $('span', count); if (n) n.textContent = String(TOUR.indexOf(t) + 1).padStart(2, '0'); if (name) name.textContent = t.tab; }
     if (same) return;
@@ -1794,7 +1981,7 @@
     const nav = e.target.closest('[data-nav]');
     if (nav) { e.preventDefault(); closeModal(); closeMenu(); go(nav.dataset.nav); return; }
     const tab = e.target.closest('[data-tour]');
-    if (tab) { setTour(tab.dataset.tour); return; }
+    if (tab) { vwHold(); setTour(tab.dataset.tour); return; }
     const xc = e.target.closest('[data-xcat]');
     if (xc) {
       S.xcat = xc.dataset.xcat;
@@ -1860,10 +2047,10 @@
         try { localStorage.setItem('ego-motion', REDUCED ? 'on' : 'off'); } catch (_) { /* storage blocked */ }
         location.reload();
         break;
-      case 'shot-zoom':
-        openModal(`<div class="shot-zoom"><img src="${esc(el.dataset.src)}" alt="${esc(el.dataset.alt)}" width="1920" height="1200"></div><div class="modal-actions"><button type="button" class="btn btn-primary" data-act="close">Done</button></div>`);
-        $('#modal .modal').classList.add('wide');
-        break;
+      case 'shot-zoom': vwHold(); openShot(el.dataset.src, el.dataset.alt); break;
+      case 'vw-prev': vwHold(); stepTour(-1); break;
+      case 'vw-next': vwHold(); stepTour(1); break;
+      case 'xp-go': S.xcat = el.dataset.cat || 'all'; S.xq = ''; S.xpAll = false; go('tweaks'); break;
       case 'demo-undoall': demoUndoAll(el); break;
       case 'admin': openAdmin(); break;
       case 'admin-refresh': loadAdmin(); break;
@@ -1895,7 +2082,7 @@
     }
     // arrow keys move between tabs (app tour, explorer categories)
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key) || e.altKey || e.ctrlKey || e.metaKey) return;
-    const tab = e.target instanceof Element && e.target.closest('.tour-tabs [role="tab"], .xp-cats [role="tab"]');
+    const tab = e.target instanceof Element && e.target.closest('.tour-tabs [role="tab"], .xp-cats [role="tab"], .dx-rail [role="tab"]');
     if (!tab) return;
     const tabs = $$('[role="tab"]', tab.parentElement);
     const i = tabs.indexOf(tab);

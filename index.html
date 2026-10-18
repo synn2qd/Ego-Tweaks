@@ -6,7 +6,7 @@
   <title>Ego Tweaks — free Windows tweaking utility</title>
   <meta name="description" content="Ego Tweaks is a free Windows tweaking utility: 87 tweaks matched to your hardware for higher FPS, lower input delay and steadier ping. Every change is backed up and can be undone. Premium available.">
   <meta name="theme-color" content="#000000">
-  <meta name="ego-site-version" content="4.0">
+  <meta name="ego-site-version" content="4.1">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Ego Tweaks — free Windows tweaking utility">
   <meta property="og:description" content="87 tweaks for FPS, input delay and ping. Every change reversible. Free download, Premium if you want more.">
@@ -17,7 +17,7 @@
   <link rel="preload" href="assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/jetbrains-mono-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/shots/home.webp" as="image" type="image/webp">
-  <link rel="stylesheet" href="assets/styles.css?v=4.0">
+  <link rel="stylesheet" href="assets/styles.css?v=4.1">
   <!-- Payhip checkout for Ego Tweaks Premium (opens on top of the page) -->
   <script src="https://payhip.com/payhip.js" defer></script>
 </head>
@@ -91,10 +91,10 @@
   <!-- If the Supabase script was blocked (ad blocker, offline), auth.js gets an offline client: accounts say
        they're unavailable, and the boot, Discord login and downloads keep working. -->
   <script>if (!window.supabase) window.supabase = { offline: true, createClient() { const no = () => Promise.reject(new Error('Accounts are unavailable right now — try again in a minute.')); const q = () => ({ select: q, eq: q, maybeSingle: no, insert: no }); return { auth: { getSession: no, getUser: no, signUp: no, signInWithPassword: no, updateUser: no, signOut: () => Promise.resolve({ error: null }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) }, from: q, rpc: no }; } };</script>
-  <script src="assets/catalog.js?v=4.0"></script>
-  <script src="assets/auth.js?v=4.0"></script>
-  <script src="assets/vendor/lenis.min.js?v=4.0"></script>
-  <script src="assets/fx.js?v=4.0"></script>
-  <script src="assets/site.js?v=4.0"></script>
+  <script src="assets/catalog.js?v=4.1"></script>
+  <script src="assets/auth.js?v=4.1"></script>
+  <script src="assets/vendor/lenis.min.js?v=4.1"></script>
+  <script src="assets/fx.js?v=4.1"></script>
+  <script src="assets/site.js?v=4.1"></script>
 </body>
 </html>
