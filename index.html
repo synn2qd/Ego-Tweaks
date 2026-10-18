@@ -6,23 +6,25 @@
   <title>Ego Tweaks — free Windows tweaking utility</title>
   <meta name="description" content="Ego Tweaks is a free Windows tweaking utility: 87 tweaks matched to your hardware for higher FPS, lower input delay and steadier ping. Every change is backed up and can be undone. Premium available.">
   <meta name="theme-color" content="#000000">
-  <meta name="ego-site-version" content="3.5">
+  <meta name="ego-site-version" content="4.0">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Ego Tweaks — free Windows tweaking utility">
   <meta property="og:description" content="87 tweaks for FPS, input delay and ping. Every change reversible. Free download, Premium if you want more.">
   <meta property="og:image" content="assets/shots/home.webp">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="preload" href="assets/fonts/unbounded-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/unbounded-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/jetbrains-mono-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/shots/home.webp" as="image" type="image/webp">
-  <link rel="stylesheet" href="assets/styles.css?v=3.5">
+  <link rel="stylesheet" href="assets/styles.css?v=4.0">
   <!-- Payhip checkout for Ego Tweaks Premium (opens on top of the page) -->
   <script src="https://payhip.com/payhip.js" defer></script>
 </head>
 <body class="booting">
   <!-- ───────────── boot sequence (same as the app) ───────────── -->
   <div id="boot" class="boot" role="status" aria-live="polite" aria-label="Loading Ego Tweaks">
+    <div class="boot-visor top" aria-hidden="true"></div><div class="boot-visor bot" aria-hidden="true"></div>
     <div class="boot-grid" aria-hidden="true"></div>
     <div class="boot-sweep" aria-hidden="true"></div>
     <div class="boot-flash" aria-hidden="true"></div>
@@ -50,29 +52,34 @@
       <div class="boot-bar"><i id="boot-bar"></i></div>
       <div class="boot-pct" id="boot-pct">0%</div>
     </div>
-    <div class="boot-skip" aria-hidden="true">Click to skip</div>
+    <div class="boot-hud" aria-hidden="true"><i></i><i></i><i></i><i></i><span class="bh-l">Ego Tweaks</span><span class="bh-r" id="boot-ver"></span></div>
+    <div class="boot-skip" aria-hidden="true"><span class="k-key">Press any key to skip</span><span class="k-tap">Tap to skip</span></div>
   </div>
 
   <!-- ───────────── site ───────────── -->
   <div id="site" class="site" hidden>
+    <button type="button" class="skip" data-act="skip">Skip to content</button>
     <div class="progress" aria-hidden="true"><i id="progress"></i></div>
     <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
+    <div class="lock" id="lock" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <header class="nav" id="nav">
       <div class="nav-in">
         <a class="brand" href="#/" data-nav="home" aria-label="Ego Tweaks home"><span class="brand-logo">EGO</span><span class="brand-name">Tweaks</span></a>
         <nav class="nav-links" id="nav-links" aria-label="Sections"></nav>
         <div class="nav-cta" id="nav-cta"></div>
-        <button class="nav-burger" id="burger" data-act="menu" aria-label="Open menu" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/></svg></button>
+        <button class="nav-burger" id="burger" data-act="menu" aria-label="Open menu" aria-expanded="false" aria-controls="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16M4 16h16"/></svg></button>
       </div>
     </header>
-    <div class="menu" id="menu" hidden role="dialog" aria-label="Menu"></div>
+    <div class="menu" id="menu" hidden role="dialog" aria-modal="true" aria-label="Menu"></div>
     <main id="view" tabindex="-1"></main>
     <footer class="foot" id="foot"></footer>
+    <div class="dock" id="dock" hidden></div>
   </div>
 
   <div class="grain" aria-hidden="true"></div>
   <div id="toasts" class="toasts" aria-live="polite"></div>
   <div id="modal" class="modal-host"></div>
+  <div class="curtain" id="curtain" aria-hidden="true"><i class="curtain-line"></i><span class="curtain-label" id="curtain-label"></span></div>
 
   <noscript>
     <div style="position:fixed;inset:0;display:grid;place-items:center;background:#000;color:#fff;font:14px/1.5 sans-serif;text-align:center;padding:24px;z-index:999">
@@ -81,8 +88,13 @@
   </noscript>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/catalog.js?v=3.5"></script>
-  <script src="assets/auth.js?v=3.5"></script>
-  <script src="assets/site.js?v=3.5"></script>
+  <!-- If the Supabase script was blocked (ad blocker, offline), auth.js gets an offline client: accounts say
+       they're unavailable, and the boot, Discord login and downloads keep working. -->
+  <script>if (!window.supabase) window.supabase = { offline: true, createClient() { const no = () => Promise.reject(new Error('Accounts are unavailable right now — try again in a minute.')); const q = () => ({ select: q, eq: q, maybeSingle: no, insert: no }); return { auth: { getSession: no, getUser: no, signUp: no, signInWithPassword: no, updateUser: no, signOut: () => Promise.resolve({ error: null }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) }, from: q, rpc: no }; } };</script>
+  <script src="assets/catalog.js?v=4.0"></script>
+  <script src="assets/auth.js?v=4.0"></script>
+  <script src="assets/vendor/lenis.min.js?v=4.0"></script>
+  <script src="assets/fx.js?v=4.0"></script>
+  <script src="assets/site.js?v=4.0"></script>
 </body>
 </html>
