@@ -8,9 +8,9 @@
     name: 'Ego Tweaking Utility',
     file: 'EgoTweaks.exe',
     href: 'downloads/EgoTweaks.exe',
-    version: '1.10.0',
-    bytes: 1980928,
-    sha256: '8139414cbc953f4074e07e4c440a437141336222dfcbdec51694f4eed8455d84',
+    version: '1.2.0',
+    bytes: 1422848,
+    sha256: 'a6c3d250da0e6220a2e390288de2081d052838451bdfb527d3880e47f567c941',
   };
   // Paste your links here and they show up in the nav, footer and menu. Leave '' to hide.
   // If discord is '', the site uses PREMIUM.discord below instead.
