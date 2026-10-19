@@ -43,6 +43,10 @@
   // section on the home page; leave the list empty and the section stays hidden. Only add real ones.
   //   { name: 'kai', text: 'Input feels instant now.', tag: 'VALORANT' }
   const REVIEWS = [];
+  // Live reviews: every message in the #reviews channel of the Discord, served by the bot at
+  // DISCORD_LOGIN.botUrl + '/reviews'. They take over from the list above as soon as they load and refresh
+  // every 2 minutes. REVIEWS_CHANNEL is where the "Post a review" buttons go; '' turns live reviews off.
+  const REVIEWS_CHANNEL = 'https://discord.com/channels/1560058897329426573/1561107128780070952';
   // Download counter for the hidden admin panel. Put EgoTweaks.exe in a GitHub Release on your site's
   // repo, then set this to 'your-username/your-repo'. The Download button then hands out the release
   // file and GitHub counts every download. Leave '' to hand out downloads/EgoTweaks.exe (not counted).
@@ -263,11 +267,12 @@
     $('#site').hidden = false;
     renderNav(); renderFooter(); renderDock(); renderPage();
     loadDiscord();
+    loadReviews();
   }
 
   // ───────────── nav, menu, footer, dock ─────────────
   // Every section has its own page. PAGES is the order of the nav, the menu and the "next page" links.
-  const PAGES = [['features', 'Features'], ['tweaks', 'Tweaks'], ['app', 'The app'], ['safety', 'Safety'], ['pricing', 'Pricing'], ['faq', 'FAQ']];
+  const PAGES = [['features', 'Features'], ['tweaks', 'Tweaks'], ['app', 'The app'], ['safety', 'Safety'], ['pricing', 'Pricing'], ['reviews', 'Reviews'], ['faq', 'FAQ']];
   const SECTIONS = PAGES;
   const roll = (t) => `<span class="roll" data-t="${esc(t)}">${esc(t)}</span>`;
 
@@ -385,12 +390,12 @@
     return 'home';
   };
   const TITLES = { home: 'Ego Tweaks — free Windows tweaking utility', download: 'Download · Ego Tweaks', premium: 'Premium · Ego Tweaks', thanks: 'Thanks for buying Premium · Ego Tweaks',
-    features: 'What it tunes · Ego Tweaks', tweaks: `All ${TWEAKS.length} tweaks · Ego Tweaks`, app: 'The app · Ego Tweaks', safety: 'Undo anything · Ego Tweaks', pricing: 'Pricing · Ego Tweaks', faq: 'FAQ · Ego Tweaks' };
+    features: 'What it tunes · Ego Tweaks', tweaks: `All ${TWEAKS.length} tweaks · Ego Tweaks`, app: 'The app · Ego Tweaks', safety: 'Undo anything · Ego Tweaks', pricing: 'Pricing · Ego Tweaks', reviews: 'Reviews · Ego Tweaks', faq: 'FAQ · Ego Tweaks' };
   function go(page) {
     const hash = page === 'home' ? '#/' : page === 'thanks' ? '#/premium/thanks' : `#/${page}`;
     if (location.hash !== hash) location.hash = hash; else route(true);
   }
-  const CURTAIN = { home: 'Ego Tweaks', download: 'Download', premium: 'Premium', thanks: 'Thank you', features: 'What it tunes', tweaks: 'Tweaks', app: 'The app', safety: 'Safety', pricing: 'Pricing', faq: 'FAQ' };
+  const CURTAIN = { home: 'Ego Tweaks', download: 'Download', premium: 'Premium', thanks: 'Thank you', features: 'What it tunes', tweaks: 'Tweaks', app: 'The app', safety: 'Safety', pricing: 'Pricing', reviews: 'Reviews', faq: 'FAQ' };
   const toTop = () => {
     try { if (fx()) return void fx().top(); } catch (e) { console.warn('[site] EgoFX.top failed', e); }
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -425,7 +430,7 @@
   // Functions queued here run on the frame after the next renderPage() (e.g. "jump to #pricing once home is up").
   const afterRenderQueue = [];
   // old in-page links (data-to) still work: each section now lives on a page of its own
-  const SECTION_PAGE = { features: 'features', how: 'features', tweaks: 'tweaks', app: 'app', tour: 'app', safety: 'safety', pricing: 'pricing', community: 'pricing', faq: 'faq', top: 'home' };
+  const SECTION_PAGE = { features: 'features', how: 'features', tweaks: 'tweaks', app: 'app', tour: 'app', safety: 'safety', pricing: 'pricing', community: 'pricing', reviews: 'reviews', faq: 'faq', top: 'home' };
   function scrollToSection(id) {
     closeMenu();
     const pg = SECTION_PAGE[id];
@@ -474,7 +479,7 @@
     cleanups = [];
     const view = $('#view');
     document.title = TITLES[S.page]; // also right on a direct load or refresh, which skips route()
-    const P = { download: pageDownload, premium: pagePremium, thanks: pagePremium, features: pageFeatures, tweaks: pageTweaks, app: pageApp, safety: pageSafety, pricing: pagePricing, faq: pageFaq };
+    const P = { download: pageDownload, premium: pagePremium, thanks: pagePremium, features: pageFeatures, tweaks: pageTweaks, app: pageApp, safety: pageSafety, pricing: pagePricing, reviews: pageReviews, faq: pageFaq };
     view.innerHTML = (P[S.page] || pageHome)();
     S.demoOn = false; S.demoBusy = false;
     setupReveal(view);
@@ -599,7 +604,7 @@
 
   // ── shared by the section pages: header, and the "next page" link at the bottom ──
   const pageIdx = (id) => PAGES.findIndex(([p]) => p === id);
-  const NEXT_LINE = { features: 'Six areas, one dial.', tweaks: `Search all ${TWEAKS.length}.`, app: 'Every page of the app.', safety: 'Flip it. Flip it back.', pricing: 'Free, or Premium.', faq: 'Straight answers.' };
+  const NEXT_LINE = { features: 'Six areas, one dial.', tweaks: `Search all ${TWEAKS.length}.`, app: 'Every page of the app.', safety: 'Flip it. Flip it back.', pricing: 'Free, or Premium.', reviews: 'Straight from the Discord.', faq: 'Straight answers.' };
   const pageTop = (id, l1, l2, sub = '') => `<div class="page-fx" aria-hidden="true"><i class="key-light"></i>${gaugeSvg('reticle')}</div>
     <div class="wrap page sp-page sp-${id}">
       <header class="page-hd rv">${secK(pad2(pageIdx(id) + 1), esc(PAGES[pageIdx(id)][1]))}<h1>${hl(l1, l2)}</h1>${sub ? `<p>${sub}</p>` : ''}</header>`;
@@ -636,7 +641,7 @@
   }
 
   function pageHome() {
-    const reviews = REVIEWS.length ? reviewSection() : '';
+    const reviews = reviewList().length ? reviewSection() : '';
     const gameRow = (list, hide = false) => list.map((g) => `<span${hide ? ' aria-hidden="true"' : ''}>${esc(g)}</span>`).join('');
     const half = Math.ceil(GAMES.length / 2), rowA = GAMES.slice(0, half), rowB = GAMES.slice(half);
     const cards = HUB.map(([id, title, sub], i) => `<a class="card hub-card spot rv" href="#/${id}" data-nav="${id}" data-lock style="--d:${i % 3}">
@@ -1025,22 +1030,88 @@
     ? `No. Premium is ${esc(PER_MONTH)}, and each purchase gives you a key that lasts one month. Nothing is charged automatically — when your month is up, buy again and your new key arrives in your Discord DMs.`
     : `No. Premium is ${esc(PER_MONTH)}, and each purchase gives you a key that lasts one month. Nothing is charged automatically — when your month is up, buy again and open a new ticket to keep Premium.`);
 
-  function reviewSection() {
-    // stars only when the review itself gives a rating
-    const stars = (r) => { const n = Math.round(Number(r.stars)); return n >= 1 && n <= 5 ? `<div class="stars" role="img" aria-label="${n} out of 5">${svg('star').repeat(n)}</div>` : ''; };
-    const card = (r, hide = false) => `<figure class="card vouch"${hide ? ' aria-hidden="true"' : ''}>
-      ${stars(r)}
+  // ── reviews ──
+  const reviewList = () => (S.reviews && S.reviews.length ? S.reviews : REVIEWS);
+  const reviewStars = (r) => { const n = Math.round(Number(r.stars)); return n >= 1 && n <= 5 ? `<div class="stars" role="img" aria-label="${n} out of 5">${svg('star').repeat(n)}</div>` : ''; };
+  const reviewDate = (r) => (r.at ? new Date(r.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: new Date(r.at).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' }) : '');
+  const reviewAv = (r) => (r.avatar ? `<img class="av" src="${esc(r.avatar)}" alt="" width="28" height="28" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : `<span class="av">${esc(String(r.name || '?')[0].toUpperCase())}</span>`);
+  const reviewCard = (r, hide = false, cls = '') => `<figure class="card vouch ${cls}"${hide ? ' aria-hidden="true"' : ''}>
+      ${reviewStars(r)}
       <blockquote>${esc(r.text)}</blockquote>
-      <figcaption><span class="av">${esc(String(r.name || '?')[0].toUpperCase())}</span><b>${esc(r.name)}</b>${r.tag ? `<span class="chip">${esc(r.tag)}</span>` : ''}</figcaption>
+      <figcaption>${reviewAv(r)}<b>${esc(r.name)}</b>${r.tag ? `<span class="chip">${esc(r.tag)}</span>` : r.at ? `<time datetime="${new Date(r.at).toISOString()}">${esc(reviewDate(r))}</time>` : ''}</figcaption>
     </figure>`;
-    // repeat a short list so the scrolling row never shows a gap
-    const loop = [];
-    while (loop.length < 6) loop.push(...REVIEWS);
+  // repeat a short list so the scrolling row never shows a gap
+  function reviewTrack() {
+    const list = reviewList().slice(0, 24), loop = [];
+    while (loop.length < 6) loop.push(...list);
+    return loop.map((r, i) => reviewCard(r, i >= list.length)).join('') + loop.map((r) => reviewCard(r, true)).join('');
+  }
+  function reviewSection() {
+    const n = reviewList().length;
     return `<section class="sec" id="reviews" data-velocity data-live>${KL}
       <div class="wrap">${secHead('07', 'Reviews', 'From the', 'Discord.')}</div>
-      <div class="marquee rv" data-dir="-1"><div class="marquee-track">${loop.map((r, i) => card(r, i >= REVIEWS.length)).join('')}${loop.map((r) => card(r, true)).join('')}</div></div>
+      <div class="marquee rv" data-dir="-1"><div class="marquee-track" id="rv-track">${reviewTrack()}</div></div>
+      <div class="wrap rv-more rv"><button type="button" class="btn btn-line btn-sm" data-nav="reviews">All ${S.reviews ? `<span data-rv-n>${n}</span> ` : ''}reviews ${svg('arrow')}</button></div>
     </section>`;
   }
+
+  const REVIEWS_PAGE = 30;
+  function reviewGrid() {
+    const list = reviewList(), shown = list.slice(0, S.rvShow || REVIEWS_PAGE);
+    if (!list.length) return `<div class="rv-empty card">${S.reviews == null ? 'Loading reviews from the Discord…' : 'No reviews yet — be the first.'}</div>`;
+    return `<div class="rv-grid">${shown.map((r) => reviewCard(r, false, 'rv-card')).join('')}</div>
+      ${list.length > shown.length ? `<div class="rv-more"><button type="button" class="btn btn-line" data-act="reviews-more">Show more <span class="muted">(${list.length - shown.length} left)</span></button></div>` : ''}`;
+  }
+  function reviewStats() {
+    const list = reviewList(), st = list.map((r) => Number(r.stars)).filter((x) => x >= 1 && x <= 5);
+    return `<span><b>${S.reviews ? list.length : '—'}</b> reviews</span>${st.length ? `<span><b>${(st.reduce((a, b) => a + b, 0) / st.length).toFixed(1)}</b> average of ${st.length} star rating${st.length === 1 ? '' : 's'}</span>` : ''}<span class="rv-live"><i class="pulse"></i>Live from Discord</span>`;
+  }
+  function pageReviews() {
+    const post = REVIEWS_CHANNEL ? `<a href="${esc(REVIEWS_CHANNEL)}" target="_blank" rel="noopener">post yours in #reviews</a>` : 'post yours in our Discord';
+    return `${pageTop('reviews', 'Straight from', 'the Discord.', `Every message in our Discord’s #reviews channel, live — ${post} and it shows up here in a couple of minutes.`)}
+      <div class="rv-stats rv" id="rv-stats" style="--d:1">${reviewStats()}</div>
+      <div id="rv-list" class="rv" style="--d:2">${reviewGrid()}</div>
+      ${REVIEWS_CHANNEL ? `<div class="rv-cta rv"><a class="btn btn-primary" href="${esc(REVIEWS_CHANNEL)}" target="_blank" rel="noopener">${BRAND.discord}Post a review</a></div>` : ''}
+    </div>
+    ${pager('reviews')}`;
+  }
+
+  // fetch the reviews channel from the bot; repaint only what changed
+  let rvSig = '';
+  async function loadReviews() {
+    if (!REVIEWS_CHANNEL || !DISCORD_LOGIN || !DISCORD_LOGIN.botUrl) { S.reviews = []; return; }
+    if (S.reviews === undefined) {
+      try { const c = JSON.parse(sessionStorage.getItem('ego-reviews') || 'null'); S.reviews = Array.isArray(c) ? c : null; } catch (_) { S.reviews = null; }
+      rvSig = (S.reviews || []).map((r) => r.id + (r.edited ? 'e' : '')).join(',');
+    }
+    try {
+      const res = await fetch(DISCORD_LOGIN.botUrl.replace(/\/+$/, '') + '/reviews', { cache: 'no-store' });
+      const j = await res.json();
+      if (!j || !j.ok || !Array.isArray(j.reviews)) throw new Error('not ready');
+      const list = j.reviews.filter((r) => r && r.text && r.name).map((r) => ({ id: r.id, name: String(r.name), text: String(r.text), avatar: /^https:\/\/cdn\.discordapp\.com\//.test(r.avatar || '') ? r.avatar : '', stars: r.stars, at: Number(r.at) || 0, edited: !!r.edited }));
+      const sig = list.map((r) => r.id + (r.edited ? 'e' : '') + r.text.length).join(',');
+      const first = S.reviews === null;
+      S.reviews = list;
+      try { sessionStorage.setItem('ego-reviews', JSON.stringify(list)); } catch (_) { /* full or blocked */ }
+      if (sig !== rvSig || first) { rvSig = sig; paintReviews(); }
+    } catch (_) {
+      if (S.reviews === null) { S.reviews = []; paintReviews(); }
+    }
+  }
+  function paintReviews() {
+    $$('[data-rv-n]').forEach((el) => (el.textContent = String(reviewList().length)));
+    if (S.page === 'reviews') {
+      const box = $('#rv-list');
+      const stats = $('#rv-stats');
+      if (stats) stats.innerHTML = reviewStats();
+      if (box) { box.innerHTML = reviewGrid(); return; }
+    }
+    if (S.page === 'home') {
+      const track = $('#rv-track');
+      if (track) { track.innerHTML = reviewTrack(); try { fx() && fx().refresh(); } catch (_) { /* ignore */ } }
+    }
+  }
+  if (REVIEWS_CHANNEL) setInterval(() => { if (!document.hidden) loadReviews(); }, 120000);
 
   function discordSection() {
     return `<section class="sec community" id="community" data-live>${KL}
@@ -2036,6 +2107,7 @@
       case 'discord-forget': discordLogout(); break;
       case 'discord-join': S.dcAwaitJoin = true; break;
       case 'discord-recheck': discordRecheck(); break;
+      case 'reviews-more': S.rvShow = (S.rvShow || REVIEWS_PAGE) + REVIEWS_PAGE; paintReviews(); break;
       case 'demo-tweak': demoTweak(el); break;
       case 'demo-restore': demoRestore(el); break;
       case 'replay': toTop(); runBoot({ full: true }); break;

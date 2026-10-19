@@ -1528,3 +1528,19 @@ body.modal-open .toasts{top:calc(16px + env(safe-area-inset-top));bottom:auto}
   .vw-tabs{margin-bottom:16px}
   .vw-arrow{width:40px;height:40px}
 }
+/* reviews: live from the Discord */
+.vouch blockquote{white-space:pre-line;overflow-wrap:anywhere}
+#reviews .vouch blockquote{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.vouch img.av{border-radius:50%;object-fit:cover;background:var(--w10);padding:0}
+.vouch time{margin-left:auto;color:var(--w55);font:500 11px/1 var(--mono)}
+#reviews .rv-more{display:flex;justify-content:center;margin-top:28px}
+.rv-stats{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px;margin:6px 0 26px;font:500 12px/1 var(--mono);color:var(--w55);text-transform:uppercase;letter-spacing:.08em}
+.rv-stats b{color:#fff;font:800 22px/1 var(--display);margin-right:6px;letter-spacing:-.02em}
+.rv-live{display:inline-flex;align-items:center;gap:8px;margin-left:auto}
+.rv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-items:start}
+.rv-grid .rv-card{width:auto;margin:0}
+.rv-empty{padding:40px;text-align:center;color:var(--w55)}
+.sp-reviews .rv-more{display:flex;justify-content:center;margin-top:12px}
+.rv-cta{display:flex;justify-content:center;margin:34px 0 10px}
+.rv-cta .btn svg{width:18px;height:18px}
+@media (max-width:640px){.rv-live{margin-left:0}.vouch{width:300px}}
