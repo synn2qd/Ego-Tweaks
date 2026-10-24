@@ -10,14 +10,14 @@
     name: 'Ego Tweaks',
     file: 'EgoTweaks.exe',
     href: 'downloads/EgoTweaks.exe',
-    version: '3.0.2',
-    bytes: 2246656,
-    sha256: 'de36988f8f69d54e0ebe9c902e275fed9d915ba6eae7dac3fd9ff47d1f083d10',
+    version: '3.0.3',
+    bytes: 2247168,
+    sha256: '885ca8a2a8cea93fd17ff84df3109cd87708db842fb92a0022a6b2abcd8dec58',
   };
   // What the Free plan includes (the app's own list).
-  const FREE = ['Overview with live CPU, GPU, RAM and storage', 'Live monitor and benchmarks', 'Network diagnostics: ping, regions, speed and route', 'Recovery: undo everything, restore points', 'Automatic updates when you sign in'];
+  const FREE = ['17 free tweaks: Game Mode, GPU scheduling, mouse acceleration off, no Start ads and more', 'Overview with live CPU, GPU, RAM and storage', 'Live monitor and benchmarks', 'Network diagnostics: ping, regions, speed and route', 'Recovery: undo everything, restore points', 'Automatic updates when you sign in'];
   // The current app, shown in the hero and the footer.
-  const APP = { version: '3.0.2' };
+  const APP = { version: '3.0.3' };
   // Paste your links here and they show up in the nav, footer and menu. Leave '' to hide.
   const LINKS = { discord: 'https://discord.gg/gtPggZ9zpz', x: '' };
   // The four plans. Every one is a one-time payment: nothing renews and it never expires.
@@ -26,9 +26,9 @@
   //   The bot reads the plan from the product (PAYHIP_TIERS on Railway) or, failing that, from the price.
   const PLANS = [
     { n: 1, id: 'starter', name: 'Starter', price: 5, payhip: 'YlFT0', sub: 'Clean, quiet Windows and a crosshair for every game.',
-      perks: ['226 Windows tweaks: Explorer, visuals, audio, storage, updates, privacy', 'Crosshair and FPS overlay', 'Quick Optimize and Profiles', 'Startup apps and temp-file clean-up', 'Mouse and keyboard tests'] },
+      perks: ['216 Windows tweaks: Explorer, visuals, audio, storage, updates, privacy', 'Crosshair and FPS overlay', 'Quick Optimize and Profiles', 'Startup apps and temp-file clean-up', 'Mouse and keyboard tests'] },
     { n: 2, id: 'premium', name: 'Premium', price: 10, payhip: 'PAIZv', flag: 'Most popular', sub: 'The performance plan: higher, steadier FPS.',
-      perks: ['257 performance tweaks: CPU scheduling, stutter, GPU, input, services', 'Game Booster (pauses update downloads while you play)', 'Process killer and per-game settings', 'Stutter checklist, deep clean, memory clearing', 'BIOS guide'] },
+      perks: ['250 performance tweaks: CPU scheduling, stutter, GPU, input, services', 'Game Booster (pauses update downloads while you play)', 'Process killer and per-game settings', 'Stutter checklist, deep clean, memory clearing', 'BIOS guide'] },
     { n: 3, id: 'pro', name: 'Pro', price: 20, payhip: '20cFf', sub: 'Lower, steadier ping on top of everything in Premium.',
       perks: ['63 network and power-plan tweaks', 'Ping Booster', 'DNS switching', 'Automatic memory clearing', 'Session reports and setup codes'] },
     { n: 4, id: 'ultimate', name: 'Ultimate', price: 50, payhip: 'Ayl9C', flag: 'Everything', sub: 'Every tweak and Max FPS mode: the whole thing in one click.',
@@ -245,7 +245,7 @@
 
   // ───────────── shared blocks ─────────────
   const secHd = (k, h, p, center = false) => `<header class="sec-hd${center ? ' center' : ''} reveal"><span class="eyebrow">${k}</span><h2>${h}</h2>${p ? `<p>${p}</p>` : ''}</header>`;
-  const tierTag = (n) => `<span class="tier t${n}">${esc(planOf(n).name)}</span>`;
+  const tierTag = (n) => (n ? `<span class="tier t${n}">${esc(planOf(n).name)}</span>` : '<span class="tier t0">Free</span>');
   const faq = (q, a) => `<details><summary>${q}${svg('plus')}</summary><div class="a">${a.split('\n').map((x) => `<p>${x}</p>`).join('')}</div></details>`;
   const dcLiveBadge = () => (DISCORD ? `<a class="dc-live" href="${esc(DISCORD)}" target="_blank" rel="noopener" data-dc-wrap hidden>${DISCORD_SVG}<span><i class="dot green live"></i><b data-dc="online">—</b> online</span><span><b data-dc="members">—</b> members</span></a>` : '');
   const dialSvg = () => {
@@ -423,7 +423,7 @@
       </div>`;
   }
   const plansNote = () => `<div class="plans-note reveal"><span>${svg('card')}One-time payment</span><span>${svg('ban')}Never expires, nothing renews</span><span>${svg('user')}Tied to your Discord, works on any PC</span><span>${svg('crown')}Upgrade any time: your highest plan counts</span></div>
-    <div class="card free-strip reveal"><div><b>Not ready to buy? Start free.</b><p>Download Ego Tweaks 3.0 free: Overview, live monitor, benchmarks, network tests and Recovery. Upgrade later in the same app.</p></div><button type="button" class="btn btn-line btn-sm" data-nav="download">${svg('download')}Download free</button></div>
+    <div class="card free-strip reveal"><div><b>Not ready to buy? Start free.</b><p>Download Ego Tweaks 3.0 free: 17 free tweaks, plus Overview, live monitor, benchmarks, network tests and Recovery. Upgrade later in the same app.</p></div><button type="button" class="btn btn-line btn-sm" data-nav="download">${svg('download')}Download free</button></div>
     <div class="card free-strip reveal" style="margin-top:10px"><div><b>Already bought Premium before 3.0?</b><p>You keep it for good. Sign in to Ego Tweaks 3.0 with the same Discord account and Premium unlocks.</p></div>${DISCORD ? `<a class="btn btn-line btn-sm" href="${esc(DISCORD)}" target="_blank" rel="noopener">${DISCORD_SVG}Ask in the Discord</a>` : ''}</div>`;
 
   // Who's buying: everyone continues with Discord first, so the purchase is tied to their Discord account.
@@ -485,14 +485,14 @@
   function compareTable() {
     const rows = [
       ['Tweaks'],
-      ['Windows, privacy and clean-up tweaks (226)', 1], ['Performance tweaks: CPU, stutter, GPU, input, services (257)', 2], ['Network and power-plan tweaks (63)', 3], ['CPU and GPU clock tweaks (20)', 4],
+      ['Windows, privacy and clean-up tweaks (216)', 1], ['Performance tweaks: CPU, stutter, GPU, input, services (250)', 2], ['Network and power-plan tweaks (63)', 3], ['CPU and GPU clock tweaks (20)', 4],
       ['Tools'],
       ['Quick Optimize and Profiles', 1], ['Crosshair and FPS overlay', 1], ['Startup apps and temp-file clean-up', 1], ['Mouse and keyboard tests', 1],
       ['Game Booster', 2], ['Process killer and per-game settings', 2], ['Stutter checklist, deep clean, memory clearing', 2], ['BIOS guide', 2],
       ['Ping Booster', 3], ['DNS switching', 3], ['Automatic memory clearing', 3], ['Session reports and setup codes', 3],
       ['Max FPS mode', 4], ['Full CPU speed', 4], ['Keyboard overclock', 4],
       ['Every plan'],
-      ['Undo and Recovery', 1], ['Automatic updates', 1], ['Sign in with Discord, on any PC', 1], ['Benchmarks and live monitor', 1],
+      ['17 free tweaks: Game Mode, GPU scheduling, mouse acceleration off and more', 1], ['Undo and Recovery', 1], ['Automatic updates', 1], ['Sign in with Discord, on any PC', 1], ['Benchmarks and live monitor', 1],
     ];
     return `<div class="cmp-wrap reveal"><table class="cmp">
       <thead><tr><th scope="col">What you get</th>${PLANS.map((p) => `<th scope="col" class="t${p.n}" style="color:var(--pc)">${esc(p.name)}<span>$${p.price} once</span></th>`).join('')}</tr></thead>
@@ -547,7 +547,7 @@
       <div class="xp-bar">
         <div class="xp-row">
           <label class="search">${svg('search')}<input id="xp-q" type="search" placeholder="Search tweaks — try “mouse”, “ping” or “telemetry”" value="${esc(S.xq)}" autocomplete="off" spellcheck="false" aria-label="Search tweaks"></label>
-          <div class="seg" role="group" aria-label="Plan">${[{ n: 0, name: 'All plans' }].concat(PLANS).map((p) => `<button type="button" data-xtier="${p.n}" aria-pressed="${S.xtier === p.n}">${esc(p.name)}</button>`).join('')}</div>
+          <div class="seg" role="group" aria-label="Plan">${[{ n: 0, name: 'All plans' }, { n: -1, name: 'Free' }].concat(PLANS).map((p) => `<button type="button" data-xtier="${p.n}" aria-pressed="${S.xtier === p.n}">${esc(p.name)}</button>`).join('')}</div>
         </div>
         <div class="cats" role="group" aria-label="Section">${[{ id: 'all', name: 'All' }].concat(CATEGORIES).map((c) => `<button type="button" data-xcat="${c.id}" aria-pressed="${S.xcat === c.id}">${esc(c.short || c.name)}<small>${c.id === 'all' ? TWEAKS.length : perCat(c.id)}</small></button>`).join('')}</div>
       </div>
@@ -566,11 +566,11 @@
     const list = $('#xp-list');
     if (!list) return;
     const q = S.xq.trim().toLowerCase();
-    const hits = TWEAKS.filter((t) => (S.xcat === 'all' || t.cat === S.xcat) && (!S.xtier || t.tier <= S.xtier)
+    const hits = TWEAKS.filter((t) => (S.xcat === 'all' || t.cat === S.xcat) && (S.xtier === -1 ? !t.tier : !S.xtier || t.tier <= S.xtier)
       && (!q || t.name.toLowerCase().includes(q) || (t.desc || '').toLowerCase().includes(q)));
     const shown = hits.slice(0, S.xshow);
     const cat = CATEGORIES.find((c) => c.id === S.xcat);
-    $('#xp-sum').innerHTML = `<b>${hits.length}</b> tweak${hits.length === 1 ? '' : 's'}${cat ? ` in ${esc(cat.name)} <span class="muted">— ${esc(cat.blurb)}</span>` : ''}${S.xtier ? ` included with ${esc(planOf(S.xtier).name)}` : ''}`;
+    $('#xp-sum').innerHTML = `<b>${hits.length}</b> tweak${hits.length === 1 ? '' : 's'}${cat ? ` in ${esc(cat.name)} <span class="muted">— ${esc(cat.blurb)}</span>` : ''}${S.xtier === -1 ? ' free, no plan needed' : S.xtier ? ` included with ${esc(planOf(S.xtier).name)}` : ''}`;
     list.innerHTML = shown.length ? shown.map((t) => `<article class="xp-item">
         <div class="t"><b>${mark(t.name, q)}</b>${tierTag(t.tier)}</div>
         ${t.desc ? `<p>${mark(t.desc, q)}</p>` : ''}
@@ -605,7 +605,7 @@
           <span class="chip">Free plan</span>
           <h2>What’s free</h2>
           <ul class="free-list">${FREE.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
-          <p>Want the tweaks? ${TWEAKS.length} of them, Max FPS mode, Game Booster, Ping Booster and the crosshair come with a plan, from $${PLANS[0].price} once. It unlocks in the app you download here.</p>
+          <p>Want the rest? All ${TWEAKS.length} tweaks, Max FPS mode, Game Booster, Ping Booster and the crosshair come with a plan, from $${PLANS[0].price} once. It unlocks in the app you download here.</p>
           <button type="button" class="btn btn-line btn-block" data-nav="plans">See plans${svg('arrow')}</button>
         </div>
       </div>
@@ -741,7 +741,7 @@
     ['What do I need to run it?', 'Windows 10 or 11 (64-bit). The window uses Microsoft Edge WebView2, which nearly every PC already has. Ego Tweaks asks for administrator access because it changes system settings.', 'about'],
     ['Windows says “Windows protected your PC”. What do I do?', 'Click More info, then Run anyway. SmartScreen shows this for apps Windows hasn’t seen much yet.', 'about'],
     ['Does it work offline?', 'Yes, for up to 3 days at a time. Then it checks in again by itself the next time you’re online.', 'about'],
-    ['Is there a free version?', `Yes. Download Ego Tweaks 3.0 free from the Download page. The Free plan includes the Overview, live monitor, benchmarks, network diagnostics and Recovery. The ${TWEAKS.length} tweaks, Max FPS mode and the boosters come with a plan, and they unlock in the same app when you sign in with Discord.`, 'about'],
+    ['Is there a free version?', `Yes. Download Ego Tweaks 3.0 free from the Download page. The Free plan includes ${TWEAKS.filter((t) => !t.tier).length} tweaks (Game Mode, GPU scheduling, mouse acceleration off, no Start ads and more), the Overview, live monitor, benchmarks, network diagnostics and Recovery. The rest of the ${TWEAKS.length} tweaks, Max FPS mode and the boosters come with a plan, and they unlock in the same app when you sign in with Discord.`, 'about'],
   ];
   function pageFaq() {
     return `<div class="wrap page">

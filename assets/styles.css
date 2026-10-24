@@ -77,7 +77,7 @@ svg.b{width:20px;height:20px;flex:none;fill:currentColor}
 @keyframes pulse{50%{opacity:.3}}
 .eyebrow{display:inline-block;color:var(--accent-t);font:500 12.5px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase}
 .tier{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:7px;font:600 12px/1 var(--body);color:var(--pc);background:color-mix(in srgb,var(--pc) 14%,transparent);border:1px solid color-mix(in srgb,var(--pc) 40%,transparent);white-space:nowrap}
-.t1{--pc:var(--p1)}.t2{--pc:var(--p2)}.t3{--pc:var(--p3)}.t4{--pc:var(--p4)}
+.t0{--pc:var(--ok)}.t1{--pc:var(--p1)}.t2{--pc:var(--p2)}.t3{--pc:var(--p3)}.t4{--pc:var(--p4)}
 
 /* ── nav ── */
 .nav{position:sticky;top:0;z-index:40;height:var(--nav);transition:background .25s,border-color .25s,backdrop-filter .25s;border-bottom:1px solid transparent}
