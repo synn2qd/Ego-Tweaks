@@ -3,98 +3,231 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Ego Tweaks — free Windows tweaking utility</title>
-  <meta name="description" content="Ego Tweaks is a free Windows tweaking utility: 87 tweaks matched to your hardware for higher FPS, lower input delay and steadier ping. Every change is backed up and can be undone. Premium available.">
-  <meta name="theme-color" content="#000000">
-  <meta name="ego-site-version" content="4.1">
+  <title>Ego Tweaks — back at 3 PM Eastern</title>
+  <meta name="description" content="Ego Tweaks is getting a big update: a new app, sign-in with Discord and four plans. The site is back at 3 PM Eastern. Join the Discord for the launch.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#08080a">
+  <meta name="ego-site-version" content="5.0-maintenance">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Ego Tweaks — free Windows tweaking utility">
-  <meta property="og:description" content="87 tweaks for FPS, input delay and ping. Every change reversible. Free download, Premium if you want more.">
-  <meta property="og:image" content="assets/shots/home.webp">
+  <meta property="og:title" content="Ego Tweaks 3.0 — back at 3 PM Eastern">
+  <meta property="og:description" content="A new app, sign-in with Discord and four plans. Join the Discord for the launch.">
+  <meta property="og:image" content="assets/shots/v3-overview.webp">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/favicon-v3.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/unbounded-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="assets/fonts/jetbrains-mono-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="assets/shots/home.webp" as="image" type="image/webp">
-  <link rel="stylesheet" href="assets/styles.css?v=4.1">
-  <!-- Payhip checkout for Ego Tweaks Premium (opens on top of the page) -->
-  <script src="https://payhip.com/payhip.js" defer></script>
+  <style>
+    @font-face { font-family: 'Unbounded'; src: url(assets/fonts/unbounded-latin-700-normal.woff2) format('woff2'); font-weight: 700; font-display: swap; }
+    @font-face { font-family: 'Unbounded'; src: url(assets/fonts/unbounded-latin-900-normal.woff2) format('woff2'); font-weight: 900; font-display: swap; }
+    @font-face { font-family: 'Geist'; src: url(assets/fonts/geist-latin-wght-normal.woff2) format('woff2'); font-weight: 100 900; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url(assets/fonts/jetbrains-mono-latin-500-normal.woff2) format('woff2'); font-weight: 500; font-display: swap; }
+    :root {
+      --accent: #ff2d3d; --accent-2: #ff4f5d; --accent-t: #ff8b94; --accent-d: rgba(255, 45, 61, .13);
+      --bg: #08080a; --panel: #101014; --line: rgba(255, 255, 255, .08);
+      --w: #fff; --w70: rgba(255, 255, 255, .7); --w55: rgba(255, 255, 255, .55); --w40: rgba(255, 255, 255, .4);
+      --p1: #b4bac2; --p2: #4f8cff; --p3: #a66bff; --p4: #ff2d3d;
+      --display: 'Unbounded', 'Segoe UI', sans-serif; --body: 'Geist', 'Segoe UI', system-ui, sans-serif; --mono: 'JetBrains Mono', Consolas, monospace;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--bg); }
+    body { margin: 0; min-height: 100vh; color: var(--w); font: 400 16px/1.6 var(--body); -webkit-font-smoothing: antialiased; overflow-x: hidden;
+      background: radial-gradient(1100px 600px at 70% -10%, rgba(255, 45, 61, .16), transparent 62%),
+        linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px) 0 0 / 48px 48px,
+        linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px) 0 0 / 48px 48px, var(--bg); }
+    a { color: inherit; }
+    ::selection { background: var(--accent); color: #fff; }
+    .wrap { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 26px 0; }
+    .logo { display: flex; align-items: baseline; gap: 10px; text-decoration: none; }
+    .logo b { font: 900 22px/1 var(--display); letter-spacing: -.01em; }
+    .logo b::after { content: ''; display: inline-block; width: 7px; height: 7px; margin-left: 3px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+    .logo span { font: 500 11px/1 var(--mono); letter-spacing: .38em; color: var(--w55); }
+    .ver { padding: 4px 8px; border: 1px solid rgba(255, 45, 61, .45); border-radius: 7px; font: 500 11px/1 var(--mono); color: var(--accent-t); }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 52px; padding: 0 26px; border-radius: 999px; font: 600 16px/1 var(--body); text-decoration: none; transition: transform .2s var(--ease), background .2s, box-shadow .2s; }
+    .btn:active { transform: scale(.97); }
+    .btn svg { width: 22px; height: 22px; fill: currentColor; }
+    .btn-discord { background: #5865f2; color: #fff; box-shadow: 0 10px 30px rgba(88, 101, 242, .35); }
+    .btn-discord:hover { background: #6b77f5; transform: translateY(-2px); }
+    .btn-line { height: 44px; padding: 0 18px; border: 1px solid rgba(255, 255, 255, .2); font-size: 14.5px; }
+    .btn-line:hover { border-color: var(--accent); }
+
+    .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; padding: 40px 0 56px; }
+    .status { display: inline-flex; align-items: center; gap: 10px; padding: 8px 14px; border: 1px solid rgba(255, 45, 61, .4); border-radius: 999px; background: var(--accent-d); color: var(--accent-t); font: 500 12.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+    .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: pulse 1.6s ease-in-out infinite; }
+    @keyframes pulse { 50% { opacity: .3; } }
+    h1 { margin: 22px 0 14px; font: 900 clamp(40px, 6vw, 72px)/1.02 var(--display); letter-spacing: -.03em; }
+    h1 em { font-style: normal; color: var(--accent); }
+    .lede { max-width: 54ch; margin: 0 0 28px; color: var(--w70); font-size: 18px; }
+
+    .count { display: flex; gap: 10px; margin: 0 0 14px; }
+    .count div { min-width: 92px; padding: 14px 12px 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); text-align: center; }
+    .count b { display: block; font: 700 34px/1 var(--display); font-variant-numeric: tabular-nums; }
+    .count span { display: block; margin-top: 8px; color: var(--w55); font: 500 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+    .when { margin: 0 0 30px; color: var(--w55); font-size: 15px; }
+    .when b { color: var(--w); font-weight: 600; }
+    .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+    .cta small { color: var(--w55); font-size: 14px; }
+
+    /* the dial from the app, around the screenshot */
+    .stage { position: relative; }
+    .dial { position: absolute; inset: -12% -8%; width: 116%; height: 124%; pointer-events: none; opacity: .85; }
+    .dial line { stroke: rgba(255, 255, 255, .1); stroke-width: 3; stroke-linecap: round; }
+    .dial line.on { stroke: var(--accent); filter: drop-shadow(0 0 4px rgba(255, 45, 61, .6)); }
+    .shot { position: relative; display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 40px 100px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 45, 61, .12);
+      transform: perspective(1400px) rotateY(-9deg) rotateX(3deg); transition: transform .8s var(--ease); }
+    .stage:hover .shot { transform: perspective(1400px) rotateY(-3deg) rotateX(1deg); }
+
+    section.block { padding: 30px 0 60px; }
+    .eyebrow { color: var(--w40); font: 500 12px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; }
+    h2 { margin: 12px 0 26px; font: 700 clamp(24px, 3vw, 34px)/1.15 var(--display); letter-spacing: -.02em; }
+    .feats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .feat { padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); }
+    .feat .ico { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 14px; border-radius: 12px; background: var(--accent-d); color: var(--accent); }
+    .feat .ico svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .feat b { display: block; margin-bottom: 6px; font-size: 17px; }
+    .feat p { margin: 0; color: var(--w70); font-size: 15px; }
+    .plans { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .plan { position: relative; padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); }
+    .plan::before { content: ''; position: absolute; left: 20px; right: 20px; top: 0; height: 2px; background: var(--pc); border-radius: 0 0 2px 2px; }
+    .plan.p1 { --pc: var(--p1); } .plan.p2 { --pc: var(--p2); } .plan.p3 { --pc: var(--p3); } .plan.p4 { --pc: var(--p4); background: linear-gradient(180deg, rgba(255, 45, 61, .12), var(--panel) 55%); }
+    .plan .nm { color: var(--pc); font: 700 16px/1 var(--display); }
+    .plan .pr { margin: 12px 0 14px; font: 900 34px/1 var(--display); }
+    .plan .pr small { margin-left: 6px; color: var(--w55); font: 500 13px var(--body); }
+    .plan ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+    .plan li { position: relative; padding-left: 20px; color: var(--w70); font-size: 14.5px; line-height: 1.4; }
+    .plan li::before { content: ''; position: absolute; left: 2px; top: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--pc); }
+    .note { margin: 18px 0 0; color: var(--w55); font-size: 14.5px; }
+
+    .discord { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 10px 0 70px; padding: 30px 34px; border: 1px solid rgba(88, 101, 242, .4); border-radius: 22px;
+      background: radial-gradient(120% 200% at 0% 0%, rgba(88, 101, 242, .22), transparent 55%), var(--panel); }
+    .discord h2 { margin: 0 0 6px; }
+    .discord p { margin: 0; color: var(--w70); }
+
+    footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px; padding: 26px 0 40px; border-top: 1px solid var(--line); color: var(--w40); font-size: 14px; }
+    footer nav { display: flex; gap: 20px; }
+    footer a { text-decoration: none; } footer a:hover { color: var(--w); }
+
+    @media (max-width: 980px) {
+      .hero { grid-template-columns: 1fr; padding-top: 16px; }
+      .stage { margin-top: 8px; } .dial { display: none; } .shot { transform: none !important; }
+      .feats, .plans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .discord { flex-direction: column; align-items: flex-start; }
+    }
+    @media (max-width: 560px) {
+      .feats, .plans { grid-template-columns: 1fr; }
+      .count div { min-width: 0; flex: 1; } .count b { font-size: 26px; }
+      header .btn-line { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  </style>
 </head>
-<body class="booting">
-  <!-- ───────────── boot sequence (same as the app) ───────────── -->
-  <div id="boot" class="boot" role="status" aria-live="polite" aria-label="Loading Ego Tweaks">
-    <div class="boot-visor top" aria-hidden="true"></div><div class="boot-visor bot" aria-hidden="true"></div>
-    <div class="boot-grid" aria-hidden="true"></div>
-    <div class="boot-sweep" aria-hidden="true"></div>
-    <div class="boot-flash" aria-hidden="true"></div>
-    <div class="boot-stage">
-      <svg class="boot-rings" viewBox="-300 -300 600 600" aria-hidden="true">
-        <circle class="ring ring-outer" r="286"></circle>
-        <g class="ring-ticks" id="boot-ticks"></g>
-        <circle class="ring ring-seg" r="226"></circle>
-        <circle class="ring ring-thin" r="206"></circle>
-        <g class="ring-sweep"><path d="M 0 -206 A 206 206 0 0 1 145.66 -145.66"></path></g>
-        <g class="ring-cross">
-          <line x1="-300" y1="0" x2="-246" y2="0"></line><line x1="246" y1="0" x2="300" y2="0"></line>
-          <line x1="0" y1="-300" x2="0" y2="-246"></line><line x1="0" y1="246" x2="0" y2="300"></line>
-        </g>
-      </svg>
-      <div class="boot-mark">
-        <div class="boot-line" aria-hidden="true"></div>
-        <h1 class="wordmark" aria-label="Ego"><span>E</span><span>G</span><span>O</span></h1>
-        <div class="boot-sub" id="boot-sub" aria-label="Tweaks">TWEAKS</div>
-      </div>
-    </div>
-    <div class="boot-log" id="boot-log" aria-hidden="true"></div>
-    <div class="boot-foot">
-      <div class="boot-step" id="boot-step">Starting</div>
-      <div class="boot-bar"><i id="boot-bar"></i></div>
-      <div class="boot-pct" id="boot-pct">0%</div>
-    </div>
-    <div class="boot-hud" aria-hidden="true"><i></i><i></i><i></i><i></i><span class="bh-l">Ego Tweaks</span><span class="bh-r" id="boot-ver"></span></div>
-    <div class="boot-skip" aria-hidden="true"><span class="k-key">Press any key to skip</span><span class="k-tap">Tap to skip</span></div>
-  </div>
-
-  <!-- ───────────── site ───────────── -->
-  <div id="site" class="site" hidden>
-    <button type="button" class="skip" data-act="skip">Skip to content</button>
-    <div class="progress" aria-hidden="true"><i id="progress"></i></div>
-    <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
-    <div class="lock" id="lock" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-    <header class="nav" id="nav">
-      <div class="nav-in">
-        <a class="brand" href="#/" data-nav="home" aria-label="Ego Tweaks home"><span class="brand-logo">EGO</span><span class="brand-name">Tweaks</span></a>
-        <nav class="nav-links" id="nav-links" aria-label="Sections"></nav>
-        <div class="nav-cta" id="nav-cta"></div>
-        <button class="nav-burger" id="burger" data-act="menu" aria-label="Open menu" aria-expanded="false" aria-controls="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16M4 16h16"/></svg></button>
-      </div>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="logo" href="./" aria-label="Ego Tweaks"><b>EGO</b><span>TWEAKS</span></a>
+      <div style="display:flex;align-items:center;gap:12px"><span class="ver">3.0</span><a class="btn btn-line" href="https://discord.gg/gtPggZ9zpz" target="_blank" rel="noopener">Join the Discord</a></div>
     </header>
-    <div class="menu" id="menu" hidden role="dialog" aria-modal="true" aria-label="Menu"></div>
-    <main id="view" tabindex="-1"></main>
-    <footer class="foot" id="foot"></footer>
-    <div class="dock" id="dock" hidden></div>
+
+    <main>
+      <section class="hero">
+        <div>
+          <span class="status"><i></i>Under maintenance</span>
+          <h1>Ego Tweaks 3.0 is <em>almost here.</em></h1>
+          <p class="lede">We’re putting the finishing touches on the biggest update yet: a brand-new app, sign-in with Discord instead of license keys, and four plans. The site comes back with it at 3 PM Eastern.</p>
+          <div class="count" id="count" aria-live="polite">
+            <div><b id="c-h">--</b><span>Hours</span></div>
+            <div><b id="c-m">--</b><span>Minutes</span></div>
+            <div><b id="c-s">--</b><span>Seconds</span></div>
+          </div>
+          <p class="when" id="when">Back <b>today at 3:00 PM Eastern</b>.</p>
+          <div class="cta">
+            <a class="btn btn-discord" href="https://discord.gg/gtPggZ9zpz" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.3 5.3A16.6 16.6 0 0 0 15.2 4l-.5 1a15.3 15.3 0 0 0-5.4 0l-.5-1a16.6 16.6 0 0 0-4.1 1.3A17.2 17.2 0 0 0 1.8 17a16.7 16.7 0 0 0 5 2.5l1-1.6a10.8 10.8 0 0 1-1.7-.8l.4-.3a12 12 0 0 0 10.9 0l.4.3c-.5.3-1.1.6-1.7.8l1 1.6a16.7 16.7 0 0 0 5-2.5 17.1 17.1 0 0 0-2.8-11.7zM8.7 14.6c-1 0-1.9-.9-1.9-2.1s.8-2.1 1.9-2.1 1.9.9 1.9 2.1-.8 2.1-1.9 2.1zm6.6 0c-1 0-1.9-.9-1.9-2.1s.8-2.1 1.9-2.1 1.9.9 1.9 2.1-.8 2.1-1.9 2.1z"/></svg>
+              Join the Discord
+            </a>
+            <small>Get pinged the second it’s live.</small>
+          </div>
+        </div>
+        <div class="stage">
+          <svg class="dial" id="dial" viewBox="-300 -300 600 600" aria-hidden="true"></svg>
+          <img class="shot" src="assets/shots/v3-overview.webp" width="1600" height="1000" alt="The new Ego Tweaks 3.0 app: system health, live CPU, GPU, RAM and storage gauges, and one-click actions.">
+        </div>
+      </section>
+
+      <section class="block">
+        <span class="eyebrow">What’s new</span>
+        <h2>A whole new Ego Tweaks</h2>
+        <div class="feats">
+          <div class="feat"><div class="ico"><svg viewBox="0 0 24 24"><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/></svg></div><b>Max FPS mode</b><p>Every FPS tweak for your PC plus Game Booster, in one click. Anything that could lower FPS is gone.</p></div>
+          <div class="feat"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div><b>Crosshair & overlay</b><p>Your own crosshair over any game, and an FPS-style counter. Included in every plan.</p></div>
+          <div class="feat"><div class="ico"><svg viewBox="0 0 24 24"><path d="M5 19v-3M10 19v-7M15 19V9M20 19V5"/></svg></div><b>Lower ping</b><p>Game traffic goes first, background uploads are capped and update downloads wait until your game closes.</p></div>
+          <div class="feat"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></div><b>Undo anything</b><p>Every change is backed up first. One click puts it all back, on any plan.</p></div>
+        </div>
+      </section>
+
+      <section class="block">
+        <span class="eyebrow">Plans</span>
+        <h2>One app, four plans</h2>
+        <div class="plans">
+          <div class="plan p1"><div class="nm">Starter</div><div class="pr">$5<small>/ 30 days</small></div><ul><li>226 Windows tweaks</li><li>Crosshair and overlay</li><li>Quick Optimize</li><li>Startup and clean-up tools</li></ul></div>
+          <div class="plan p2"><div class="nm">Premium</div><div class="pr">$10<small>/ 30 days</small></div><ul><li>257 performance tweaks</li><li>Game Booster</li><li>Stutter fixes and process killer</li><li>Everything in Starter</li></ul></div>
+          <div class="plan p3"><div class="nm">Pro</div><div class="pr">$20<small>/ 30 days</small></div><ul><li>Network and power tweaks</li><li>Ping Booster</li><li>DNS switching</li><li>Everything in Premium</li></ul></div>
+          <div class="plan p4"><div class="nm">Ultimate</div><div class="pr">$50<small>/ 30 days</small></div><ul><li>CPU and GPU clock tweaks</li><li>Max FPS mode</li><li>Keyboard overclock</li><li>Everything in every plan</li></ul></div>
+        </div>
+        <p class="note">Each purchase unlocks its plan for 30 days. Nothing renews or charges you again. Sign in to the app with Discord and it unlocks by itself — no keys.</p>
+      </section>
+
+      <section class="discord">
+        <div><h2>Be there at launch</h2><p>Announcements and support live in the Ego Tweaks Discord — you’ll hear the moment 3.0 is out.</p></div>
+        <a class="btn btn-discord" href="https://discord.gg/gtPggZ9zpz" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.3 5.3A16.6 16.6 0 0 0 15.2 4l-.5 1a15.3 15.3 0 0 0-5.4 0l-.5-1a16.6 16.6 0 0 0-4.1 1.3A17.2 17.2 0 0 0 1.8 17a16.7 16.7 0 0 0 5 2.5l1-1.6a10.8 10.8 0 0 1-1.7-.8l.4-.3a12 12 0 0 0 10.9 0l.4.3c-.5.3-1.1.6-1.7.8l1 1.6a16.7 16.7 0 0 0 5-2.5 17.1 17.1 0 0 0-2.8-11.7zM8.7 14.6c-1 0-1.9-.9-1.9-2.1s.8-2.1 1.9-2.1 1.9.9 1.9 2.1-.8 2.1-1.9 2.1zm6.6 0c-1 0-1.9-.9-1.9-2.1s.8-2.1 1.9-2.1 1.9.9 1.9 2.1-.8 2.1-1.9 2.1z"/></svg>
+          Join the Discord
+        </a>
+      </section>
+    </main>
+
+    <footer>
+      <span>© 2026 Ego Tweaks</span>
+      <nav><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a><a href="https://discord.gg/gtPggZ9zpz" target="_blank" rel="noopener">Discord</a></nav>
+    </footer>
   </div>
 
-  <div class="grain" aria-hidden="true"></div>
-  <div id="toasts" class="toasts" aria-live="polite"></div>
-  <div id="modal" class="modal-host"></div>
-  <div class="curtain" id="curtain" aria-hidden="true"><i class="curtain-line"></i><span class="curtain-label" id="curtain-label"></span></div>
+  <script>
+    // back at 3:00 PM Eastern on Oct 24, 2026 (Eastern Daylight Time, UTC−4)
+    (function () {
+      var LAUNCH = Date.UTC(2026, 9, 24, 19, 0, 0);
+      var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+      var local = new Date(LAUNCH).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      var tzEastern = /New_York|Detroit|Toronto|Indiana|Kentucky|Montreal|Nassau/.test((Intl.DateTimeFormat().resolvedOptions().timeZone || ''));
+      function tick() {
+        var left = Math.max(0, Math.floor((LAUNCH - Date.now()) / 1000));
+        document.getElementById('c-h').textContent = pad(Math.floor(left / 3600));
+        document.getElementById('c-m').textContent = pad(Math.floor(left / 60) % 60);
+        document.getElementById('c-s').textContent = pad(left % 60);
+        var when = document.getElementById('when');
+        if (!left) when.innerHTML = '<b>Any minute now.</b> Join the Discord to hear the second it’s live.';
+        else when.innerHTML = 'Back <b>at 3:00 PM Eastern</b>' + (tzEastern ? '.' : ' (' + local + ' your time).');
+        return left;
+      }
+      tick();
+      var t = setInterval(function () { if (!tick()) clearInterval(t); }, 1000);
 
-  <noscript>
-    <div style="position:fixed;inset:0;display:grid;place-items:center;background:#000;color:#fff;font:14px/1.5 sans-serif;text-align:center;padding:24px;z-index:999">
-      <div>Ego Tweaks needs JavaScript turned on to show this page.</div>
-    </div>
-  </noscript>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- If the Supabase script was blocked (ad blocker, offline), auth.js gets an offline client: accounts say
-       they're unavailable, and the boot, Discord login and downloads keep working. -->
-  <script>if (!window.supabase) window.supabase = { offline: true, createClient() { const no = () => Promise.reject(new Error('Accounts are unavailable right now — try again in a minute.')); const q = () => ({ select: q, eq: q, maybeSingle: no, insert: no }); return { auth: { getSession: no, getUser: no, signUp: no, signInWithPassword: no, updateUser: no, signOut: () => Promise.resolve({ error: null }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) }, from: q, rpc: no }; } };</script>
-  <script src="assets/catalog.js?v=4.1"></script>
-  <script src="assets/auth.js?v=4.1"></script>
-  <script src="assets/vendor/lenis.min.js?v=4.1"></script>
-  <script src="assets/fx.js?v=4.1"></script>
-  <script src="assets/site.js?v=4.1"></script>
+      // the app's dial: 64 ticks, lit as the launch gets closer
+      var svg = document.getElementById('dial');
+      var N = 64, html = '';
+      for (var i = 0; i < N; i++) {
+        var a = (-135 + (270 * i) / (N - 1)) * Math.PI / 180, s = Math.sin(a), c = -Math.cos(a), r0 = i % 8 === 0 ? 262 : 270;
+        html += '<line x1="' + (s * r0).toFixed(1) + '" y1="' + (c * r0).toFixed(1) + '" x2="' + (s * 288).toFixed(1) + '" y2="' + (c * 288).toFixed(1) + '"/>';
+      }
+      svg.innerHTML = html;
+      var lines = svg.querySelectorAll('line');
+      var START = LAUNCH - 24 * 3600 * 1000;
+      function light() { var p = Math.min(1, Math.max(0, (Date.now() - START) / (LAUNCH - START))); var k = Math.round(p * N); for (var j = 0; j < N; j++) lines[j].setAttribute('class', j < k ? 'on' : ''); }
+      light(); setInterval(light, 30000);
+    })();
+  </script>
 </body>
 </html>
