@@ -23,13 +23,13 @@
   //           "Coming soon" and points to the Discord instead. Each plan needs its own Payhip product.
   //   The bot reads the plan from the product (PAYHIP_TIERS on Railway) or, failing that, from the price.
   const PLANS = [
-    { n: 1, id: 'starter', name: 'Starter', price: 5, payhip: '', sub: 'Clean, quiet Windows and a crosshair for every game.',
+    { n: 1, id: 'starter', name: 'Starter', price: 5, payhip: 'YlFT0', sub: 'Clean, quiet Windows and a crosshair for every game.',
       perks: ['226 Windows tweaks: Explorer, visuals, audio, storage, updates, privacy', 'Crosshair and FPS overlay', 'Quick Optimize and Profiles', 'Startup apps and temp-file clean-up', 'Mouse and keyboard tests'] },
     { n: 2, id: 'premium', name: 'Premium', price: 10, payhip: 'PAIZv', flag: 'Most popular', sub: 'The performance plan: higher, steadier FPS.',
       perks: ['257 performance tweaks: CPU scheduling, stutter, GPU, input, services', 'Game Booster (pauses update downloads while you play)', 'Process killer and per-game settings', 'Stutter checklist, deep clean, memory clearing', 'BIOS guide'] },
-    { n: 3, id: 'pro', name: 'Pro', price: 20, payhip: '', sub: 'Lower, steadier ping on top of everything in Premium.',
+    { n: 3, id: 'pro', name: 'Pro', price: 20, payhip: '20cFf', sub: 'Lower, steadier ping on top of everything in Premium.',
       perks: ['63 network and power-plan tweaks', 'Ping Booster', 'DNS switching', 'Automatic memory clearing', 'Session reports and setup codes'] },
-    { n: 4, id: 'ultimate', name: 'Ultimate', price: 50, payhip: '', flag: 'Everything', sub: 'Every tweak and Max FPS mode: the whole thing in one click.',
+    { n: 4, id: 'ultimate', name: 'Ultimate', price: 50, payhip: 'Ayl9C', flag: 'Everything', sub: 'Every tweak and Max FPS mode: the whole thing in one click.',
       perks: ['20 CPU and GPU clock tweaks', 'Max FPS mode: every FPS tweak plus Game Booster in one click', 'Full CPU speed', 'Keyboard overclock'] },
   ];
   // "Continue with Discord": visitors log in with Discord to download and to buy (so the purchase is tied to
