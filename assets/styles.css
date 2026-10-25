@@ -239,6 +239,8 @@ svg.b{width:20px;height:20px;flex:none;fill:currentColor}
 .addon-pr{font:900 30px/1 var(--display)}
 .addon-pr small{margin-left:6px;color:var(--w55);font:500 13px var(--body)}
 .addon p{margin:0 0 14px;color:var(--w70);font-size:15.5px}
+.addon-free{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(8,8,10,.4);color:var(--w85)!important}
+.addon-free .i{flex:none;width:18px;height:18px;margin-top:2px;color:var(--ok)}
 .addon ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
 .addon li{position:relative;padding-left:26px;color:var(--w70);font-size:15px}
 .addon li .i{position:absolute;left:0;top:1px;width:18px;height:18px;color:var(--ok)}

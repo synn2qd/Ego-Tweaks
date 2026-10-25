@@ -10,14 +10,14 @@
     name: 'Ego Tweaks',
     file: 'EgoTweaks.exe',
     href: 'downloads/EgoTweaks.exe',
-    version: '3.0.7',
-    bytes: 2268672,
-    sha256: 'a3368cb573e6b1ca5647adcf76ae8920a7cc908c0f4b2f1ea739adf1abd82e67',
+    version: '3.0.8',
+    bytes: 2275328,
+    sha256: '1e0a6a7a48d4e7339385211056d22e1f344b4b54f746ea861c4214440fa47fec',
   };
   // What the Free plan includes (the app's own list).
   const FREE = ['17 free tweaks: Game Mode, GPU scheduling, mouse acceleration off, no Start ads and more', 'Overview with live CPU, GPU, RAM and storage', 'Live monitor and benchmarks', 'Network diagnostics: ping, regions, speed and route', 'Recovery: undo everything, restore points', 'Automatic updates when you sign in'];
   // The current app, shown in the hero and the footer.
-  const APP = { version: '3.0.7' };
+  const APP = { version: '3.0.8' };
   // Paste your links here and they show up in the nav, footer and menu. Leave '' to hide.
   const LINKS = { discord: 'https://discord.gg/gtPggZ9zpz', x: '' };
   // The four plans. Every one is a one-time payment: nothing renews and it never expires.
@@ -65,7 +65,8 @@
   // Add-on: bought on its own next to any plan (Free included). Ultimate includes it. The bot reads it from the
   // product (Xvbc1 = retrac), and the app unlocks its Project Retrac section on the next sign-in or Refresh.
   const RETRAC = { n: 'retrac', id: 'retrac', name: 'Retrac', price: 5, payhip: 'Xvbc1',
-    perks: ['A Project Retrac section in the app, with one-click Boost Retrac', 'Retrac’s own FPS and delay settings: high-performance GPU, fullscreen optimizations off, high priority', 'Retrac Booster: Game Booster with the 0.5 ms timer, only for Retrac', 'In-game settings for the Chapter 2 Season 4 build'] };
+    perks: ['One-click Boost Retrac: every Retrac setting and Retrac Booster at once', 'Fullscreen optimizations off, high CPU priority, sharp at any display scaling, never power-throttled', 'Retrac Booster with 6 options: high priority, calm background apps, 0.5 ms timer, clear memory, pause updates, max-performance power plan', 'Your recent Retrac sessions'],
+    free: 'Free for everyone: Retrac found on your PC, the high-performance GPU setting and in-game settings for the Chapter 2 Season 4 build.' };
   const productOf = (key) => (key === 'retrac' ? RETRAC : planOf(Number(key)));
   // auth.js needs the Supabase script. If that was blocked, accounts are off but the rest of the site keeps working.
   const AUTH = window.EgoAuth || (() => { const no = () => Promise.reject(new Error('Accounts are unavailable right now — try again in a minute.'));
@@ -434,6 +435,7 @@
         <span class="eyebrow">Add-on · works with any plan, Free included</span>
         <h3>Project Retrac <span class="addon-pr">$${RETRAC.price}<small>one-time</small></span></h3>
         <p>For Project Retrac, the OG Fortnite launcher (Chapter 2 Season 4): higher, steadier FPS and the lowest input delay, only for Retrac. Your real Fortnite isn’t touched. Included with Ultimate.</p>
+        <p class="addon-free">${svg('check')}${esc(RETRAC.free)}</p>
         <ul>${RETRAC.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
       </div>
       <div class="buy" data-plan="retrac">${buyArea(RETRAC)}</div>
@@ -755,7 +757,7 @@
     ['Can I get banned for using it?', 'Ego Tweaks changes Windows settings only. It doesn’t inject into games, read their memory or change their files, and the crosshair overlay is a separate window. You’re still responsible for following each game’s rules.', 'about'],
     ['Can I upgrade later?', 'Yes. Buy the bigger plan whenever you like. The highest plan you’ve bought is the one that counts.', 'plans'],
     ['Does it work on more than one PC?', 'Your plan is tied to your Discord account, so it unlocks on any PC you sign in on.', 'plans'],
-    ['What’s the Retrac add-on?', 'A $5 one-time add-on for Project Retrac, the OG Fortnite launcher. It adds a Project Retrac section to the app: one-click Boost Retrac (high-performance GPU, fullscreen optimizations off, high priority), Retrac Booster with the 0.5 ms timer, and in-game settings for that build. It works with any plan, Free included, and only changes Retrac, never your real Fortnite. Ultimate already includes it.', 'plans'],
+    ['What’s the Retrac add-on?', 'Every copy of Ego Tweaks has a Project Retrac section for free: it finds Retrac, sets it to the high-performance GPU and shows the best in-game settings for that build. The $5 one-time add-on unlocks the rest: one-click Boost Retrac, fullscreen optimizations off, high CPU priority, sharp at any display scaling, never power-throttled, and Retrac Booster with six options (high priority, calm background apps, 0.5 ms timer, clear memory, pause updates, max-performance power plan). It works with any plan, Free included, and only changes Retrac, never your real Fortnite. Ultimate already includes it.', 'plans'],
     ['Why do I need to continue with Discord to buy?', 'So your purchase is tied to your Discord account. That’s how the app knows what you bought when you sign in, and how the bot gives you your role. Continuing with Discord also adds you to the server if you’re not in it yet.', 'plans'],
     ['How do updates work?', 'Ego Tweaks checks for updates when it starts and every 6 hours. When there’s a new version, an Update button appears at the top. Press it and it downloads, checks it’s a genuine Ego Tweaks build, and restarts on the new version. Your tweaks and settings stay as they are.', 'about'],
     ['What do I need to run it?', 'Windows 10 or 11 (64-bit). The window uses Microsoft Edge WebView2, which nearly every PC already has. Ego Tweaks asks for administrator access because it changes system settings.', 'about'],
