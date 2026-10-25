@@ -233,6 +233,18 @@ svg.b{width:20px;height:20px;flex:none;fill:currentColor}
 .plan .buy .why{margin:2px 0 0;color:var(--w55);font-size:13.5px;text-align:center}
 @media (max-width:1080px){.plans{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:620px){.plans{grid-template-columns:1fr}.plan .sub{min-height:0}}
+.addon{display:grid;grid-template-columns:1fr 280px;gap:28px;align-items:center;margin-top:14px;padding:26px;--pc:var(--ok);border-color:rgba(61,220,132,.3);background:linear-gradient(135deg,rgba(61,220,132,.09),var(--panel) 55%)}
+.addon .eyebrow{color:var(--ok)}
+.addon h3{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin:10px 0 8px;font:700 24px/1.15 var(--display);letter-spacing:-.02em}
+.addon-pr{font:900 30px/1 var(--display)}
+.addon-pr small{margin-left:6px;color:var(--w55);font:500 13px var(--body)}
+.addon p{margin:0 0 14px;color:var(--w70);font-size:15.5px}
+.addon ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.addon li{position:relative;padding-left:26px;color:var(--w70);font-size:15px}
+.addon li .i{position:absolute;left:0;top:1px;width:18px;height:18px;color:var(--ok)}
+.addon .buy{display:grid;gap:8px}
+.addon .buy .why{margin:2px 0 0;color:var(--w55);font-size:13.5px;text-align:center}
+@media (max-width:860px){.addon{grid-template-columns:1fr}}
 .plans-note{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 26px;margin-top:24px;color:var(--w55);font-size:15px}
 .plans-note span{display:inline-flex;align-items:center;gap:8px}
 .plans-note .i{width:18px;height:18px;color:var(--accent)}

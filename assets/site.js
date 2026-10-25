@@ -10,14 +10,14 @@
     name: 'Ego Tweaks',
     file: 'EgoTweaks.exe',
     href: 'downloads/EgoTweaks.exe',
-    version: '3.0.6',
-    bytes: 2256896,
-    sha256: 'e90a2f2318082b72cbee2b0951077b88c65be6b65a4c7cab5002b206688e0b2f',
+    version: '3.0.7',
+    bytes: 2268672,
+    sha256: 'a3368cb573e6b1ca5647adcf76ae8920a7cc908c0f4b2f1ea739adf1abd82e67',
   };
   // What the Free plan includes (the app's own list).
   const FREE = ['17 free tweaks: Game Mode, GPU scheduling, mouse acceleration off, no Start ads and more', 'Overview with live CPU, GPU, RAM and storage', 'Live monitor and benchmarks', 'Network diagnostics: ping, regions, speed and route', 'Recovery: undo everything, restore points', 'Automatic updates when you sign in'];
   // The current app, shown in the hero and the footer.
-  const APP = { version: '3.0.6' };
+  const APP = { version: '3.0.7' };
   // Paste your links here and they show up in the nav, footer and menu. Leave '' to hide.
   const LINKS = { discord: 'https://discord.gg/gtPggZ9zpz', x: '' };
   // The four plans. Every one is a one-time payment: nothing renews and it never expires.
@@ -32,7 +32,7 @@
     { n: 3, id: 'pro', name: 'Pro', price: 20, payhip: '20cFf', sub: 'Lower, steadier ping on top of everything in Premium.',
       perks: ['63 network and power-plan tweaks', 'Ping Booster', 'DNS switching', 'Automatic memory clearing', 'Session reports and setup codes'] },
     { n: 4, id: 'ultimate', name: 'Ultimate', price: 50, payhip: 'Ayl9C', flag: 'Everything', sub: 'Every tweak and Max FPS mode: the whole thing in one click.',
-      perks: ['20 CPU and GPU clock tweaks', 'Max FPS mode: every FPS tweak plus Game Booster in one click', 'Full CPU speed', 'Keyboard overclock'] },
+      perks: ['20 CPU and GPU clock tweaks', 'Max FPS mode: every FPS tweak plus Game Booster in one click', 'Full CPU speed', 'Keyboard overclock', 'The Retrac add-on included'] },
   ];
   // "Continue with Discord": visitors log in with Discord to download and to buy (so the purchase is tied to
   // their Discord account and the bot can DM them). The bot then adds them to the Discord server.
@@ -62,6 +62,11 @@
   const perCat = (id) => TWEAKS.filter((t) => t.cat === id).length;
   const upTo = (n) => TWEAKS.filter((t) => t.tier <= n).length;
   const planOf = (n) => PLANS.find((p) => p.n === n) || PLANS[0];
+  // Add-on: bought on its own next to any plan (Free included). Ultimate includes it. The bot reads it from the
+  // product (Xvbc1 = retrac), and the app unlocks its Project Retrac section on the next sign-in or Refresh.
+  const RETRAC = { n: 'retrac', id: 'retrac', name: 'Retrac', price: 5, payhip: 'Xvbc1',
+    perks: ['A Project Retrac section in the app, with one-click Boost Retrac', 'Retrac’s own FPS and delay settings: high-performance GPU, fullscreen optimizations off, high priority', 'Retrac Booster: Game Booster with the 0.5 ms timer, only for Retrac', 'In-game settings for the Chapter 2 Season 4 build'] };
+  const productOf = (key) => (key === 'retrac' ? RETRAC : planOf(Number(key)));
   // auth.js needs the Supabase script. If that was blocked, accounts are off but the rest of the site keeps working.
   const AUTH = window.EgoAuth || (() => { const no = () => Promise.reject(new Error('Accounts are unavailable right now — try again in a minute.'));
     return { current: () => null, onChange() {}, signUp: no, signIn: no, update: no, signOut: () => Promise.resolve(),
@@ -420,7 +425,19 @@
         <ul>${p.n > 1 ? `<li class="inc">${svg('check')}Everything in ${esc(planOf(p.n - 1).name)}, plus:</li>` : ''}${p.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
         <div class="buy" data-plan="${p.n}">${buyArea(p)}</div>
       </article>`).join('')}
-      </div>`;
+      </div>
+      ${addonCard()}`;
+  }
+  function addonCard() {
+    return `<article class="card addon reveal" id="plan-retrac">
+      <div class="addon-main">
+        <span class="eyebrow">Add-on · works with any plan, Free included</span>
+        <h3>Project Retrac <span class="addon-pr">$${RETRAC.price}<small>one-time</small></span></h3>
+        <p>For Project Retrac, the OG Fortnite launcher (Chapter 2 Season 4): higher, steadier FPS and the lowest input delay, only for Retrac. Your real Fortnite isn’t touched. Included with Ultimate.</p>
+        <ul>${RETRAC.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
+      </div>
+      <div class="buy" data-plan="retrac">${buyArea(RETRAC)}</div>
+    </article>`;
   }
   const plansNote = () => `<div class="plans-note reveal"><span>${svg('card')}One-time payment</span><span>${svg('ban')}Never expires, nothing renews</span><span>${svg('user')}Tied to your Discord, works on any PC</span><span>${svg('crown')}Upgrade any time: your highest plan counts</span></div>
     <div class="card free-strip reveal"><div><b>Not ready to buy? Start free.</b><p>Download Ego Tweaks 3.0 free: 17 free tweaks, plus Overview, live monitor, benchmarks, network tests and Recovery. Upgrade later in the same app.</p></div><button type="button" class="btn btn-line btn-sm" data-nav="download">${svg('download')}Download free</button></div>
@@ -440,7 +457,7 @@
     return 'https://payhip.com/buy?' + q;
   };
   function buyArea(p) {
-    const cls = `btn ${p.n === 4 || p.flag === 'Most popular' ? 'btn-primary' : 'btn-line'} btn-block`;
+    const cls = `btn ${p.n === 4 || p.n === 'retrac' || p.flag === 'Most popular' ? 'btn-primary' : 'btn-line'} btn-block`;
     if (!payhipKey(p)) return `<a class="btn soon btn-block" href="${esc(DISCORD || '#/plans')}" target="_blank" rel="noopener" data-act="buy-soon" data-plan="${p.n}">Coming soon</a><p class="why">Ask in the Discord to get ${esc(p.name)} now.</p>`;
     if (!DC_LOGIN) return `<a class="${cls}" href="${esc(checkoutUrl(p))}" target="_blank" rel="noopener" data-act="buy" data-plan="${p.n}">Buy ${esc(p.name)} — $${p.price}</a>`;
     if (S.dcBusy) return `<button class="${cls} busy" disabled>Connecting</button>`;
@@ -451,14 +468,14 @@
     return `<a class="${cls}" href="${esc(checkoutUrl(p))}" target="_blank" rel="noopener" data-act="buy" data-plan="${p.n}">Buy ${esc(p.name)} — $${p.price}</a>`;
   }
   const refreshBuy = () => {
-    $$('.buy[data-plan]').forEach((el) => { el.innerHTML = buyArea(planOf(Number(el.dataset.plan))); });
+    $$('.buy[data-plan]').forEach((el) => { el.innerHTML = buyArea(productOf(el.dataset.plan)); });
     $$('.who-wrap').forEach((el) => { el.innerHTML = whoBar(); });
   };
   const thanksUrl = () => location.href.split(/[?#]/)[0] + '?premium=thanks#/plans/thanks';
 
   function buyPlan(e, el) {
     closeMenu();
-    const p = planOf(Number(el.dataset.plan));
+    const p = productOf(el.dataset.plan);
     if (!payhipKey(p)) { e.preventDefault(); return; }
     track('/api/event', { t: 'buy', plan: p.id });
     if (DC_LOGIN && S.dc) {
@@ -491,6 +508,8 @@
       ['Game Booster', 2], ['Process killer and per-game settings', 2], ['Stutter checklist, deep clean, memory clearing', 2], ['BIOS guide', 2],
       ['Ping Booster', 3], ['DNS switching', 3], ['Automatic memory clearing', 3], ['Session reports and setup codes', 3],
       ['Max FPS mode', 4], ['Full CPU speed', 4], ['Keyboard overclock', 4],
+      ['Add-on'],
+      ['Project Retrac add-on (or $5 on its own)', 4],
       ['Every plan'],
       ['17 free tweaks: Game Mode, GPU scheduling, mouse acceleration off and more', 1], ['Undo and Recovery', 1], ['Automatic updates', 1], ['Sign in with Discord, on any PC', 1], ['Benchmarks and live monitor', 1],
     ];
@@ -736,6 +755,7 @@
     ['Can I get banned for using it?', 'Ego Tweaks changes Windows settings only. It doesn’t inject into games, read their memory or change their files, and the crosshair overlay is a separate window. You’re still responsible for following each game’s rules.', 'about'],
     ['Can I upgrade later?', 'Yes. Buy the bigger plan whenever you like. The highest plan you’ve bought is the one that counts.', 'plans'],
     ['Does it work on more than one PC?', 'Your plan is tied to your Discord account, so it unlocks on any PC you sign in on.', 'plans'],
+    ['What’s the Retrac add-on?', 'A $5 one-time add-on for Project Retrac, the OG Fortnite launcher. It adds a Project Retrac section to the app: one-click Boost Retrac (high-performance GPU, fullscreen optimizations off, high priority), Retrac Booster with the 0.5 ms timer, and in-game settings for that build. It works with any plan, Free included, and only changes Retrac, never your real Fortnite. Ultimate already includes it.', 'plans'],
     ['Why do I need to continue with Discord to buy?', 'So your purchase is tied to your Discord account. That’s how the app knows what you bought when you sign in, and how the bot gives you your role. Continuing with Discord also adds you to the server if you’re not in it yet.', 'plans'],
     ['How do updates work?', 'Ego Tweaks checks for updates when it starts and every 6 hours. When there’s a new version, an Update button appears at the top. Press it and it downloads, checks it’s a genuine Ego Tweaks build, and restarts on the new version. Your tweaks and settings stay as they are.', 'about'],
     ['What do I need to run it?', 'Windows 10 or 11 (64-bit). The window uses Microsoft Edge WebView2, which nearly every PC already has. Ego Tweaks asks for administrator access because it changes system settings.', 'about'],
