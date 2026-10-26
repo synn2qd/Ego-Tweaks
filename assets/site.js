@@ -416,7 +416,7 @@
 
   // ───────────── plans ─────────────
   function plansGrid() {
-    return `${refCode() ? `<p class="invited reveal">${svg('spark')}You were invited by a friend: buying through their link supports them.</p>` : ''}
+    return `${refCode() ? `<p class="invited">${svg('spark')}You were invited by a friend: buying a plan here supports them.</p>` : ''}
       ${DC_LOGIN ? `<div class="who-wrap reveal">${whoBar()}</div>` : ''}
       <div class="plans">${PLANS.map((p, i) => `
       <article class="card plan t${p.n}${p.flag === 'Most popular' ? ' hot' : ''} reveal" style="--d:${i}" id="plan-${p.id}">
@@ -1269,7 +1269,9 @@
       keep.set('ego-ref', { code: r, at: Date.now() });
       track('/api/event', { t: 'ref' });
       q.delete('ref');
-      try { history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } catch (_) { /* old browser */ }
+      // a referral link lands on Plans (where they can buy) unless it points somewhere else on the site
+      const hash = !location.hash || location.hash === '#' || location.hash === '#/' ? '#/plans' : location.hash;
+      try { history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + hash); } catch (_) { location.hash = hash; }
     }
   }
   // Back from a Payhip purchase (see thanksUrl): show the thanks page and tidy the address bar.
