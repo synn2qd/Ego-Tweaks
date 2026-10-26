@@ -513,3 +513,5 @@ svg.b{width:20px;height:20px;flex:none;fill:currentColor}
 @media (max-width:560px){.adm-tiles{grid-template-columns:1fr}}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+.invited{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 auto 18px;max-width:max-content;padding:10px 16px;border:1px solid rgba(61,220,132,.35);border-radius:999px;background:rgba(61,220,132,.08);color:var(--w85);font-size:15px}
+.invited .i{width:18px;height:18px;color:var(--ok)}

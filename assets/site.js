@@ -10,14 +10,14 @@
     name: 'Ego Tweaks',
     file: 'EgoTweaks.exe',
     href: 'downloads/EgoTweaks.exe',
-    version: '3.0.8',
-    bytes: 2275328,
-    sha256: '1e0a6a7a48d4e7339385211056d22e1f344b4b54f746ea861c4214440fa47fec',
+    version: '3.0.9',
+    bytes: 2279936,
+    sha256: '5c7bd07f47b2b30e287313dab18e353e724efa77c0a523ab233d184ecafea749',
   };
   // What the Free plan includes (the app's own list).
   const FREE = ['17 free tweaks: Game Mode, GPU scheduling, mouse acceleration off, no Start ads and more', 'Overview with live CPU, GPU, RAM and storage', 'Live monitor and benchmarks', 'Network diagnostics: ping, regions, speed and route', 'Recovery: undo everything, restore points', 'Automatic updates when you sign in'];
   // The current app, shown in the hero and the footer.
-  const APP = { version: '3.0.8' };
+  const APP = { version: '3.0.9' };
   // Paste your links here and they show up in the nav, footer and menu. Leave '' to hide.
   const LINKS = { discord: 'https://discord.gg/gtPggZ9zpz', x: '' };
   // The four plans. Every one is a one-time payment: nothing renews and it never expires.
@@ -416,7 +416,8 @@
 
   // ───────────── plans ─────────────
   function plansGrid() {
-    return `${DC_LOGIN ? `<div class="who-wrap reveal">${whoBar()}</div>` : ''}
+    return `${refCode() ? `<p class="invited reveal">${svg('spark')}You were invited by a friend: buying through their link supports them.</p>` : ''}
+      ${DC_LOGIN ? `<div class="who-wrap reveal">${whoBar()}</div>` : ''}
       <div class="plans">${PLANS.map((p, i) => `
       <article class="card plan t${p.n}${p.flag === 'Most popular' ? ' hot' : ''} reveal" style="--d:${i}" id="plan-${p.id}">
         <div class="top"><span class="nm">${esc(p.name)}</span>${p.flag ? `<span class="flag">${esc(p.flag)}</span>` : ''}</div>
@@ -453,9 +454,14 @@
     return `<div class="who">${dcImg(S.dc, 34)}<span>Buying as <b>${esc(dcName())}</b> <span class="muted">@${esc(S.dc.username)}</span></span><button type="button" data-act="discord-forget">Not you?</button></div>`;
   }
   // checkout link: carries the buyer's Discord ID as Payhip metadata, which Payhip passes to the bot's webhook
+  // Referral links (egotweaks.com/?ref=CODE): the code is kept for 30 days and rides along in the checkout, so the
+  // bot can pay the link's owner $5 for a Premium, Pro or Ultimate purchase.
+  const REF_DAYS = 30;
+  const refCode = () => { const r = keep.get('ego-ref'); return r && /^[A-Z0-9]{4,16}$/.test(r.code) && Date.now() - r.at < REF_DAYS * 864e5 ? r.code : ''; };
   const checkoutUrl = (p) => {
     const q = new URLSearchParams({ link: payhipKey(p) });
     if (DC_LOGIN && S.dc) { q.set('metadata[discord_id]', S.dc.id); q.set('metadata[discord_name]', S.dc.username); }
+    if (refCode()) q.set('metadata[ref]', refCode());
     return 'https://payhip.com/buy?' + q;
   };
   function buyArea(p) {
@@ -536,6 +542,14 @@
       <section class="sec" style="padding-bottom:0">
         ${secHd('After you pay', 'Three steps. <em>No keys.</em>')}
         ${howSteps()}
+      </section>
+      <section class="sec" style="padding-bottom:0">
+        ${secHd('Earn', 'Get <em>$5</em> for every friend.', 'Own Premium or higher? You get your own link. Everyone who buys Premium, Pro or Ultimate through it earns you $5, paid to your PayPal.')}
+        <div class="steps">
+          <div class="card step reveal"><span class="n">1</span><h3>Get your link</h3><p>Type <b>/referral</b> in the Ego Tweaks Discord, or open Plans in the app. Your link looks like egotweaks.com/?ref=ABC123.</p></div>
+          <div class="card step reveal" style="--d:1"><span class="n">2</span><h3>Share it</h3><p>TikTok, YouTube, your Discord, your friends. The link remembers them for 30 days.</p></div>
+          <div class="card step reveal" style="--d:2"><span class="n">3</span><h3>Get paid</h3><p>$5 for every Premium, Pro or Ultimate bought through it. From $10, press Request payout and we send it to your PayPal.</p></div>
+        </div>
       </section>
       <section class="sec" style="padding-bottom:0">
         ${secHd('Buying', 'Questions about <em>plans.</em>')}
@@ -758,6 +772,7 @@
     ['Can I upgrade later?', 'Yes. Buy the bigger plan whenever you like. The highest plan you’ve bought is the one that counts.', 'plans'],
     ['Does it work on more than one PC?', 'Your plan is tied to your Discord account, so it unlocks on any PC you sign in on.', 'plans'],
     ['What’s the Retrac add-on?', 'Every copy of Ego Tweaks has a Project Retrac section for free: it finds Retrac, sets it to the high-performance GPU and shows the best in-game settings for that build. The $5 one-time add-on unlocks the rest: one-click Boost Retrac, fullscreen optimizations off, high CPU priority, sharp at any display scaling, never power-throttled, and Retrac Booster with six options (high priority, calm background apps, 0.5 ms timer, clear memory, pause updates, max-performance power plan). It works with any plan, Free included, and only changes Retrac, never your real Fortnite. Ultimate already includes it.', 'plans'],
+    ['How do referral links work?', 'Own Ego Premium, Pro or Ultimate and you get your own link: type /referral in the Ego Tweaks Discord, or open Plans in the app. Everyone who buys Premium, Pro or Ultimate through your link earns you $5. Starter and the Retrac add-on don’t count, and neither does buying through your own link. The link remembers people for 30 days. Your balance is shown in /referral; from $10, press Request payout and the team sends it to your PayPal. If a purchase is refunded, its $5 comes off your balance.', 'plans'],
     ['Why do I need to continue with Discord to buy?', 'So your purchase is tied to your Discord account. That’s how the app knows what you bought when you sign in, and how the bot gives you your role. Continuing with Discord also adds you to the server if you’re not in it yet.', 'plans'],
     ['How do updates work?', 'Ego Tweaks checks for updates when it starts and every 6 hours. When there’s a new version, an Update button appears at the top. Press it and it downloads, checks it’s a genuine Ego Tweaks build, and restarts on the new version. Your tweaks and settings stay as they are.', 'about'],
     ['What do I need to run it?', 'Windows 10 or 11 (64-bit). The window uses Microsoft Edge WebView2, which nearly every PC already has. Ego Tweaks asks for administrator access because it changes system settings.', 'about'],
@@ -1247,6 +1262,16 @@
   });
 
   // ───────────── start ─────────────
+  // Arrived through a referral link: remember the code (newest link wins) and tidy the address bar.
+  {
+    const q = new URLSearchParams(location.search), r = (q.get('ref') || '').trim().toUpperCase();
+    if (/^[A-Z0-9]{4,16}$/.test(r)) {
+      keep.set('ego-ref', { code: r, at: Date.now() });
+      track('/api/event', { t: 'ref' });
+      q.delete('ref');
+      try { history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } catch (_) { /* old browser */ }
+    }
+  }
   // Back from a Payhip purchase (see thanksUrl): show the thanks page and tidy the address bar.
   if (/[?&]premium=thanks\b/.test(location.search)) {
     try { history.replaceState(null, '', location.pathname + '#/plans/thanks'); } catch (_) { location.hash = '#/plans/thanks'; }
