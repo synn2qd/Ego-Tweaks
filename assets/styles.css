@@ -525,6 +525,8 @@ svg.b{width:20px;height:20px;flex:none;fill:currentColor}
 .own-warn{display:flex;gap:12px;align-items:flex-start;margin:0 0 18px;padding:14px 16px;border:1px solid var(--accent-b);border-radius:14px;background:var(--accent-d);color:var(--accent-t);font-size:14px}
 .own-warn svg{width:18px;height:18px;flex:none;margin-top:2px;fill:none;stroke:currentColor;stroke-width:2}
 .own-warn b{color:#fff}
+.own-saved{display:flex;align-items:center;gap:8px;margin:-8px 0 18px;color:var(--w55);font-size:13px}
+.own-saved svg{width:15px;height:15px;fill:none;stroke:var(--ok);stroke-width:2.4}
 .own-gate{max-width:520px;margin:20px auto 0;padding:34px 28px;text-align:center}
 .own-gate h2{margin:14px 0 8px;font:800 24px/1.1 var(--display)}
 .own-gate p{margin:0 auto 20px;max-width:380px;color:var(--w55)}

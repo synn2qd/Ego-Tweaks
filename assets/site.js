@@ -1166,7 +1166,8 @@
     const versions = Object.entries(d.versions || {}).sort((a, b) => b[1] - a[1]);
     const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
     return `${head(`Updated ${esc(new Date(d.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))} · refreshes every minute`)}
-      ${d.storageWarning ? `<div class="own-warn">${svg('alert')}<span><b>Data isn’t being saved.</b> ${esc(d.storageWarning)}</span></div>` : ''}
+      ${d.backup && d.backup.ready ? `<p class="own-saved">${svg('check')}Backed up to Discord${d.backup.last ? ` at ${esc(new Date(d.backup.last).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))}` : ''} · totals carry over every bot update</p>`
+        : d.storageWarning ? `<div class="own-warn">${svg('alert')}<span><b>Data isn’t being saved.</b> ${esc(d.storageWarning)}</span></div>` : ''}
       <section class="own-kpis">
         <div class="own-kpi big"><span>Total revenue</span><b>${money(d.revenue)}</b><small>${num(d.sales)} sale${d.sales === 1 ? '' : 's'} · ${num(d.refunds)} refund${d.refunds === 1 ? '' : 's'}</small></div>
         <div class="own-kpi"><span>Last 30 days</span><b>${money(d.revenue30)}</b><small>${num(d.sales30)} sales</small></div>
