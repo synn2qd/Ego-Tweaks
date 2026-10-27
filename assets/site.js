@@ -10,14 +10,14 @@
     name: 'Ego Tweaks',
     file: 'EgoTweaks.exe',
     href: 'downloads/EgoTweaks.exe',
-    version: '3.0.11',
-    bytes: 2286592,
-    sha256: 'e3e7fe8cc0713cef33c1c5e41ccf4e43fe608feb100a1d9d5240dba719b30f08',
+    version: '3.0.12',
+    bytes: 2287616,
+    sha256: '5f2b967d39a59bbbf39225a3b5835f7a669494b14bb457b18422cde30fe55d82',
   };
   // What the Free plan includes (the app's own list).
   const FREE = ['17 free tweaks: Game Mode, GPU scheduling, mouse acceleration off, no Start ads and more', 'Overview with live CPU, GPU, RAM and storage', 'Live monitor and benchmarks', 'Network diagnostics: ping, regions, speed and route', 'Recovery: undo everything, restore points', 'Automatic updates when you sign in'];
   // The current app, shown in the hero and the footer.
-  const APP = { version: '3.0.11' };
+  const APP = { version: '3.0.12' };
   // Paste your links here and they show up in the nav, footer and menu. Leave '' to hide.
   const LINKS = { discord: 'https://discord.gg/gtPggZ9zpz', x: '' };
   // The four plans. Every one is a one-time payment: nothing renews and it never expires.
@@ -196,7 +196,7 @@
   // ───────────── routing ─────────────
   const ALIAS = { premium: 'plans', pricing: 'plans', features: 'home', app: 'home', safety: 'home' };
   const SCROLL = { features: 'features', app: 'tour', safety: 'safety' };
-  const PAGES = ['home', 'tweaks', 'plans', 'thanks', 'download', 'reviews', 'faq'];
+  const PAGES = ['home', 'tweaks', 'plans', 'thanks', 'download', 'reviews', 'faq', 'admin'];
   const routeFromHash = () => {
     const h = location.hash;
     if (/^#\/?(premium|plans)\/thanks/.test(h)) return 'thanks';
@@ -205,7 +205,7 @@
     return PAGES.includes(id) ? id : 'home';
   };
   const TITLES = { home: 'Ego Tweaks 3.0 — more FPS, less lag, undo anything', tweaks: `All ${TWEAKS.length} tweaks · Ego Tweaks`, plans: 'Plans · Ego Tweaks', thanks: 'Thanks for buying · Ego Tweaks',
-    download: 'Free download · Ego Tweaks', reviews: 'Reviews · Ego Tweaks', faq: 'FAQ · Ego Tweaks' };
+    download: 'Free download · Ego Tweaks', reviews: 'Reviews · Ego Tweaks', faq: 'FAQ · Ego Tweaks', admin: 'Admin · Ego Tweaks' };
   function go(target) {
     const page = ALIAS[target] || target;
     const sec = SCROLL[target];
@@ -233,11 +233,12 @@
   function renderPage() {
     document.title = TITLES[S.page] || TITLES.home;
     const view = $('#view');
-    view.innerHTML = ({ home: pageHome, tweaks: pageTweaks, plans: pagePlans, thanks: pageThanks, download: pageDownload, reviews: pageReviews, faq: pageFaq }[S.page] || pageHome)();
+    view.innerHTML = ({ home: pageHome, tweaks: pageTweaks, plans: pagePlans, thanks: pageThanks, download: pageDownload, reviews: pageReviews, faq: pageFaq, admin: pageAdmin }[S.page] || pageHome)();
     renderNav();
     setupReveal(view);
     if (S.page === 'tweaks') filterXp();
     if (S.page === 'home' || S.page === 'reviews') loadReviews();
+    if (S.page === 'admin') loadOwner();
     loadDiscord();
   }
   let io = null;
@@ -829,7 +830,7 @@
   function dcChanged() {
     refreshBuy();
     renderNav(); renderFooter();
-    if (S.page === 'download') renderPage();
+    if (S.page === 'download' || S.page === 'admin') renderPage();
   }
   async function dcFetch(path, token) {
     const r = await fetch('https://discord.com/api/v10' + path, { headers: { authorization: `Bearer ${token}` } });
@@ -846,7 +847,7 @@
     const after = keep.get('ego-oauth-after', sessionStorage) || { page: 'plans' };
     keep.set('ego-oauth-state', null, sessionStorage);
     keep.set('ego-oauth-after', null, sessionStorage);
-    const page = ['home', 'download', 'plans'].includes(after.page) ? after.page : 'plans';
+    const page = ['home', 'download', 'plans', 'admin'].includes(after.page) ? after.page : 'plans';
     const hash = page === 'home' ? '#/' : `#/${page}`;
     try { history.replaceState(null, '', location.pathname + hash); } catch (_) { location.hash = hash; }
     const token = params.get('access_token');
@@ -1061,6 +1062,7 @@
     await sleep(REDUCED ? 0 : 300);
     let user = S.user;
     try { user = await AUTH.recordDownload({ file: BUILD.file, version: BUILD.version }); } catch (_) { /* still give them the file */ }
+    countDownload();
     S.user = user || S.user;
     triggerDownload();
     S.busy = false;
@@ -1089,6 +1091,122 @@
     if (S.page === 'download' && !$('#modal').firstElementChild) renderPage();
   }
   AUTH.onChange(() => { if (!S.busy) refresh(); });
+
+  // ───────────── admin page (#/admin, the © in the footer) ─────────────
+  // Revenue, downloads and people on each plan, from the Ego Tweaks bot. The bot checks the Discord login with
+  // Discord and only answers its admin accounts, so nothing here is secret.
+  const OWN = { data: null, err: '', busy: false, timer: 0 };
+  const dcToken = () => { const t = keep.get('ego-discord-token', sessionStorage); return t && t.exp > Date.now() ? t.token : ''; };
+  const botApi = (p) => DISCORD_LOGIN.botUrl.replace(/\/+$/, '') + p;
+  // Download pressed: tell the bot (text/plain, so no preflight; a beacon survives the file download starting)
+  function countDownload() {
+    if (!DISCORD_LOGIN.botUrl || !/^https?:$/.test(location.protocol)) return;
+    try {
+      const body = JSON.stringify(dcToken() ? { access_token: dcToken() } : {});
+      if (navigator.sendBeacon && navigator.sendBeacon(botApi('/site/download'), new Blob([body], { type: 'text/plain' }))) return;
+      fetch(botApi('/site/download'), { method: 'POST', body, keepalive: true, headers: { 'content-type': 'text/plain' } }).catch(() => {});
+    } catch (_) { /* counting never blocks a download */ }
+  }
+  async function loadOwner(manual = false) {
+    clearInterval(OWN.timer);
+    if (S.page !== 'admin') return;
+    if (!dcToken()) { OWN.data = null; OWN.err = 'login'; return paintOwner(); }
+    OWN.busy = true; if (manual) paintOwner();
+    try {
+      const r = await fetch(botApi('/site/admin'), { method: 'POST', headers: { 'content-type': 'text/plain' }, body: JSON.stringify({ access_token: dcToken() }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 401) { keep.set('ego-discord-token', null, sessionStorage); OWN.err = 'login'; OWN.data = null; }
+      else if (r.status === 403) { OWN.err = 'not-admin'; OWN.data = null; }
+      else if (!r.ok || !j.ok) OWN.err = j.error ? `The bot said: ${j.error}` : `The bot didn’t answer (${r.status}).`;
+      else { OWN.data = j; OWN.err = ''; }
+    } catch (_) { OWN.err = 'Couldn’t reach the bot. Check that it’s running on Railway.'; }
+    OWN.busy = false;
+    paintOwner();
+    OWN.timer = setInterval(() => { if (S.page === 'admin' && !document.hidden) loadOwner(); else if (S.page !== 'admin') clearInterval(OWN.timer); }, 60000);
+  }
+  function paintOwner() { const el = $('#owner'); if (el) el.innerHTML = ownerBody(); }
+  function pageAdmin() {
+    return `<div class="wrap page own-page"><div id="owner">${ownerBody()}</div></div>`;
+  }
+  const money = (v) => '$' + Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 });
+  const num = (v) => Number(v || 0).toLocaleString();
+  function ownerBody() {
+    const d = OWN.data;
+    const head = (sub) => `<div class="own-top"><div><span class="eyebrow">Ego Tweaks · Admin</span><h1 class="own-h">Business overview</h1><p class="own-sub">${sub}</p></div>
+      ${d ? `<div class="own-acts"><button type="button" class="btn btn-line ${OWN.busy ? 'busy' : ''}" data-act="owner-refresh">${svg('refresh')}Refresh</button></div>` : ''}</div>`;
+    if (!d && OWN.err === 'login') {
+      return `${head('Log in with the Discord account that owns Ego Tweaks.')}
+        <div class="card own-gate"><div class="mark">${svg('lock')}</div><h2>Owner login</h2><p>Only Discord accounts on the bot’s admin list can see this page. Everyone else gets nothing.</p>
+          <button type="button" class="btn btn-discord btn-lg" data-act="owner-login">${DISCORD_SVG}${S.dc ? `Continue as @${esc(S.dc.username)}` : 'Log in with Discord'}</button></div>`;
+    }
+    if (!d && OWN.err === 'not-admin') {
+      return `${head('This Discord account isn’t an admin.')}<div class="card own-gate"><div class="mark">${svg('ban')}</div><h2>Not an admin</h2><p>@${esc(S.dc ? S.dc.username : '')} isn’t on the bot’s admin list. Log in with the owner account.</p>
+        <button type="button" class="btn btn-line" data-act="discord-forget">Use another account</button></div>`;
+    }
+    if (!d) return `${head(OWN.err ? esc(OWN.err) : 'Loading…')}<div class="own-skel">${'<i></i>'.repeat(8)}</div>
+      ${OWN.err ? '<div class="center-row"><button type="button" class="btn btn-line" data-act="owner-refresh">Try again</button></div>' : ''}`;
+
+    const plans = [{ n: 0, name: 'Free', price: 0 }, ...PLANS];
+    const owners = d.owners || [0, 0, 0, 0, 0];
+    const people = owners.reduce((a, b) => a + b, 0);
+    const paidPeople = owners.slice(1).reduce((a, b) => a + b, 0);
+    const days = d.days || [];
+    const maxRev = Math.max(1, ...days.map((x) => x.revenue || 0));
+    const maxDl = Math.max(1, ...days.map((x) => (x.siteDownloads || 0) + (x.downloads || 0)));
+    const short = (k) => new Date(k + 'T12:00:00Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const bars = (val, max, label) => days.map((x) => { const v = val(x); return `<div class="own-bar" title="${esc(short(x.day))}: ${esc(label(v))}"><i style="height:${Math.max(v ? 4 : 0, (v / max) * 100).toFixed(1)}%"></i><span>${esc(short(x.day).replace(/\s.*/, ''))}<br>${esc(short(x.day).replace(/^\S+\s/, ''))}</span></div>`; }).join('');
+    const retracSales = (d.addonSales || {}).retrac || 0, retracRev = (d.addonRevenue || {}).retrac || 0;
+    const planCard = (p) => {
+      const n = p.n, own = owners[n] || 0;
+      return `<div class="own-plan p${n}"><div class="own-plan-h"><b>${esc(p.name)}</b><span>${n ? `$${p.price}` : 'Free'}</span></div>
+        <div class="own-plan-n">${num(own)}</div><small>${n ? (own === 1 ? 'person owns it' : 'people own it') : 'app users who never bought'}</small>
+        <div class="own-meter"><i style="width:${people ? ((own / people) * 100).toFixed(1) : 0}%"></i></div>
+        <dl>${n ? `<div><dt>Sales</dt><dd>${num(d.salesByTier[n])}</dd></div><div><dt>Revenue</dt><dd>${money(d.revenueByTier[n])}</dd></div>` : `<div><dt>Share of users</dt><dd>${people ? Math.round((own / people) * 100) : 0}%</dd></div>`}</dl></div>`;
+    };
+    const versions = Object.entries(d.versions || {}).sort((a, b) => b[1] - a[1]);
+    const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
+    return `${head(`Updated ${esc(new Date(d.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))} · refreshes every minute`)}
+      ${d.storageWarning ? `<div class="own-warn">${svg('alert')}<span><b>Data isn’t being saved.</b> ${esc(d.storageWarning)}</span></div>` : ''}
+      <section class="own-kpis">
+        <div class="own-kpi big"><span>Total revenue</span><b>${money(d.revenue)}</b><small>${num(d.sales)} sale${d.sales === 1 ? '' : 's'} · ${num(d.refunds)} refund${d.refunds === 1 ? '' : 's'}</small></div>
+        <div class="own-kpi"><span>Last 30 days</span><b>${money(d.revenue30)}</b><small>${num(d.sales30)} sales</small></div>
+        <div class="own-kpi"><span>Today</span><b>${money(d.revenueToday)}</b><small>${num((days[days.length - 1] || {}).sales)} sales</small></div>
+        <div class="own-kpi"><span>Downloads</span><b>${num((d.siteDownloads || 0) + (d.downloads || 0))}</b><small>${num(d.siteDownloads)} from the site · ${num(d.downloads)} app updates</small></div>
+      </section>
+
+      <section class="own-sec"><div class="own-sec-h"><h2>People on each plan</h2><span>${num(people)} people · ${num(paidPeople)} paying${people ? ` (${Math.round((paidPeople / people) * 100)}%)` : ''}</span></div>
+        <div class="own-plans">${plans.map(planCard).join('')}
+          <div class="own-plan own-addon"><div class="own-plan-h"><b>Retrac add-on</b><span>$${RETRAC.price}</span></div><div class="own-plan-n">${num(retracSales)}</div><small>add-on sales (Ultimate includes it)</small>
+            <dl><div><dt>Revenue</dt><dd>${money(retracRev)}</dd></div></dl></div>
+        </div></section>
+
+      <section class="own-grid">
+        <div class="own-card"><div class="own-sec-h"><h2>Revenue, last 14 days</h2><span>${money(days.reduce((a, x) => a + (x.revenue || 0), 0))}</span></div>
+          <div class="own-bars rev">${bars((x) => x.revenue || 0, maxRev, money)}</div></div>
+        <div class="own-card"><div class="own-sec-h"><h2>Downloads, last 14 days</h2><span>${num(days.reduce((a, x) => a + (x.siteDownloads || 0) + (x.downloads || 0), 0))}</span></div>
+          <div class="own-bars dl">${bars((x) => (x.siteDownloads || 0) + (x.downloads || 0), maxDl, num)}</div></div>
+      </section>
+
+      <section class="own-grid three">
+        <div class="own-card"><div class="own-sec-h"><h2>Downloads</h2></div><dl class="own-list">
+          <div><dt>Site downloads (all time)</dt><dd>${num(d.siteDownloads)}</dd></div><div><dt>Different people</dt><dd>${num(d.siteDownloaders)}</dd></div>
+          <div><dt>Site downloads, 30 days</dt><dd>${num(d.siteDownloads30)}</dd></div><div><dt>In-app updates</dt><dd>${num(d.downloads)}</dd></div></dl></div>
+        <div class="own-card"><div class="own-sec-h"><h2>App users</h2></div><dl class="own-list">
+          <div><dt>Signed in ever</dt><dd>${num(d.users)}</dd></div><div><dt>Active today</dt><dd>${num(d.active1)}</dd></div>
+          <div><dt>Active this week</dt><dd>${num(d.active7)}</dd></div><div><dt>Active this month</dt><dd>${num(d.active30)}</dd></div><div><dt>PCs</dt><dd>${num(d.devices)}</dd></div></dl></div>
+        <div class="own-card"><div class="own-sec-h"><h2>Referrals</h2></div><dl class="own-list">
+          <div><dt>Owed to referrers</dt><dd>${money(d.referralsOwed)}</dd></div><div><dt>Payout requests</dt><dd>${num(d.payoutRequests)}</dd></div></dl>
+          <p class="own-note">Pay in PayPal, then record it in Discord with <code>/payout</code>. <code>/referrals</code> lists who asked.</p></div>
+      </section>
+
+      <section class="own-grid">
+        <div class="own-card"><div class="own-sec-h"><h2>Latest sign-ins</h2><span>app</span></div>
+          <div class="own-people">${(d.recent || []).slice(0, 12).map((u) => `<div><b>${esc(u.name || u.id)}</b>${tierTag(u.tier)}<small>${esc(ago(u.last))}</small></div>`).join('') || '<p class="own-note">Nobody yet.</p>'}</div></div>
+        <div class="own-card"><div class="own-sec-h"><h2>App versions in use</h2><span>last 30 days</span></div>
+          <div class="own-vers">${versions.map(([v, c]) => `<div><span>v${esc(v)}${v === APP.version ? ' <em>newest</em>' : ''}</span><i><b style="width:${((c / Math.max(1, versions[0][1])) * 100).toFixed(1)}%"></b></i><small>${num(c)}</small></div>`).join('') || '<p class="own-note">No PCs checked in yet.</p>'}</div></div>
+      </section>
+      <p class="own-note center">Sales and revenue come from Payhip orders the bot received. Site downloads are counted from 3.0.12 on; older clicks are in <button type="button" class="link" data-act="admin-legacy">the Supabase counter</button>.</p>`;
+  }
 
   // ───────────── hidden admin panel (Supabase registrations + downloads) ─────────────
   const ADM = { timer: 0, data: null };
@@ -1178,7 +1296,7 @@
       ticking = false;
       const y = window.scrollY;
       $('#nav').classList.toggle('scrolled', y > 20);
-      $('#dock').classList.toggle('on', y > 560 && S.page !== 'plans' && S.page !== 'thanks');
+      $('#dock').classList.toggle('on', y > 560 && !['plans', 'thanks', 'admin'].includes(S.page));
     });
   }
   window.addEventListener('scroll', onScroll, { passive: true });
@@ -1226,7 +1344,10 @@
       case 'reviews-more': S.rvShow = (S.rvShow || REVIEWS_PAGE) + REVIEWS_PAGE; paintReviews(); break;
       case 'xp-more': S.xshow += 60; filterXp(); break;
       case 'copy-hash': copyHash(el); break;
-      case 'admin': openAdmin(); break;
+      case 'admin': go('admin'); break;
+      case 'admin-legacy': openAdmin(); break;
+      case 'owner-login': discordConnect('admin'); break;
+      case 'owner-refresh': loadOwner(true); break;
       case 'admin-refresh': loadAdmin(); break;
       case 'admin-lock': clearInterval(ADM.timer); AUTH.signOut().catch(() => {}); closeModal(); toast('Admin signed out'); break;
     }

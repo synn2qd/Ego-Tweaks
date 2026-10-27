@@ -6,7 +6,7 @@
   <title>Ego Tweaks 3.0 — more FPS, less lag, undo anything</title>
   <meta name="description" content="Ego Tweaks tunes Windows for gaming: 567 tweaks matched to your PC, Max FPS mode, Game Booster and Ping Booster. Free download for Windows 10 and 11, one-time plans from $5, and every change can be undone.">
   <meta name="theme-color" content="#08080a">
-  <meta name="ego-site-version" content="5.11">
+  <meta name="ego-site-version" content="5.12">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Ego Tweaks 3.0 — more FPS, less lag, undo anything">
   <meta property="og:description" content="567 tweaks, Max FPS mode, Game Booster and Ping Booster. One-time plans from $5. Every change can be undone.">
@@ -16,7 +16,7 @@
   <link rel="preload" href="assets/fonts/unbounded-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/shots/v3/overview.webp" as="image" type="image/webp">
-  <link rel="stylesheet" href="assets/styles.css?v=5.11">
+  <link rel="stylesheet" href="assets/styles.css?v=5.12">
   <!-- Payhip checkout (opens on top of the page when there's no Discord login) -->
   <script src="https://payhip.com/payhip.js" defer></script>
 </head>
@@ -47,8 +47,8 @@
   <!-- If the Supabase script was blocked (ad blocker, offline), auth.js gets an offline client: accounts say
        they're unavailable, and Discord login, buying and downloads keep working. -->
   <script>if (!window.supabase) window.supabase = { offline: true, createClient() { const no = () => Promise.reject(new Error('Accounts are unavailable right now — try again in a minute.')); const q = () => ({ select: q, eq: q, maybeSingle: no, insert: no }); return { auth: { getSession: no, getUser: no, signUp: no, signInWithPassword: no, updateUser: no, signOut: () => Promise.resolve({ error: null }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) }, from: q, rpc: no }; } };</script>
-  <script src="assets/catalog.js?v=5.11"></script>
-  <script src="assets/auth.js?v=5.11"></script>
-  <script src="assets/site.js?v=5.11"></script>
+  <script src="assets/catalog.js?v=5.12"></script>
+  <script src="assets/auth.js?v=5.12"></script>
+  <script src="assets/site.js?v=5.12"></script>
 </body>
 </html>
