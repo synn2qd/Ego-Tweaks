@@ -10,14 +10,14 @@
     name: 'Ego Tweaks',
     file: 'EgoTweaks.exe',
     href: 'downloads/EgoTweaks.exe',
-    version: '3.0.12',
-    bytes: 2287616,
-    sha256: '5f2b967d39a59bbbf39225a3b5835f7a669494b14bb457b18422cde30fe55d82',
+    version: '3.0.13',
+    bytes: 2315264,
+    sha256: '88ac8d300c3ad835e5525b589a503fc76cc5de29e02239cd073e4bded533da32',
   };
   // What the Free plan includes (the app's own list).
   const FREE = ['17 free tweaks: Game Mode, GPU scheduling, mouse acceleration off, no Start ads and more', 'Overview with live CPU, GPU, RAM and storage', 'Live monitor and benchmarks', 'Network diagnostics: ping, regions, speed and route', 'Recovery: undo everything, restore points', 'Automatic updates when you sign in'];
   // The current app, shown in the hero and the footer.
-  const APP = { version: '3.0.12' };
+  const APP = { version: '3.0.13' };
   // Paste your links here and they show up in the nav, footer and menu. Leave '' to hide.
   const LINKS = { discord: 'https://discord.gg/gtPggZ9zpz', x: '' };
   // The four plans. Every one is a one-time payment: nothing renews and it never expires.
@@ -31,8 +31,8 @@
       perks: ['250 performance tweaks: CPU scheduling, stutter, GPU, input, services', 'Game Booster (pauses update downloads while you play)', 'Process killer and per-game settings', 'Stutter checklist, deep clean, memory clearing', 'BIOS guide'] },
     { n: 3, id: 'pro', name: 'Pro', price: 20, payhip: '20cFf', sub: 'Lower, steadier ping on top of everything in Premium.',
       perks: ['63 network and power-plan tweaks', 'Ping Booster', 'DNS switching', 'Automatic memory clearing', 'Session reports and setup codes'] },
-    { n: 4, id: 'ultimate', name: 'Ultimate', price: 50, payhip: 'Ayl9C', flag: 'Everything', sub: 'Every tweak and Max FPS mode: the whole thing in one click.',
-      perks: ['20 CPU and GPU clock tweaks', 'Max FPS mode: every FPS tweak plus Game Booster in one click', 'Full CPU speed', 'Keyboard overclock', 'The Retrac add-on included'] },
+    { n: 4, id: 'ultimate', name: 'Ultimate', price: 50, payhip: 'Ayl9C', flag: 'Everything', sub: 'Every tweak, Ego OS and Max FPS mode: the whole thing in one click.',
+      perks: ['20 CPU and GPU clock tweaks', 'Ego OS: turns your Windows into a gaming setup, under 80 processes, no USB or reinstall, fully undoable', 'Max FPS mode: every FPS tweak plus Game Booster in one click', 'Full CPU speed', 'Keyboard overclock', 'The Retrac add-on included'] },
   ];
   // "Continue with Discord": visitors log in with Discord to download and to buy (so the purchase is tied to
   // their Discord account and the bot can DM them). The bot then adds them to the Discord server.
