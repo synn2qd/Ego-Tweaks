@@ -10,14 +10,14 @@
     name: 'Ego Tweaks',
     file: 'EgoTweaks.exe',
     href: 'downloads/EgoTweaks.exe',
-    version: '3.0.13',
-    bytes: 2315264,
-    sha256: '88ac8d300c3ad835e5525b589a503fc76cc5de29e02239cd073e4bded533da32',
+    version: '3.0.14',
+    bytes: 2340864,
+    sha256: 'd1b9eb807255f2502e552c65db4f974e40e1478fb27defb4f39155b1f51fc1d1',
   };
   // What the Free plan includes (the app's own list).
   const FREE = ['17 free tweaks: Game Mode, GPU scheduling, mouse acceleration off, no Start ads and more', 'Overview with live CPU, GPU, RAM and storage', 'Live monitor and benchmarks', 'Network diagnostics: ping, regions, speed and route', 'Recovery: undo everything, restore points', 'Automatic updates when you sign in'];
   // The current app, shown in the hero and the footer.
-  const APP = { version: '3.0.13' };
+  const APP = { version: '3.0.14' };
   // Paste your links here and they show up in the nav, footer and menu. Leave '' to hide.
   const LINKS = { discord: 'https://discord.gg/gtPggZ9zpz', x: '' };
   // The four plans. Every one is a one-time payment: nothing renews and it never expires.
@@ -67,7 +67,15 @@
   const RETRAC = { n: 'retrac', id: 'retrac', name: 'Retrac', price: 5, payhip: 'Xvbc1',
     perks: ['One-click Boost Retrac: every Retrac setting and Retrac Booster at once', 'Fullscreen optimizations off, high CPU priority, sharp at any display scaling, never power-throttled', 'Retrac Booster with 6 options: high priority, calm background apps, 0.5 ms timer, clear memory, pause updates, max-performance power plan', 'Your recent Retrac sessions'],
     free: 'Free for everyone: Retrac found on your PC, the high-performance GPU setting and in-game settings for the Chapter 2 Season 4 build.' };
-  const productOf = (key) => (key === 'retrac' ? RETRAC : planOf(Number(key)));
+  // Console Tweaks and Ego Security Check add-ons, and the $30 bundle (Ultimate + every add-on).
+  // payhip:'' shows "Coming soon" — put each product's Payhip key here when it's on sale.
+  const CONSOLE = { n: 'console', id: 'console', name: 'Console Tweaks', price: 5, payhip: '',
+    perks: ['Lowest-lag TV and console settings for PS5 and Xbox', 'Performance mode, 120 Hz, VRR and ALLM set up right', 'Wired network, audio and controller setup', 'Per-game frame-rate picks'] };
+  const SECURITY = { n: 'security', id: 'security', name: 'Security Check', price: 5, payhip: '',
+    perks: ['A read-only check of Defender, firewall, SmartScreen, UAC and updates', 'Plain-English results with a jump to each Windows setting', 'Flags a missing antivirus, old definitions or paused updates', 'Changes nothing — Ego Tweaks never turns off your security'] };
+  const BUNDLE = { n: 'bundle', id: 'bundle', name: 'Everything Bundle', price: 30, payhip: '',
+    perks: ['Ultimate: every tweak, Ego OS and Max FPS mode', 'Console Tweaks for PS5 and Xbox', 'Ego Security Check', 'One payment, yours for good — saves $20 vs buying apart'] };
+  const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE, security: SECURITY, bundle: BUNDLE }[key] || planOf(Number(key)));
   // auth.js needs the Supabase script. If that was blocked, accounts are off but the rest of the site keeps working.
   const AUTH = window.EgoAuth || (() => { const no = () => Promise.reject(new Error('Accounts are unavailable right now — try again in a minute.'));
     return { current: () => null, onChange() {}, signUp: no, signIn: no, update: no, signOut: () => Promise.resolve(),
@@ -441,6 +449,33 @@
         <ul>${RETRAC.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
       </div>
       <div class="buy" data-plan="retrac">${buyArea(RETRAC)}</div>
+    </article>
+    <article class="card addon reveal" id="plan-console">
+      <div class="addon-main">
+        <span class="eyebrow">Add-on · works with any plan, Free included</span>
+        <h3>Console Tweaks <span class="addon-pr">$${CONSOLE.price}<small>one-time</small></span></h3>
+        <p>The lowest-lag TV and console settings for PS5 and Xbox: display, performance mode, 120 Hz, VRR, network, audio and controller. Shown in the app; you change them on your console. Included with Ultimate.</p>
+        <ul>${CONSOLE.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
+      </div>
+      <div class="buy" data-plan="console">${buyArea(CONSOLE)}</div>
+    </article>
+    <article class="card addon reveal" id="plan-security">
+      <div class="addon-main">
+        <span class="eyebrow">Add-on · works with any plan, Free included</span>
+        <h3>Ego Security Check <span class="addon-pr">$${SECURITY.price}<small>one-time</small></span></h3>
+        <p>A one-click, read-only check that your PC’s built-in protection is on and healthy — Defender, firewall, SmartScreen, UAC and updates. It never turns anything off; it just tells you what to fix. Included with Ultimate.</p>
+        <ul>${SECURITY.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
+      </div>
+      <div class="buy" data-plan="security">${buyArea(SECURITY)}</div>
+    </article>
+    <article class="card addon bundle reveal" id="plan-bundle">
+      <div class="addon-main">
+        <span class="eyebrow">Bundle · best value</span>
+        <h3>Everything Bundle <span class="addon-pr">$${BUNDLE.price}<small>one-time</small></span></h3>
+        <p>Ultimate plus every add-on — Ego OS, Console Tweaks and Security Check — in one payment. Buying them apart is $50. Yours for good.</p>
+        <ul>${BUNDLE.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
+      </div>
+      <div class="buy" data-plan="bundle">${buyArea(BUNDLE)}</div>
     </article>`;
   }
   const plansNote = () => `<div class="plans-note reveal"><span>${svg('card')}One-time payment</span><span>${svg('ban')}Never expires, nothing renews</span><span>${svg('user')}Tied to your Discord, works on any PC</span><span>${svg('crown')}Upgrade any time: your highest plan counts</span></div>
@@ -466,7 +501,7 @@
     return 'https://payhip.com/buy?' + q;
   };
   function buyArea(p) {
-    const cls = `btn ${p.n === 4 || p.n === 'retrac' || p.flag === 'Most popular' ? 'btn-primary' : 'btn-line'} btn-block`;
+    const cls = `btn ${p.n === 4 || p.n === 'retrac' || p.n === 'bundle' || p.flag === 'Most popular' ? 'btn-primary' : 'btn-line'} btn-block`;
     if (!payhipKey(p)) return `<a class="btn soon btn-block" href="${esc(DISCORD || '#/plans')}" target="_blank" rel="noopener" data-act="buy-soon" data-plan="${p.n}">Coming soon</a><p class="why">Ask in the Discord to get ${esc(p.name)} now.</p>`;
     if (!DC_LOGIN) return `<a class="${cls}" href="${esc(checkoutUrl(p))}" target="_blank" rel="noopener" data-act="buy" data-plan="${p.n}">Buy ${esc(p.name)} — $${p.price}</a>`;
     if (S.dcBusy) return `<button class="${cls} busy" disabled>Connecting</button>`;
