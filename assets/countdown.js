@@ -69,7 +69,7 @@
       '<div class="unit"><b data-u="s">00</b><small>Seconds</small></div></div>' +
       '<div><div class="when">' + DROP_TEXT + '</div><div class="local">' + localWhen() + '</div></div>' +
       '<a class="btn" href="' + DISCORD + '" target="_blank" rel="noopener">Join the Discord for the drop</a>' +
-      '<p class="fine">Already have Ego Tweaks or Ego for Roblox? The apps keep working while the site is down.</p>' +
+      '<p class="fine">Already have Ego Tweaks? The app keeps working while the site is down.</p>' +
       '</div>';
     document.body.appendChild(el);
     tick();
