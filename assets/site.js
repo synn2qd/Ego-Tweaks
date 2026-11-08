@@ -11,14 +11,14 @@
     name: 'Ego Tweaks',
     file: 'EgoTweaks.exe',
     href: 'downloads/EgoTweaks.exe',
-    version: '3.0.14',
-    bytes: 2340864,
-    sha256: 'd1b9eb807255f2502e552c65db4f974e40e1478fb27defb4f39155b1f51fc1d1',
+    version: '3.1.0',
+    bytes: 2355712,
+    sha256: 'c55d20259491df99b04fe87bd1bd56d0e6b3dfdd6fbcc49e0051c6508c363482',
   };
   // What the Free plan includes (the app's own list).
   const FREE = ['17 free tweaks: Game Mode, GPU scheduling, mouse acceleration off, no Start ads and more', 'Overview with live CPU, GPU, RAM and storage', 'Live monitor and benchmarks', 'Network diagnostics: ping, regions, speed and route', 'Recovery: undo everything, restore points', 'Automatic updates when you sign in'];
   // The current app, shown in the hero and the footer.
-  const APP = { version: '3.0.14' };
+  const APP = { version: '3.1.0' };
   // Paste your links here and they show up in the nav, footer and menu. Leave '' to hide.
   const LINKS = { discord: 'https://discord.gg/gtPggZ9zpz', x: '' };
   // The four plans. Every one is a one-time payment: nothing renews and it never expires.
