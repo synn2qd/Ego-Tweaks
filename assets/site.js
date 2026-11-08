@@ -73,9 +73,12 @@
     perks: ['Lowest-lag TV and console settings for PS5 and Xbox', 'Performance mode, 120 Hz, VRR and ALLM set up right', 'Wired network, audio and controller setup', 'Per-game frame-rate picks'] };
   const SECURITY = { n: 'security', id: 'security', name: 'Security Check', price: 5, payhip: '',
     perks: ['A read-only check of Defender, firewall, SmartScreen, UAC and updates', 'Plain-English results with a jump to each Windows setting', 'Flags a missing antivirus, old definitions or paused updates', 'Changes nothing — Ego Tweaks never turns off your security'] };
+  // Ego+ for Roblox: looks for the Ego for Roblox launcher. The bot finds it by "Roblox" in the Payhip product name.
+  const ROBLOXPLUS = { n: 'roblox', id: 'roblox', name: 'Ego+ for Roblox', price: 3, payhip: '',
+    perks: ['7 colour themes for Ego for Roblox', 'Live backgrounds: Aurora, Grid and Stars', 'The EGO+ badge by the logo', 'Looks only — every boost, the auto clicker, games and friends stay free'] };
   const BUNDLE = { n: 'bundle', id: 'bundle', name: 'Everything Bundle', price: 30, payhip: '',
-    perks: ['Ultimate: every tweak, Ego OS and Max FPS mode', 'Console Tweaks for PS5 and Xbox', 'Ego Security Check', 'One payment, yours for good — saves $20 vs buying apart'] };
-  const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE, security: SECURITY, bundle: BUNDLE }[key] || planOf(Number(key)));
+    perks: ['Ultimate: every tweak, Ego OS and Max FPS mode', 'Console Tweaks for PS5 and Xbox', 'Ego Security Check', 'Ego+ for Roblox', 'One payment, yours for good — saves $23 vs buying apart'] };
+  const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE, security: SECURITY, roblox: ROBLOXPLUS, bundle: BUNDLE }[key] || planOf(Number(key)));
   // auth.js needs the Supabase script. If that was blocked, accounts are off but the rest of the site keeps working.
   const AUTH = window.EgoAuth || (() => { const no = () => Promise.reject(new Error('Accounts are unavailable right now — try again in a minute.'));
     return { current: () => null, onChange() {}, signUp: no, signIn: no, update: no, signOut: () => Promise.resolve(),
@@ -468,11 +471,20 @@
       </div>
       <div class="buy" data-plan="security">${buyArea(SECURITY)}</div>
     </article>
+    <article class="card addon reveal" id="plan-roblox">
+      <div class="addon-main">
+        <span class="eyebrow">Add-on · for Ego for Roblox</span>
+        <h3>Ego+ for Roblox <span class="addon-pr">$${ROBLOXPLUS.price}<small>one-time</small></span></h3>
+        <p>Make the Ego for Roblox launcher yours: colour themes, live backgrounds and the EGO+ badge. Sign in to the launcher with the same Discord account and it unlocks. Included with Ultimate.</p>
+        <ul>${ROBLOXPLUS.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
+      </div>
+      <div class="buy" data-plan="roblox">${buyArea(ROBLOXPLUS)}</div>
+    </article>
     <article class="card addon bundle reveal" id="plan-bundle">
       <div class="addon-main">
         <span class="eyebrow">Bundle · best value</span>
         <h3>Everything Bundle <span class="addon-pr">$${BUNDLE.price}<small>one-time</small></span></h3>
-        <p>Ultimate plus every add-on — Ego OS, Console Tweaks and Security Check — in one payment. Buying them apart is $50. Yours for good.</p>
+        <p>Ultimate plus every add-on — Ego OS, Console Tweaks, Security Check and Ego+ for Roblox — in one payment. Buying them apart is $53. Yours for good.</p>
         <ul>${BUNDLE.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
       </div>
       <div class="buy" data-plan="bundle">${buyArea(BUNDLE)}</div>
