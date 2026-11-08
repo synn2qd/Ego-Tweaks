@@ -1,4 +1,4 @@
-/* Ego Tweaks — website 5.0 (Ego Tweaks 3.0: four one-time plans, sign in with Discord) */
+/* Ego Tweaks — website 6.0 (Ego Tweaks 3.0: four one-time plans, sign in with Discord; Nov 2026 white brand) */
 (() => {
   'use strict';
 
@@ -84,7 +84,7 @@
   const fmtDate = (iso, time = true) => { try { return new Date(iso).toLocaleString(undefined, Object.assign({ month: 'short', day: 'numeric', year: 'numeric' }, time ? { hour: 'numeric', minute: '2-digit' } : {})); } catch (_) { return iso; } };
   const YEAR = new Date().getFullYear();
   const DISCORD = LINKS.discord;
-  const avPlaceholder = (name) => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#5865f2"/><text x="32" y="42" font-family="Segoe UI,Arial,sans-serif" font-size="28" font-weight="700" fill="#fff" text-anchor="middle">${esc(String(name || '?').trim().charAt(0).toUpperCase() || '?')}</text></svg>`);
+  const avPlaceholder = (name) => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#5b4cf0"/><text x="32" y="42" font-family="Segoe UI,Arial,sans-serif" font-size="28" font-weight="700" fill="#fff" text-anchor="middle">${esc(String(name || '?').trim().charAt(0).toUpperCase() || '?')}</text></svg>`);
   // Images that fail to load step through their fallbacks (data-fb, then data-fb2).
   document.addEventListener('error', (e) => {
     const img = e.target;
@@ -133,6 +133,10 @@
   const DISCORD_SVG = '<svg class="b" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.32 4.37A19.8 19.8 0 0 0 15.43 2.85a.07.07 0 0 0-.08.04c-.21.38-.44.86-.61 1.25a18.27 18.27 0 0 0-5.49 0 12.64 12.64 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.74 19.74 0 0 0-4.88 1.52.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.3 1.23-1.99a.08.08 0 0 0-.04-.11 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1 0 .13 12.3 12.3 0 0 1-1.88.89.08.08 0 0 0-.04.11c.36.7.77 1.36 1.23 1.99a.08.08 0 0 0 .08.03 19.84 19.84 0 0 0 6-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.15-1.09-2.15-2.42s.95-2.42 2.15-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z"/></svg>';
   const X_SVG = '<svg class="b" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.41l-5.8-7.58-6.64 7.58H.47l8.6-9.83L0 1.15h7.59l5.24 6.93zm-1.29 19.5h2.04L6.49 3.24H4.3z"/></svg>';
 
+  // The logo lives in ONE file: assets/logo-mark.svg (also the favicon). Swap that file to change the mark everywhere
+  // (nav, menu, footer, download card, countdown, legal pages). LOGO_MARK / LOGO are the only logo markup in this file.
+  const LOGO_MARK = (size = 28) => `<img class="logo-mark" src="assets/logo-mark.svg?v=7" alt="" width="${size}" height="${size}">`;
+  const LOGO = (chip = '') => `${LOGO_MARK()}<span class="wordmark"><span class="wm-ego">Ego</span> Tweaks</span>${chip}`;
   const S = { page: 'home', user: AUTH.current(), busy: false, tour: 'overview', xcat: 'all', xq: '', xtier: 0, xshow: 60 };
 
   // ───────────── visit counts (only used if the site runs on the Cloudflare setup) ─────────────
@@ -148,19 +152,22 @@
 
   // ───────────── nav, menu, footer, dock ─────────────
   const NAV = [['features', 'Features'], ['tweaks', 'Tweaks'], ['plans', 'Plans'], ['download', 'Download'], ['reviews', 'Reviews'], ['faq', 'FAQ']];
+  // Download has its own primary button in the bar, so it isn't repeated as a text link there (it stays in the phone menu).
+  const NAV_BAR = NAV.filter(([id]) => id !== 'download');
   const meBtn = () => (S.dc
     ? `<button type="button" class="me" data-act="discord-me">${dcImg(S.dc, 30)}${esc(dcName())}</button>`
     : DC_LOGIN ? `<button type="button" class="btn btn-line btn-sm" data-act="discord-me">${DISCORD_SVG}Log in</button>` : '');
   function renderNav() {
-    $('#nav-links').innerHTML = NAV.map(([id, n]) => `<button type="button" data-nav="${id}"${navOn(id) ? ' aria-current="page"' : ''}>${n}</button>`).join('');
-    $('#nav-cta').innerHTML = `${meBtn()}<button type="button" class="btn btn-primary btn-sm" data-nav="plans">Get Ego Tweaks</button>`;
+    $('#nav .brand').innerHTML = LOGO('<i>3.0</i>');
+    $('#nav-links').innerHTML = NAV_BAR.map(([id, n]) => `<button type="button" data-nav="${id}"${navOn(id) ? ' aria-current="page"' : ''}>${n}</button>`).join('');
+    $('#nav-cta').innerHTML = `${meBtn()}<button type="button" class="btn btn-primary btn-sm nav-dl" data-nav="download"${navOn('download') ? ' aria-current="page"' : ''}>${svg('download')}Download</button>`;
   }
   const navOn = (id) => id === S.page || (id === 'plans' && S.page === 'thanks');
   function openMenu() {
     const m = $('#menu');
-    m.innerHTML = `<div class="menu-top"><a class="brand" href="#/" data-nav="home"><b>EGO</b><span>TWEAKS</span></a>
+    m.innerHTML = `<div class="menu-top"><a class="brand" href="#/" data-nav="home" aria-label="Ego Tweaks home">${LOGO()}</a>
         <button type="button" class="burger" style="display:grid" data-act="menu-close" aria-label="Close menu">${svg('x')}</button></div>
-      <nav aria-label="Pages">${[['home', 'Home']].concat(NAV).map(([id, n]) => `<button type="button" data-nav="${id}">${n}${svg('arrow')}</button>`).join('')}</nav>
+      <nav aria-label="Pages">${[['home', 'Home']].concat(NAV.filter(([id]) => id !== 'features')).map(([id, n]) => `<button type="button" data-nav="${id}"${navOn(id) && id !== 'features' ? ' aria-current="page"' : ''}>${n}${svg('arrow')}</button>`).join('')}</nav>
       <div class="acts">
         <button type="button" class="btn btn-primary btn-lg" data-nav="plans">Get Ego Tweaks — from $${PLANS[0].price}</button>
         ${DC_LOGIN ? `<button type="button" class="btn btn-line btn-lg" data-act="discord-me">${DISCORD_SVG}${S.dc ? '@' + esc(S.dc.username) : 'Log in with Discord'}</button>` : ''}
@@ -184,7 +191,7 @@
       LINKS.x && `<li><a href="${esc(LINKS.x)}" target="_blank" rel="noopener">X (Twitter)</a></li>`].filter(Boolean).join('');
     $('#foot').innerHTML = `<div class="wrap">
       <div class="foot-in">
-        <div><a class="brand" href="#/" data-nav="home"><b>EGO</b><span>TWEAKS</span></a>
+        <div><a class="brand" href="#/" data-nav="home" aria-label="Ego Tweaks home">${LOGO()}</a>
           <p>A Windows tweaking utility for gamers. ${TWEAKS.length} tweaks for FPS, input delay and ping, and every one can be undone. One-time plans from $${PLANS[0].price}.</p></div>
         <div><h4>Product</h4><ul><li><button type="button" data-nav="features">Features</button></li><li><button type="button" data-nav="tweaks">All tweaks</button></li><li><button type="button" data-nav="plans">Plans</button></li><li><button type="button" data-nav="download">Free download</button></li></ul></div>
         <div><h4>Help</h4><ul><li><button type="button" data-nav="faq">FAQ</button></li><li><button type="button" data-nav="reviews">Reviews</button></li>${DC_LOGIN ? `<li><button type="button" data-act="discord-me">${S.dc ? '@' + esc(S.dc.username) : 'Log in with Discord'}</button></li>` : ''}</ul></div>
@@ -248,6 +255,7 @@
     if (S.page === 'home' || S.page === 'reviews') loadReviews();
     if (S.page === 'admin') loadOwner();
     loadDiscord();
+    spyJump();
   }
   let io = null;
   function setupReveal(view) {
@@ -260,17 +268,11 @@
 
   // ───────────── shared blocks ─────────────
   const secHd = (k, h, p, center = false) => `<header class="sec-hd${center ? ' center' : ''} reveal"><span class="eyebrow">${k}</span><h2>${h}</h2>${p ? `<p>${p}</p>` : ''}</header>`;
+  // In-page jump row for long pages (Plans, FAQ): buttons, not #anchors, because the hash is the page router.
+  const jumpRow = (items) => `<nav class="jump" aria-label="On this page"><div class="jump-in">${items.map(([id, n]) => `<button type="button" data-jump="${id}">${n}</button>`).join('')}</div></nav>`;
   const tierTag = (n) => (n ? `<span class="tier t${n}">${esc(planOf(n).name)}</span>` : '<span class="tier t0">Free</span>');
   const faq = (q, a) => `<details><summary>${q}${svg('plus')}</summary><div class="a">${a.split('\n').map((x) => `<p>${x}</p>`).join('')}</div></details>`;
   const dcLiveBadge = () => (DISCORD ? `<a class="dc-live" href="${esc(DISCORD)}" target="_blank" rel="noopener" data-dc-wrap hidden>${DISCORD_SVG}<span><i class="dot green live"></i><b data-dc="online">—</b> online</span><span><b data-dc="members">—</b> members</span></a>` : '');
-  const dialSvg = () => {
-    let s = '';
-    for (let i = 0; i < 64; i++) {
-      const a = (i / 64) * Math.PI * 2 - Math.PI / 2, r1 = 47, r2 = i % 4 ? 49 : 50.5;
-      s += `<line x1="${(50 + Math.cos(a) * r1).toFixed(2)}" y1="${(50 + Math.sin(a) * r1).toFixed(2)}" x2="${(50 + Math.cos(a) * r2).toFixed(2)}" y2="${(50 + Math.sin(a) * r2).toFixed(2)}"${i < 22 ? ' class="on"' : ''} vector-effect="non-scaling-stroke"/>`;
-    }
-    return `<svg class="dial" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${s}</svg>`;
-  };
 
   // ───────────── home ─────────────
   const FEATURES = [
@@ -309,8 +311,7 @@
         <div class="reveal" style="--d:5">${dcLiveBadge()}</div>
       </div>
       <div class="stage reveal" style="--d:2">
-        ${dialSvg()}
-        <img class="shot" src="${shot('overview')}" width="1600" height="1000" alt="The Ego Tweaks 3.0 app: the Overview page" fetchpriority="high">
+        <div class="frame"><img class="shot" src="${shot('overview')}" width="1600" height="1000" alt="The Ego Tweaks 3.0 app: the Overview page" fetchpriority="high"></div>
         <div class="tag b"><span class="ic">${svg('bolt')}</span><span><b>Max FPS mode</b><br>one click</span></div>
         <div class="tag a"><span class="ic">${svg('undo')}</span><span><b>Undo anything</b><br>every change is backed up</span></div>
       </div>
@@ -333,14 +334,14 @@
             <div><span class="ic">${svg('bolt')}</span><h3>Max FPS mode</h3><p>One click: every FPS tweak for this PC, full CPU speed, and Game Booster with every option. Undo it any time from Recovery.</p><p style="margin-top:14px">${tierTag(4)}</p></div>
             <img src="${shot('booster')}" width="1600" height="1000" alt="Max FPS mode and Game Booster in the app" loading="lazy">
           </article>
-          ${FEATURES.map((f, i) => `<article class="card feat reveal" style="--d:${(i % 3) + 1}"><span class="ic">${svg(f.ic)}</span><h3>${f.t}${f.n ? tierTag(f.n) : '<span class="tier t1" style="--pc:#3ddc84">Every plan</span>'}</h3><p>${f.p}</p></article>`).join('')}
+          ${FEATURES.map((f, i) => `<article class="card feat reveal" style="--d:${(i % 3) + 1}"><span class="ic">${svg(f.ic)}</span><h3>${f.t}${f.n ? tierTag(f.n) : '<span class="tier t0">Every plan</span>'}</h3><p>${f.p}</p></article>`).join('')}
         </div>
       </div>
     </section>
 
     <section class="sec tint" id="tour">
       <div class="wrap">
-        ${secHd('The app', 'Easy to use. <em>Hard to beat.</em>', 'Bigger text, plain-English descriptions, and a Start here card that walks you through your first run.')}
+        ${secHd('The app', 'Easy to use. <em>Easy to undo.</em>', 'Bigger text, plain-English descriptions, and a Start here card that walks you through your first run.')}
         <div class="tour reveal">
           <div class="tour-tabs" role="tablist" aria-label="App pages">
             ${TOUR.map((x) => `<button type="button" role="tab" data-tour="${x.id}" aria-selected="${x.id === t.id}"><b>${svg(x.ic)}${x.t}</b><small>${x.p}</small></button>`).join('')}
@@ -368,7 +369,7 @@
     <section class="sec" id="safety">
       <div class="wrap safe">
         <div>${secHd('Safety', 'Every change can be <em>undone.</em>', 'Ego Tweaks saves what it changes before it changes it. Switch a tweak off and the old value goes back.')}
-          <div class="reveal"><img class="shot" src="${shot('recovery')}" width="1600" height="1000" alt="The Recovery page in the app" loading="lazy"></div></div>
+          <div class="frame reveal"><img class="shot" src="${shot('recovery')}" width="1600" height="1000" alt="The Recovery page in the app" loading="lazy"></div></div>
         <ul class="safe-list">
           <li class="reveal"><span class="ic">${svg('save')}</span><div><b>Backed up first</b><p>Before any tweak changes a setting, the value it replaces is saved.</p></div></li>
           <li class="reveal" style="--d:1"><span class="ic">${svg('undo')}</span><div><b>Undo one, or all</b><p>Switch a tweak off to undo it, or press Undo all changes in Recovery. Undo works even when you’re signed out.</p></div></li>
@@ -397,7 +398,7 @@
       <div class="wrap">
         <div class="finale reveal">
           <span class="eyebrow">Ego Tweaks 3.0</span>
-          <h2>Your PC, at its <em style="font-style:normal;color:var(--accent)">fastest.</em></h2>
+          <h2>Your PC, at its <em>fastest.</em></h2>
           <p>Pick a plan, sign in with Discord, and Ego Tweaks does the rest. Pay once and it’s yours.</p>
           <div class="hero-cta"><button type="button" class="btn btn-primary btn-lg" data-nav="plans">See plans${svg('arrow')}</button><button type="button" class="btn btn-line btn-lg" data-nav="download">${svg('download')}Free download</button></div>
         </div>
@@ -440,7 +441,7 @@
       ${addonCard()}`;
   }
   function addonCard() {
-    return `<article class="card addon reveal" id="plan-retrac">
+    return `<article class="card addon reveal jump-target" id="plan-retrac">
       <div class="addon-main">
         <span class="eyebrow">Add-on · works with any plan, Free included</span>
         <h3>Project Retrac <span class="addon-pr">$${RETRAC.price}<small>one-time</small></span></h3>
@@ -569,17 +570,19 @@
     return `<div class="wrap page">
       <header class="page-hd reveal"><span class="eyebrow">Plans</span><h1 class="h1">Pay once. <em>Keep it.</em></h1>
         <p>Four one-time plans, each including everything before it. No subscription: your plan never expires and nothing renews. It’s tied to your Discord account, so it works on any PC you sign in on.</p></header>
+      ${jumpRow([['plans-top', 'Plans'], ['plan-retrac', 'Add-ons'], ['compare', 'Compare'], ['after', 'After you pay'], ['earn', 'Referrals'], ['plans-faq', 'Questions']])}
+      <div id="plans-top" class="jump-target"></div>
       ${plansGrid()}
       ${plansNote()}
-      <section class="sec" style="padding-bottom:0">
+      <section class="sec jump-target" id="compare" style="padding-bottom:0">
         ${secHd('Compare', 'Everything, <em>side by side.</em>')}
         ${compareTable()}
       </section>
-      <section class="sec" style="padding-bottom:0">
+      <section class="sec jump-target" id="after" style="padding-bottom:0">
         ${secHd('After you pay', 'Three steps. <em>No keys.</em>')}
         ${howSteps()}
       </section>
-      <section class="sec" style="padding-bottom:0">
+      <section class="sec jump-target" id="earn" style="padding-bottom:0">
         ${secHd('Earn', 'Get <em>$5</em> for every friend.', 'Own Premium or higher? You get your own link. Everyone who buys Premium, Pro or Ultimate through it earns you $5, paid to your PayPal.')}
         <div class="steps">
           <div class="card step reveal"><span class="n">1</span><h3>Get your link</h3><p>Type <b>/referral</b> in the Ego Tweaks Discord, or open Plans in the app. Your link looks like egotweaks.com/?ref=ABC123.</p></div>
@@ -587,7 +590,7 @@
           <div class="card step reveal" style="--d:2"><span class="n">3</span><h3>Get paid</h3><p>$5 for every Premium, Pro or Ultimate bought through it. From $10, press Request payout and we send it to your PayPal.</p></div>
         </div>
       </section>
-      <section class="sec" style="padding-bottom:0">
+      <section class="sec jump-target" id="plans-faq" style="padding-bottom:0">
         ${secHd('Buying', 'Questions about <em>plans.</em>')}
         <div class="faq reveal">${FAQ.filter((x) => x[2] === 'plans').map(([q, a]) => faq(q, a)).join('')}</div>
       </section>
@@ -668,7 +671,7 @@
         <div class="card dl-card main reveal">
           <span class="chip red">Free · v${esc(BUILD.version)}</span>
           <h2>${esc(BUILD.name)} 3.0</h2>
-          <div class="dl-file"><span class="logo">EGO</span><div><b>${esc(BUILD.file)}</b><small>v${esc(BUILD.version)} · ${fmtMB(BUILD.bytes)} · Windows 10 &amp; 11</small></div></div>
+          <div class="dl-file">${LOGO_MARK(44)}<div><b>${esc(BUILD.file)}</b><small>v${esc(BUILD.version)} · ${fmtMB(BUILD.bytes)} · Windows 10 &amp; 11</small></div></div>
           <button type="button" class="btn ${ready || !DC_LOGIN ? 'btn-primary' : 'btn-discord'} btn-lg btn-block" data-act="get">${ready ? `${svg('download')}Download free` : DC_LOGIN ? `${DISCORD_SVG}Continue with Discord to download` : `${svg('download')}Get it free`}</button>
           <ol class="flow">${flow}</ol>
         </div>
@@ -820,7 +823,9 @@
     return `<div class="wrap page">
       <header class="page-hd reveal"><span class="eyebrow">FAQ</span><h1 class="h1">Questions, <em>answered.</em></h1>
         <p>Can’t find yours? Ask in the ${DISCORD ? `<a href="${esc(DISCORD)}" target="_blank" rel="noopener">Discord</a>` : 'Discord'}.</p></header>
-      <div class="faq reveal">${FAQ.map(([q, a]) => faq(q, a)).join('')}</div>
+      ${jumpRow([['faq-about', `The app <small>${FAQ.filter((x) => x[2] === 'about').length}</small>`], ['faq-plans', `Plans and buying <small>${FAQ.filter((x) => x[2] === 'plans').length}</small>`]])}
+      <section class="faq-group jump-target" id="faq-about"><h2 class="faq-h">The app</h2><div class="faq reveal">${FAQ.filter((x) => x[2] === 'about').map(([q, a]) => faq(q, a)).join('')}</div></section>
+      <section class="faq-group jump-target" id="faq-plans"><h2 class="faq-h">Plans and buying</h2><div class="faq reveal">${FAQ.filter((x) => x[2] === 'plans').map(([q, a]) => faq(q, a)).join('')}</div></section>
     </div>`;
   }
 
@@ -919,6 +924,7 @@
   }
   function discordLogout() {
     S.dc = null;
+    ownerFlag(false);
     keep.set('ego-discord', null);
     keep.set('ego-discord-token', null, sessionStorage);
     closeModal(); closeMenu();
@@ -1131,6 +1137,9 @@
   // Revenue, downloads and people on each plan, from the Ego Tweaks bot. The bot checks the Discord login with
   // Discord and only answers its admin accounts, so nothing here is secret.
   const OWN = { data: null, err: '', busy: false, timer: 0 };
+  // 'ego-owner' = '1' once the bot has said this Discord login is an admin. countdown.js reads it and lets the owner
+  // see the real site before launch. It's a convenience, not security: the admin data still needs the bot's OK.
+  const ownerFlag = (on) => { try { if (on) localStorage.setItem('ego-owner', '1'); else localStorage.removeItem('ego-owner'); } catch (_) { /* storage blocked */ } };
   const dcToken = () => { const t = keep.get('ego-discord-token', sessionStorage); return t && t.exp > Date.now() ? t.token : ''; };
   const botApi = (p) => DISCORD_LOGIN.botUrl.replace(/\/+$/, '') + p;
   // Download pressed: tell the bot (text/plain, so no preflight; a beacon survives the file download starting)
@@ -1151,9 +1160,9 @@
       const r = await fetch(botApi('/site/admin'), { method: 'POST', headers: { 'content-type': 'text/plain' }, body: JSON.stringify({ access_token: dcToken() }) });
       const j = await r.json().catch(() => ({}));
       if (r.status === 401) { keep.set('ego-discord-token', null, sessionStorage); OWN.err = 'login'; OWN.data = null; }
-      else if (r.status === 403) { OWN.err = 'not-admin'; OWN.data = null; }
+      else if (r.status === 403) { OWN.err = 'not-admin'; OWN.data = null; ownerFlag(false); }
       else if (!r.ok || !j.ok) OWN.err = j.error ? `The bot said: ${j.error}` : `The bot didn’t answer (${r.status}).`;
-      else { OWN.data = j; OWN.err = ''; }
+      else { OWN.data = j; OWN.err = ''; ownerFlag(true); }
     } catch (_) { OWN.err = 'Couldn’t reach the bot. Check that it’s running on Railway.'; }
     OWN.busy = false;
     paintOwner();
@@ -1333,9 +1342,20 @@
       const y = window.scrollY;
       $('#nav').classList.toggle('scrolled', y > 20);
       $('#dock').classList.toggle('on', y > 560 && !['plans', 'thanks', 'admin'].includes(S.page));
+      spyJump();
     });
   }
   window.addEventListener('scroll', onScroll, { passive: true });
+  // Marks the jump-row button for the section you're reading.
+  function spyJump() {
+    const btns = $$('[data-jump]');
+    if (!btns.length) return;
+    const line = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav')) || 64) + 90;
+    let cur = btns[0].dataset.jump;
+    btns.forEach((b) => { const t = document.getElementById(b.dataset.jump); if (t && t.getBoundingClientRect().top <= line) cur = b.dataset.jump; });
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) cur = btns[btns.length - 1].dataset.jump;
+    btns.forEach((b) => { if (b.dataset.jump === cur) { if (b.getAttribute('aria-current') !== 'true') { b.setAttribute('aria-current', 'true'); const row = b.parentElement; if (row.scrollWidth > row.clientWidth) row.scrollTo({ left: b.offsetLeft - 16, behavior: REDUCED ? 'auto' : 'smooth' }); } } else b.removeAttribute('aria-current'); });
+  }
 
   // ───────────── events ─────────────
   document.addEventListener('submit', (e) => {
@@ -1350,6 +1370,8 @@
     if (nav) { e.preventDefault(); closeModal(); closeMenu(); go(nav.dataset.nav); return; }
     const tab = e.target.closest('[data-tour]');
     if (tab) { setTour(tab.dataset.tour); return; }
+    const jump = e.target.closest('[data-jump]');
+    if (jump) { scrollToId(jump.dataset.jump); return; }
     const xc = e.target.closest('[data-xcat]');
     if (xc) { S.xcat = xc.dataset.xcat; S.xshow = 60; $$('[data-xcat]').forEach((b) => b.setAttribute('aria-pressed', String(b === xc))); filterXp(); return; }
     const xt = e.target.closest('[data-xtier]');
