@@ -534,6 +534,16 @@
   function plansGrid() {
     return `${refCode() ? `<p class="invited">${svg('spark')}You were invited by a friend: buying a plan here supports them.</p>` : ''}
       ${DC_LOGIN ? `<div class="who-wrap reveal">${whoBar()}</div>` : ''}
+      <article class="card plan-free t0 reveal" id="plan-free">
+        <div class="pf-head">
+          <div class="top"><span class="nm">Free</span><span class="flag">No card needed</span></div>
+          <div class="pr">$0<small>forever</small></div>
+          <p class="sub">Try Ego Tweaks first: the essentials, free for good.</p>
+          <div class="count"><b>${upTo(0)}</b> free tweaks</div>
+        </div>
+        <ul>${FREE.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
+        <div class="pf-cta"><button type="button" class="btn btn-line btn-block" data-nav="download">${svg('download')}Download free</button><p class="why">Upgrade any time in the same app.</p></div>
+      </article>
       <div class="plans">${PLANS.map((p, i) => `
       <article class="card plan t${p.n}${p.flag === 'Most popular' ? ' hot' : ''} reveal" style="--d:${i}" id="plan-${p.id}">
         <div class="top"><span class="nm">${esc(p.name)}</span>${p.flag ? `<span class="flag">${esc(p.flag)}</span>` : ''}</div>
