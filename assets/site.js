@@ -31,7 +31,7 @@
     { n: 2, id: 'premium', name: 'Premium', price: 10, payhip: 'PAIZv', flag: 'Most popular', sub: 'The performance plan: higher, steadier FPS.',
       perks: ['250 performance tweaks: CPU scheduling, stutter, GPU, input, services', 'Game Booster (pauses update downloads while you play)', 'Process killer and per-game settings', 'Stutter checklist, deep clean, memory clearing', 'BIOS guide'] },
     { n: 3, id: 'pro', name: 'Pro', price: 20, payhip: '20cFf', sub: 'Lower, steadier ping on top of everything in Premium.',
-      perks: ['63 network and power-plan tweaks', 'Ping Booster', 'DNS switching', 'Automatic memory clearing', 'Session reports and setup codes'] },
+      perks: ['63 network and power-plan tweaks', 'Ping Booster', 'DNS switching', 'Automatic memory clearing', 'Session reports and setup codes', 'Ego Security Check'] },
     { n: 4, id: 'ultimate', name: 'Ultimate', price: 50, payhip: 'Ayl9C', flag: 'Everything', sub: 'Every tweak, Ego OS and Max FPS mode: the whole thing in one click.',
       perks: ['20 CPU and GPU clock tweaks', 'Ego OS: turns your Windows into a gaming setup, under 80 processes, no USB or reinstall, fully undoable', 'Max FPS mode: every FPS tweak plus Game Booster in one click', 'Full CPU speed', 'Keyboard overclock', 'The Retrac add-on included'] },
   ];
@@ -68,13 +68,11 @@
   const RETRAC = { n: 'retrac', id: 'retrac', name: 'Retrac', price: 5, payhip: 'Xvbc1',
     perks: ['One-click Boost Retrac: every Retrac setting and Retrac Booster at once', 'Fullscreen optimizations off, high CPU priority, sharp at any display scaling, never power-throttled', 'Retrac Booster with 6 options: high priority, calm background apps, 0.5 ms timer, clear memory, pause updates, max-performance power plan', 'Your recent Retrac sessions'],
     free: 'Free for everyone: Retrac found on your PC, the high-performance GPU setting and in-game settings for the Chapter 2 Season 4 build.' };
-  // Console Tweaks and Ego Security Check add-ons.
+  // The Console Tweaks add-on. (Ego Security Check now comes with Pro and Ultimate.)
   // payhip:'' shows "Coming soon" — put each product's Payhip key here when it's on sale.
   const CONSOLE = { n: 'console', id: 'console', name: 'Console Tweaks', price: 5, payhip: '',
     perks: ['Lowest-lag TV and console settings for PS5 and Xbox', 'Performance mode, 120 Hz, VRR and ALLM set up right', 'Wired network, audio and controller setup', 'Per-game frame-rate picks'] };
-  const SECURITY = { n: 'security', id: 'security', name: 'Security Check', price: 5, payhip: '',
-    perks: ['A read-only check of Defender, firewall, SmartScreen, UAC and updates', 'Plain-English results with a jump to each Windows setting', 'Flags a missing antivirus, old definitions or paused updates', 'Changes nothing — Ego Tweaks never turns off your security'] };
-  const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE, security: SECURITY }[key] || planOf(Number(key)));
+  const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE }[key] || planOf(Number(key)));
   // auth.js needs the Supabase script. If that was blocked, accounts are off but the rest of the site keeps working.
   const AUTH = window.EgoAuth || (() => { const no = () => Promise.reject(new Error('Accounts are unavailable right now — try again in a minute.'));
     return { current: () => null, onChange() {}, signUp: no, signIn: no, update: no, signOut: () => Promise.resolve(),
@@ -535,15 +533,6 @@
         <ul>${CONSOLE.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
       </div>
       <div class="buy" data-plan="console">${buyArea(CONSOLE)}</div>
-    </article>
-    <article class="card addon reveal" id="plan-security">
-      <div class="addon-main">
-        <span class="eyebrow">Add-on · works with any plan, Free included</span>
-        <h3>Ego Security Check <span class="addon-pr">$${SECURITY.price}<small>one-time</small></span></h3>
-        <p>A one-click, read-only check that your PC’s built-in protection is on and healthy — Defender, firewall, SmartScreen, UAC and updates. It never turns anything off; it just tells you what to fix. Included with Ultimate.</p>
-        <ul>${SECURITY.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
-      </div>
-      <div class="buy" data-plan="security">${buyArea(SECURITY)}</div>
     </article>`;
   }
   const plansNote = () => `<div class="plans-note reveal"><span>${svg('card')}One-time payment</span><span>${svg('ban')}Never expires, nothing renews</span><span>${svg('user')}Tied to your Discord, works on any PC</span><span>${svg('crown')}Upgrade any time: your highest plan counts</span></div>
@@ -618,7 +607,7 @@
       ['Tools'],
       ['Quick Optimize and Profiles', 1], ['Crosshair and FPS overlay', 1], ['Startup apps and temp-file clean-up', 1], ['Mouse and keyboard tests', 1],
       ['Game Booster', 2], ['Process killer and per-game settings', 2], ['Stutter checklist, deep clean, memory clearing', 2], ['BIOS guide', 2],
-      ['Ping Booster', 3], ['DNS switching', 3], ['Automatic memory clearing', 3], ['Session reports and setup codes', 3],
+      ['Ping Booster', 3], ['DNS switching', 3], ['Automatic memory clearing', 3], ['Session reports and setup codes', 3], ['Ego Security Check: a read-only check of Defender, firewall and updates', 3],
       ['Max FPS mode', 4], ['Full CPU speed', 4], ['Keyboard overclock', 4],
       ['Add-on'],
       ['Project Retrac add-on (or $5 on its own)', 4],
