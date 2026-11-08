@@ -293,16 +293,17 @@
     { ic: 'refresh', t: 'Updates itself', n: 0, p: 'New versions install with one click. Every update is checked to be a genuine Ego Tweaks build before it runs.' },
   ];
   const feat = (t) => FEATURES.find((f) => f.t === t);
+  // The app tour: the screens there are rebranded screenshots of (light and dark sets in assets/shots/v4).
   const TOUR = [
     { id: 'overview', ic: 'home', t: 'Overview', p: 'Your PC at a glance: health, live CPU, GPU, RAM and storage, and one-click places to start.' },
-    { id: 'quick', ic: 'bolt', t: 'Quick Optimize', p: 'Preview every setting it will change, then apply what’s recommended for your hardware.' },
-    { id: 'tweaks', ic: 'sliders', t: 'All tweaks', p: `${TWEAKS.length} tweaks in ${CATEGORIES.length} sections, each with a plain-English description and a Safe or Advanced label.` },
-    { id: 'booster', ic: 'rocket', t: 'Game Booster & Max FPS', p: 'Max FPS mode and Game Booster: start a game and Ego Tweaks takes over, then puts everything back when it closes.' },
-    { id: 'ping', ic: 'signal', t: 'Ping Booster', p: 'Live ping, jitter and spikes. Game traffic first, background uploads capped.' },
-    { id: 'overlay', ic: 'cross', t: 'Crosshair & overlay', p: 'Pick a crosshair, its size and colour, and add an FPS counter. Included from Starter.' },
-    { id: 'recovery', ic: 'undo', t: 'Recovery', p: 'Undo one tweak or all of them, and make a Windows restore point in one click.' },
+    { id: 'all-tweaks', ic: 'sliders', t: 'All tweaks', p: `${TWEAKS.length} tweaks in ${CATEGORIES.length} sections, each with a plain-English description and a Safe or Advanced label. Each one records the value it replaces, so turning it off puts things back.` },
+    { id: 'monitor', ic: 'gauge', t: 'Monitor', p: 'Live readings from Windows’ own counters, once a second: CPU, GPU, memory and latency. Nothing here changes anything.' },
   ];
-  const shot = (id) => `assets/shots/v3/${id}.webp`;
+  // App screenshots come in a dark and a light set; both <img>s are in the page and CSS shows the one for the current
+  // mode (html[data-mode]). The hidden one is lazy, so it only loads if the visitor switches.
+  const shotSrc = (id, mode) => `assets/shots/v4/${mode}-${id}.webp`;
+  const curMode = () => (document.documentElement.dataset.mode === 'light' ? 'light' : 'dark');
+  const shotPic = (id, alt, { cls = 'shot', eager = false } = {}) => ['dark', 'light'].map((m) => `<img class="${cls} sw sw-${m}" src="${shotSrc(id, m)}" width="1280" height="820" alt="${esc(alt)}"${m === curMode() && eager ? ' fetchpriority="high"' : ' loading="lazy"'}>`).join('');
   // Splits text into word spans (the hero load-in and the scroll-lit statement animate them one by one).
   const words = (text, from = 0) => esc(text).split(' ').map((w, i) => `<span class="w" style="--i:${from + i}">${w}</span>`).join(' ');
   // Real tweak names from the catalog for the little app mock-ups.
@@ -333,7 +334,7 @@
         <div class="show-stage" id="show-stage">
           <div class="show-glow" aria-hidden="true"></div>
           <div class="show-frame" id="show-frame">
-            <div class="frame"><img class="shot" src="${shot('overview')}" width="1600" height="1000" alt="The Ego Tweaks 3.0 app: the Overview page" fetchpriority="high"></div>
+            <div class="frame">${shotPic('overview', 'The Ego Tweaks 3.0 app: the Overview page', { eager: true })}</div>
             <div class="tag b"><span class="ic">${svg('bolt')}</span><span><b>Max FPS mode</b><br>one click</span></div>
             <div class="tag a"><span class="ic">${svg('undo')}</span><span><b>Undo anything</b><br>every change is backed up</span></div>
           </div>
@@ -371,7 +372,7 @@
           <div class="tour-tabs" role="tablist" aria-label="App pages">
             ${TOUR.map((x) => `<button type="button" role="tab" data-tour="${x.id}" aria-selected="${x.id === t.id}"><b>${svg(x.ic)}${x.t}</b><small>${x.p}</small></button>`).join('')}
           </div>
-          <div class="tour-view" id="tour-view"><img src="${shot(t.id)}" width="1600" height="1000" alt="${esc(t.t)} in the Ego Tweaks app" loading="lazy"><p class="cap">${esc(t.p)}</p></div>
+          <div class="tour-view" id="tour-view">${shotPic(t.id, `${t.t} in the Ego Tweaks app`, { cls: '' })}<p class="cap">${esc(t.p)}</p></div>
         </div>
       </div>
     </section>
@@ -395,7 +396,7 @@
     <section class="sec" id="safety">
       <div class="wrap safe">
         <div>${secHd('Safety', 'Every change can be <em>undone.</em>', 'Ego Tweaks saves what it changes before it changes it. Switch a tweak off and the old value goes back.')}
-          <div class="frame reveal"><img class="shot" src="${shot('recovery')}" width="1600" height="1000" alt="The Recovery page in the app" loading="lazy"></div></div>
+          <div class="frame reveal">${shotPic('all-tweaks', 'The All Tweaks page in the app: each tweak records the value it replaces')}</div></div>
         <ul class="safe-list">
           <li class="reveal"><span class="ic">${svg('save')}</span><div><b>Backed up first</b><p>Before any tweak changes a setting, the value it replaces is saved.</p></div></li>
           <li class="reveal" style="--d:1"><span class="ic">${svg('undo')}</span><div><b>Undo one, or all</b><p>Switch a tweak off to undo it, or press Undo all changes in Recovery. Undo works even when you’re signed out.</p></div></li>
@@ -488,10 +489,10 @@
     S.tour = id;
     $$('[data-tour]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tour === id)));
     const v = $('#tour-view');
-    if (v) v.innerHTML = `<img src="${shot(id)}" width="1600" height="1000" alt="${esc(t.t)} in the Ego Tweaks app"><p class="cap">${esc(t.p)}</p>`;
+    if (v) v.innerHTML = `${shotPic(id, `${t.t} in the Ego Tweaks app`, { cls: '', eager: true })}<p class="cap">${esc(t.p)}</p>`;
   }
   // warm the tour images once the page is idle so switching tabs is instant
-  const warmTour = () => TOUR.forEach((t) => { const i = new Image(); i.src = shot(t.id); });
+  const warmTour = () => TOUR.forEach((t) => ['dark', 'light'].forEach((m) => { const i = new Image(); i.src = shotSrc(t.id, m); }));
 
   function howSteps() {
     return `<div class="steps">

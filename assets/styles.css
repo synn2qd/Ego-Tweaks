@@ -227,6 +227,8 @@ svg.b{width:20px;height:20px;flex:none;fill:currentColor}
 @keyframes ldIn{from{opacity:0;transform:translate3d(0,18px,0);filter:blur(10px)}}
 @keyframes fadeIn{from{opacity:0}}
 
+/* app screenshots: a dark and a light set, the one for the current mode is shown */
+:root[data-mode="dark"] .sw-light,:root[data-mode="light"] .sw-dark{display:none}
 /* product screenshot that rises and un-tilts as you scroll (transform set by site.js) */
 .showcase{position:relative;padding:clamp(28px,5vw,56px) 0 clamp(40px,6vw,72px)}
 .show-stage{position:relative;--show:1}
@@ -241,7 +243,7 @@ svg.b{width:20px;height:20px;flex:none;fill:currentColor}
 .show-frame .tag .ic{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:var(--accent-soft);color:var(--accent-text)}
 .show-frame .tag .ic .i{width:17px;height:17px}
 .show-frame .tag.a{left:-26px;bottom:12%}
-.show-frame .tag.b{right:-22px;top:9%}
+.show-frame .tag.b{right:-22px;top:-22px}
 @media (max-width:980px){.show-frame .tag.a{left:10px;bottom:-20px}.show-frame .tag.b{right:10px;top:-20px}}
 @media (max-width:520px){.show-frame .tag{font-size:12px;padding:7px 10px 7px 7px}.show-frame .tag .ic{width:26px;height:26px}.frame{padding:5px;border-radius:16px}.frame img,.frame .shot{border-radius:11px}}
 
