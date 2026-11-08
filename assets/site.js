@@ -72,7 +72,32 @@
   // payhip:'' shows "Coming soon" — put each product's Payhip key here when it's on sale.
   const CONSOLE = { n: 'console', id: 'console', name: 'Console Tweaks', price: 5, payhip: '',
     perks: ['Lowest-lag TV and console settings for PS5 and Xbox', 'Performance mode, 120 Hz, VRR and ALLM set up right', 'Wired network, audio and controller setup', 'Per-game frame-rate picks'] };
-  const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE }[key] || planOf(Number(key)));
+  // Add-ons for the other Ego apps. The bot finds them by "Roblox" / "Keys" in the Payhip product name.
+  const ROBLOXPLUS = { n: 'roblox', id: 'roblox', name: 'Ego+ for Roblox', price: 5, payhip: '',
+    perks: ['In-game looks: cursor, sounds and font mods on your PC', 'A game overlay: crosshair, clock and time in game', 'Launcher themes and the EGO+ badge', 'Every boost, the auto clicker, games, friends and the Discord status stay free'] };
+  const KEYS = { n: 'keys', id: 'keys', name: 'Ego Keys', price: 7, payhip: '',
+    perks: ['Remap any key, on any keyboard', 'Macro editor: record, edit and play macros on a hotkey', 'Profiles that switch by themselves for each app or game', 'Lighting effects', 'The key tester stays free'] };
+  const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE, roblox: ROBLOXPLUS, keys: KEYS }[key] || planOf(Number(key)));
+  // The other Ego apps: same Discord sign-in, downloaded straight from this site.
+  const MORE_APPS = [
+    { id: 'roblox', name: 'Ego for Roblox', version: '0.7.0', file: 'EgoRoblox.exe', bytes: 1463296, sha256: 'c678de0aaee2c9f54bf9360059598c559be9d0cf1f89224e61c0df205753235f',
+      price: 'Free', note: 'Ego+ looks add-on $5', blurb: 'A Roblox launcher with FPS boosts, an auto clicker, your games and friends in one place.',
+      perks: ['FPS unlock and FastFlag boosts, undo any time', 'Auto clicker up to 100 clicks a second', 'Your games and friends, one click to join', 'Discord status while you play'] },
+    { id: 'keys', name: 'Ego Keys', version: '0.2.0', file: 'EgoKeys.exe', bytes: 1355264, sha256: '959027e69f16cff08fd45e1caa5aba16bc896e30ff55f5550e5887f76746eee7',
+      price: '$7 one-time', note: 'Key tester free', blurb: 'One app for any keyboard: remaps, macros, profiles and lighting.',
+      perks: ['Remap any key', 'Macro editor with hotkeys', 'Profiles per app or game', 'Lighting effects and a free key tester'] },
+  ];
+  const appsBlock = () => `<div class="apps-grid">${MORE_APPS.map((a, i) => `
+      <article class="card app-card reveal" style="--d:${i}" id="app-${a.id}">
+        <div class="app-top">${LOGO_MARK(44)}<div><h3>${esc(a.name)}</h3><small>v${esc(a.version)} · ${fmtMB(a.bytes)} · Windows 10 &amp; 11</small></div>
+          <span class="chip${a.price === 'Free' ? ' red' : ''}">${esc(a.price)}</span></div>
+        <p>${esc(a.blurb)}</p>
+        <ul class="free-list">${a.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
+        <a class="btn btn-primary btn-block" href="downloads/${esc(a.file)}" download data-act="app-dl" data-app="${a.id}">${svg('download')}Download ${esc(a.name)}</a>
+        <p class="app-meta">${DISCORD_SVG}Sign in with Discord in the app · ${esc(a.note)}</p>
+        <details class="app-hash"><summary>SHA-256</summary><span class="hash">${esc(a.sha256)}</span></details>
+      </article>`).join('')}
+    </div>`;
   // auth.js needs the Supabase script. If that was blocked, accounts are off but the rest of the site keeps working.
   const AUTH = window.EgoAuth || (() => { const no = () => Promise.reject(new Error('Accounts are unavailable right now — try again in a minute.'));
     return { current: () => null, onChange() {}, signUp: no, signIn: no, update: no, signOut: () => Promise.resolve(),
@@ -389,6 +414,13 @@
       </div>
     </section>
 
+    <section class="sec" id="apps">
+      <div class="wrap">
+        ${secHd('New', 'More from <em>Ego.</em>', 'Two new apps with the same Discord sign-in: a Roblox launcher and a keyboard app for any keyboard.', true)}
+        ${appsBlock()}
+      </div>
+    </section>
+
     <section class="sec" id="safety">
       <div class="wrap safe">
         <div>${secHd('Safety', 'Every change can be <em>undone.</em>', 'Ego Tweaks saves what it changes before it changes it. Switch a tweak off and the old value goes back.')}
@@ -533,6 +565,24 @@
         <ul>${CONSOLE.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
       </div>
       <div class="buy" data-plan="console">${buyArea(CONSOLE)}</div>
+    </article>
+    <article class="card addon reveal" id="plan-keys">
+      <div class="addon-main">
+        <span class="eyebrow">Ego Keys · the keyboard app</span>
+        <h3>Ego Keys <span class="addon-pr">$${KEYS.price}<small>one-time</small></span></h3>
+        <p>Unlocks remapping, macros, profiles and lighting in Ego Keys. Download it free, sign in with the same Discord account, and it unlocks. Included with Ultimate.</p>
+        <ul>${KEYS.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
+      </div>
+      <div class="buy" data-plan="keys">${buyArea(KEYS)}</div>
+    </article>
+    <article class="card addon reveal" id="plan-roblox">
+      <div class="addon-main">
+        <span class="eyebrow">Add-on · for Ego for Roblox</span>
+        <h3>Ego+ for Roblox <span class="addon-pr">$${ROBLOXPLUS.price}<small>one-time</small></span></h3>
+        <p>Ego for Roblox is free. Ego+ adds the looks: in-game cursor, sound and font mods on your PC, a game overlay and launcher themes. Sign in with the same Discord account and it unlocks. Included with Ultimate.</p>
+        <ul>${ROBLOXPLUS.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
+      </div>
+      <div class="buy" data-plan="roblox">${buyArea(ROBLOXPLUS)}</div>
     </article>`;
   }
   const plansNote = () => `<div class="plans-note reveal"><span>${svg('card')}One-time payment</span><span>${svg('ban')}Never expires, nothing renews</span><span>${svg('user')}Tied to your Discord, works on any PC</span><span>${svg('crown')}Upgrade any time: your highest plan counts</span></div>
@@ -749,6 +799,8 @@
             <dt>.NET</dt><dd>.NET Framework 4.7.2 or later, built into Windows 10 (1803+) and 11</dd><dt>Access</dt><dd>Administrator: Windows asks when it opens</dd></dl>
           <p style="font-size:14.5px">If SmartScreen appears, choose <b>More info → Run anyway</b>. It shows for apps Windows hasn’t seen much yet.</p></div>
       </div>
+      <div style="margin-top:56px">${secHd('More apps', 'More from <em>Ego.</em>', 'Same Discord account, same one-time payments. Each app asks you to sign in with Discord when it opens.')}</div>
+      ${appsBlock()}
     </div>`;
   }
   function copyHash(el) {
@@ -1627,6 +1679,7 @@
       case 'manual-dl': AUTH.recordDownload({ file: BUILD.file, version: BUILD.version }).catch(() => {}); break;
       case 'buy': buyPlan(e, el); break;
       case 'buy-soon': track('/api/event', { t: 'buy-soon', plan: el.dataset.plan }); break;
+      case 'app-dl': track('/api/event', { t: 'app-dl', app: el.dataset.app }); break;
       case 'discord-connect': discordConnect(S.page === 'home' ? 'home' : S.page === 'download' ? 'download' : 'plans'); break;
       case 'discord-me': openDiscordMe(); break;
       case 'discord-forget': discordLogout(); break;

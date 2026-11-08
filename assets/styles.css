@@ -863,3 +863,20 @@ svg.b{width:20px;height:20px;flex:none;fill:currentColor}
   .statement .w,.tl-body{opacity:1}
   .mock *{animation:none!important}
 }
+
+/* More from Ego: the other apps */
+.apps-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.app-card{padding:26px;display:flex;flex-direction:column;gap:16px;min-width:0;border-radius:var(--r-lg)}
+.app-top{display:flex;align-items:center;gap:14px;min-width:0}
+.app-top>div{flex:1;min-width:0}
+.app-top .logo-mark{width:44px;height:44px;flex:none}
+.app-top h3{margin:0;font:650 20px/1.2 var(--sans);letter-spacing:-.015em}
+.app-top small{color:var(--text-muted);font-size:13px}
+.app-card>p{margin:0;color:var(--text-2)}
+.app-card .free-list{margin:0}
+.app-meta{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text-muted)!important}
+.app-meta svg{width:16px;height:16px;flex:none}
+.app-hash summary{cursor:pointer;font-size:13px;color:var(--text-muted)}
+.app-hash .hash{display:block;margin-top:6px;font:12px/1.5 var(--mono);word-break:break-all;color:var(--text-2)}
+@media (max-width:820px){.apps-grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:520px){.app-card{padding:20px}}
