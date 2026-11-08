@@ -9,8 +9,8 @@
 //   - a preview link (egotweaks.com/?preview), which lasts for that browser tab.
 // Downloads, the bot, Discord sign-in and the apps keep working: only this page is covered.
 (function () {
-  var DROP = Date.parse('2026-11-08T18:00:00Z'); // Sunday 11/8/2026, 1:00 PM EST (UTC-5)
-  var DROP_TEXT = 'Sunday, Nov 8 · 1:00 PM EST';
+  var DROP = Date.parse('2026-11-08T19:00:00Z'); // Sunday 11/8/2026, 2:00 PM EST (UTC-5)
+  var DROP_TEXT = 'Sunday, Nov 8 · 2:00 PM EST';
   var DISCORD = 'https://discord.gg/gtPggZ9zpz';
   if (!(Date.now() < DROP)) return;
   try {
