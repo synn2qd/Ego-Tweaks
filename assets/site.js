@@ -73,9 +73,9 @@
   const CONSOLE = { n: 'console', id: 'console', name: 'Console Tweaks', price: 5, payhip: '',
     perks: ['Lowest-lag TV and console settings for PS5 and Xbox', 'Performance mode, 120 Hz, VRR and ALLM set up right', 'Wired network, audio and controller setup', 'Per-game frame-rate picks'] };
   // Add-ons for the other Ego apps. The bot finds them by "Roblox" / "Keys" in the Payhip product name.
-  const ROBLOXPLUS = { n: 'roblox', id: 'roblox', name: 'Ego+ for Roblox', price: 5, payhip: '',
+  const ROBLOXPLUS = { n: 'roblox', id: 'roblox', name: 'Ego+ for Roblox', price: 5, payhip: 'Q3c6h',
     perks: ['In-game looks: cursor, sounds and font mods on your PC', 'A game overlay: crosshair, clock and time in game', 'Launcher themes and the EGO+ badge', 'Every boost, the auto clicker, games, friends and the Discord status stay free'] };
-  const KEYS = { n: 'keys', id: 'keys', name: 'Ego Keys', price: 7, payhip: '',
+  const KEYS = { n: 'keys', id: 'keys', name: 'Ego Keys', price: 7, payhip: '02ImW',
     perks: ['Remap any key, on any keyboard', 'Macro editor: record, edit and play macros on a hotkey', 'Profiles that switch by themselves for each app or game', 'Lighting effects', 'The key tester stays free'] };
   const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE, roblox: ROBLOXPLUS, keys: KEYS }[key] || planOf(Number(key)));
   // The other Ego apps: same Discord sign-in, downloaded straight from this site.
