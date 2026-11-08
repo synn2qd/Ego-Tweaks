@@ -447,8 +447,6 @@ svg.b{width:20px;height:20px;flex:none;fill:currentColor}
 .addon li{position:relative;padding-left:26px;color:var(--text-2);font-size:14.5px}
 .addon li .i{position:absolute;left:0;top:2px;width:17px;height:17px;color:var(--accent);stroke-width:2.2}
 .addon .buy{display:grid;gap:8px}
-.addon.bundle{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.10),var(--shadow-sm)}
-.addon.bundle .eyebrow{color:var(--accent-text)}
 @media (max-width:860px){.addon{grid-template-columns:minmax(0,1fr)}}
 .plans-note{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 26px;margin-top:28px;color:var(--text-muted);font-size:14.5px}
 .plans-note span{display:inline-flex;align-items:center;gap:8px}
