@@ -1,24 +1,47 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-mode="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Privacy Policy · Ego Tweaks</title>
   <meta name="description" content="Privacy Policy for Ego Tweaks — the Windows tweaking utility, the egotweaks.com website, paid plans and the Ego Tweaks Discord bot.">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#0a0a0f">
+  <script>(function(){var m='dark';try{var v=localStorage.getItem('ego-mode');if(v==='light'||v==='dark')m=v}catch(e){}var d=document.documentElement;d.setAttribute('data-mode',m);d.style.colorScheme=m;var t=document.querySelector('meta[name="theme-color"]');if(t)t.setAttribute('content',m==='dark'?'#0a0a0f':'#ffffff')})();</script>
   <link rel="icon" href="assets/logo-mark.svg?v=7" type="image/svg+xml">
   <style>
 @font-face { font-family: 'Geist'; src: url(assets/fonts/geist-latin-wght-normal.woff2) format('woff2-variations'), url(assets/fonts/geist-latin-wght-normal.woff2) format('woff2'); font-weight: 100 900; font-display: swap; }
 :root { color-scheme: light; --bg: #ffffff; --bg-subtle: #f7f7f9; --bg-muted: #f0f0f3; --border: #e6e6eb; --border-strong: #d5d5dd;
-  --text: #0d0d14; --text-2: #3d3d4a; --text-muted: #6b6b7a; --text-faint: #9b9ba8; --accent: #5b4cf0; --accent-hover: #4b3bde; --accent-soft: #efedfe; --accent-text: #4b3bde; }
+  --text: #0d0d14; --text-2: #3d3d4a; --text-muted: #6b6b7a; --text-faint: #9b9ba8; --accent: #5b4cf0; --accent-hover: #4b3bde; --accent-soft: #efedfe; --accent-text: #4b3bde; --surface: #ffffff; --glass: rgba(255,255,255,.88); --dot: rgba(91,76,240,.28); }
+:root[data-mode="dark"] { color-scheme: dark; --bg: #0a0a0f; --bg-subtle: #0f0f16; --bg-muted: #181822; --surface: #111119; --border: #22222d; --border-strong: #30303d;
+  --text: #f3f3f7; --text-2: #c4c4cf; --text-muted: #8a8a99; --text-faint: #5f5f6e; --accent: #7b6cff; --accent-hover: #8d80ff; --accent-soft: rgba(123,108,255,.14); --accent-text: #a99fff; --glass: rgba(14,14,21,.7); --dot: rgba(123,108,255,.4); }
+body::before { content: ''; position: absolute; left: 50%; top: 0; width: min(1200px, 100vw); height: 420px; transform: translateX(-50%); z-index: -1; pointer-events: none;
+  background-image: radial-gradient(circle, var(--dot) 1.1px, transparent 1.7px); background-size: 14px 14px;
+  -webkit-mask: radial-gradient(50% 70% at 50% 0%, rgba(0,0,0,.75), transparent 80%); mask: radial-gradient(50% 70% at 50% 0%, rgba(0,0,0,.75), transparent 80%); }
+body { position: relative; isolation: isolate; }
+.mode-btn { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); color: var(--text); cursor: pointer; padding: 0; margin-left: 6px; }
+.mode-btn:hover { background: var(--bg-muted); }
+.mode-ic { width: 18px; height: 18px; overflow: visible; transition: transform .15s ease-out; }
+.mode-core { transition: r .5s cubic-bezier(.7,0,.2,1); }
+.mode-cut { transition: cx .5s cubic-bezier(.7,0,.2,1), cy .5s cubic-bezier(.7,0,.2,1); }
+.mode-rays { transform-origin: 12px 12px; transition: transform .5s cubic-bezier(.7,0,.2,1), opacity .35s; }
+:root[data-mode="dark"] .mode-core { r: 9; }
+:root[data-mode="dark"] .mode-cut { cx: 17px; cy: 7px; }
+:root[data-mode="dark"] .mode-rays { transform: rotate(-90deg) scale(.4); opacity: 0; }
+.mode-btn:active .mode-ic { transform: scale(.85); }
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-old(root) { z-index: 1; transform-origin: center; }
+::view-transition-new(root) { z-index: 2; }
+::view-transition-group(root) { background: #000; }
+.top nav { align-items: center; }
+
 * { box-sizing: border-box; }
 html { background: var(--bg); }
 body { margin: 0; background: var(--bg); color: var(--text-2); font: 400 16px/1.7 'Geist', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-::selection { background: rgba(91,76,240,.18); color: var(--text); }
+::selection { background: rgba(91,76,240,.28); color: var(--text); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 a { color: var(--accent-text); text-underline-offset: 3px; text-decoration-color: rgba(75,59,222,.35); }
 a:hover { color: var(--accent-hover); text-decoration-color: currentColor; }
-.bar { position: sticky; top: 0; z-index: 5; background: rgba(255,255,255,.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+.bar { position: sticky; top: 0; z-index: 5; background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
 .wrap { position: relative; max-width: 760px; margin: 0 auto; padding: 0 20px; }
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 60px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; }
@@ -56,7 +79,7 @@ footer a:hover { color: var(--text); }
 </head>
 <body>
   <div class="bar"><div class="wrap">
-    <header class="top"><a class="brand" href="/" aria-label="Ego Tweaks home"><img class="logo-mark" src="assets/logo-mark.svg?v=7" alt="" width="26" height="26"><span class="wordmark"><span class="wm-ego">Ego</span> Tweaks</span></a><nav><a href="/">Home</a><a href="terms.html">Terms</a><a href="privacy.html" aria-current="page">Privacy</a></nav></header>
+    <header class="top"><a class="brand" href="/" aria-label="Ego Tweaks home"><img class="logo-mark" src="assets/logo-mark.svg?v=7" alt="" width="26" height="26"><span class="wordmark"><span class="wm-ego">Ego</span> Tweaks</span></a><nav><a href="/">Home</a><a href="terms.html">Terms</a><a href="privacy.html" aria-current="page">Privacy</a><button type="button" class="mode-btn" data-act="mode" aria-label="Switch to light mode" title="Switch to light mode"><svg class="mode-ic" viewBox="0 0 24 24" aria-hidden="true"><mask id="mode-moon-legal"><rect width="24" height="24" fill="#fff"/><circle class="mode-cut" cx="24" cy="4" r="8" fill="#000"/></mask><circle class="mode-core" cx="12" cy="12" r="5" mask="url(#mode-moon-legal)" fill="currentColor" stroke="none"/><g class="mode-rays" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1.5v2M12 20.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M1.5 12h2M20.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></g></svg></button></nav></header>
   </div></div>
   <div class="wrap">
     <div class="hd"><span class="eyebrow">Legal</span><h1>Privacy Policy</h1><p class="meta">Last updated October 24, 2026</p><p class="lead">What we collect, why, and what you can do about it.</p></div>
@@ -92,5 +115,6 @@ footer a:hover { color: var(--text); }
 <p>We don't sell your information, and we don't use it for advertising.</p></section><section id="s8"><h2><span class="n">08</span>Who we share it with</h2><p>Only the services we need to run Ego Tweaks: <strong>Supabase</strong> (accounts), <strong>Payhip</strong> (payments), <strong>Discord</strong> (where tickets happen), and the hosting provider that runs our website and bot. We share information with others only if the law requires it.</p></section><section id="s9"><h2><span class="n">09</span>How long we keep it</h2><p>We keep your account until you ask us to delete it. We keep order details and ticket transcripts as long as we need them for support, refunds and our sales records, then delete them.</p></section><section id="s10"><h2><span class="n">10</span>Your choices</h2><p>You can ask us to see, correct or delete your information at any time by opening a ticket in our <a href="https://discord.gg/gtPggZ9zpz" target="_blank" rel="noopener">Discord</a>. We'll delete your account and the information we hold, except records we have to keep (for example of sales). Payhip and Discord keep their own records under their own privacy policies.</p></section><section id="s11"><h2><span class="n">11</span>Children</h2><p>Ego Tweaks isn't meant for children under 13, and we don't knowingly collect information from them. If you think a child under 13 has given us information, contact us and we'll delete it.</p></section><section id="s12"><h2><span class="n">12</span>Changes</h2><p>If we change this policy, we'll update the date at the top of this page.</p></section></main>
     <footer><span>© 2026 Ego Tweaks</span><span><a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · <a href="https://discord.gg/gtPggZ9zpz" target="_blank" rel="noopener">Discord</a></span></footer>
   </div>
+  <script src="assets/mode.js?v=7.0"></script>
 </body>
 </html>

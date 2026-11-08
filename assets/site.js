@@ -1,4 +1,5 @@
-/* Ego Tweaks — website 6.0 (Ego Tweaks 3.0: four one-time plans, sign in with Discord; Nov 2026 white brand) */
+/* Ego Tweaks — website 7.0 (Ego Tweaks 3.0: four one-time plans, sign in with Discord; Nov 2026 brand, light + dark,
+   scroll-linked motion in plain JS: IntersectionObserver + one rAF loop, transform/opacity only, static under reduced motion) */
 (() => {
   'use strict';
 
@@ -84,7 +85,10 @@
   const fmtDate = (iso, time = true) => { try { return new Date(iso).toLocaleString(undefined, Object.assign({ month: 'short', day: 'numeric', year: 'numeric' }, time ? { hour: 'numeric', minute: '2-digit' } : {})); } catch (_) { return iso; } };
   const YEAR = new Date().getFullYear();
   const DISCORD = LINKS.discord;
-  const avPlaceholder = (name) => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#5b4cf0"/><text x="32" y="42" font-family="Segoe UI,Arial,sans-serif" font-size="28" font-weight="700" fill="#fff" text-anchor="middle">${esc(String(name || '?').trim().charAt(0).toUpperCase() || '?')}</text></svg>`);
+  // First character of a name as a whole code point (names can start with emoji or styled letters, which are two
+  // UTF-16 units: slicing one of them in half made encodeURIComponent throw and blanked the reviews).
+  const firstChar = (name) => (Array.from(String(name || '').trim())[0] || '?').toUpperCase();
+  const avPlaceholder = (name) => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#5b4cf0"/><text x="32" y="42" font-family="Segoe UI,Arial,sans-serif" font-size="28" font-weight="700" fill="#fff" text-anchor="middle">${esc(firstChar(name))}</text></svg>`);
   // Images that fail to load step through their fallbacks (data-fb, then data-fb2).
   document.addEventListener('error', (e) => {
     const img = e.target;
@@ -128,6 +132,7 @@
     card: '<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/>',
     ban: '<circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/>',
     windows: '<path d="M4 5.5l7-1v7H4zM13 4.2l7-1v8.3h-7zM4 12.5h7v7l-7-1zM13 12.5h7v8.3l-7-1z"/>',
+    upright: '<path d="M7 17L17 7M9 7h8v8"/>',
   };
   const svg = (name) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[name] || ''}</svg>`;
   const DISCORD_SVG = '<svg class="b" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.32 4.37A19.8 19.8 0 0 0 15.43 2.85a.07.07 0 0 0-.08.04c-.21.38-.44.86-.61 1.25a18.27 18.27 0 0 0-5.49 0 12.64 12.64 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.74 19.74 0 0 0-4.88 1.52.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.3 1.23-1.99a.08.08 0 0 0-.04-.11 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1 0 .13 12.3 12.3 0 0 1-1.88.89.08.08 0 0 0-.04.11c.36.7.77 1.36 1.23 1.99a.08.08 0 0 0 .08.03 19.84 19.84 0 0 0 6-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.15-1.09-2.15-2.42s.95-2.42 2.15-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z"/></svg>';
@@ -160,7 +165,7 @@
   function renderNav() {
     $('#nav .brand').innerHTML = LOGO('<i>3.0</i>');
     $('#nav-links').innerHTML = NAV_BAR.map(([id, n]) => `<button type="button" data-nav="${id}"${navOn(id) ? ' aria-current="page"' : ''}>${n}</button>`).join('');
-    $('#nav-cta').innerHTML = `${meBtn()}<button type="button" class="btn btn-primary btn-sm nav-dl" data-nav="download"${navOn('download') ? ' aria-current="page"' : ''}>${svg('download')}Download</button>`;
+    $('#nav-cta').innerHTML = `${meBtn()}<button type="button" class="btn btn-primary btn-sm btn-tile nav-dl" data-nav="download"${navOn('download') ? ' aria-current="page"' : ''}>Download<span class="tile">${svg('download')}</span></button>`;
   }
   const navOn = (id) => id === S.page || (id === 'plans' && S.page === 'thanks');
   function openMenu() {
@@ -190,6 +195,7 @@
       REVIEWS_CHANNEL && `<li><a href="${esc(REVIEWS_CHANNEL)}" target="_blank" rel="noopener">Post a review</a></li>`,
       LINKS.x && `<li><a href="${esc(LINKS.x)}" target="_blank" rel="noopener">X (Twitter)</a></li>`].filter(Boolean).join('');
     $('#foot').innerHTML = `<div class="wrap">
+      <div class="matrix" id="matrix-box" aria-hidden="true"><canvas id="matrix"></canvas></div>
       <div class="foot-in">
         <div><a class="brand" href="#/" data-nav="home" aria-label="Ego Tweaks home">${LOGO()}</a>
           <p>A Windows tweaking utility for gamers. ${TWEAKS.length} tweaks for FPS, input delay and ping, and every one can be undone. One-time plans from $${PLANS[0].price}.</p></div>
@@ -203,6 +209,7 @@
         <span>Not affiliated with Microsoft, Discord or any game publisher.</span>
       </div>
     </div>`;
+    setupMatrix();
   }
   function renderDock() {
     $('#dock').innerHTML = `<button type="button" class="btn btn-primary" data-nav="plans">${svg('crown')}See plans</button>${DISCORD ? `<a class="btn btn-discord" href="${esc(DISCORD)}" target="_blank" rel="noopener">${DISCORD_SVG}Discord</a>` : ''}`;
@@ -251,6 +258,7 @@
     view.innerHTML = ({ home: pageHome, tweaks: pageTweaks, plans: pagePlans, thanks: pageThanks, download: pageDownload, reviews: pageReviews, faq: pageFaq, admin: pageAdmin }[S.page] || pageHome)();
     renderNav();
     setupReveal(view);
+    setupMotion(view);
     if (S.page === 'tweaks') filterXp();
     if (S.page === 'home' || S.page === 'reviews') loadReviews();
     if (S.page === 'admin') loadOwner();
@@ -284,6 +292,7 @@
     { ic: 'undo', t: 'Undo anything', n: 0, p: 'Every change is backed up before it’s made. Switch a tweak off, or undo everything at once from Recovery.' },
     { ic: 'refresh', t: 'Updates itself', n: 0, p: 'New versions install with one click. Every update is checked to be a genuine Ego Tweaks build before it runs.' },
   ];
+  const feat = (t) => FEATURES.find((f) => f.t === t);
   const TOUR = [
     { id: 'overview', ic: 'home', t: 'Overview', p: 'Your PC at a glance: health, live CPU, GPU, RAM and storage, and one-click places to start.' },
     { id: 'quick', ic: 'bolt', t: 'Quick Optimize', p: 'Preview every setting it will change, then apply what’s recommended for your hardware.' },
@@ -294,54 +303,70 @@
     { id: 'recovery', ic: 'undo', t: 'Recovery', p: 'Undo one tweak or all of them, and make a Windows restore point in one click.' },
   ];
   const shot = (id) => `assets/shots/v3/${id}.webp`;
+  // Splits text into word spans (the hero load-in and the scroll-lit statement animate them one by one).
+  const words = (text, from = 0) => esc(text).split(' ').map((w, i) => `<span class="w" style="--i:${from + i}">${w}</span>`).join(' ');
+  // Real tweak names from the catalog for the little app mock-ups.
+  const QO_SAMPLE = TWEAKS.filter((t) => t.tier && t.tier <= 2 && t.name.length <= 30).slice(0, 3);
+  const UNDO_SAMPLE = TWEAKS.find((t) => !t.tier && t.name.length <= 26) || TWEAKS[0];
 
   function pageHome() {
     const t = TOUR.find((x) => x.id === S.tour) || TOUR[0];
+    const statement = 'Ego Tweaks is ' + FAQ[0][1].charAt(0).toLowerCase() + FAQ[0][1].slice(1);
     return `
-    <section class="wrap hero">
-      <div>
-        <span class="chip red reveal"><i class="dot live"></i>New · Ego Tweaks 3.0</span>
-        <h1 class="h1 reveal" style="--d:1">More FPS. Less lag. <em>Undo anything.</em></h1>
-        <p class="lede reveal" style="--d:2">Ego Tweaks tunes Windows for gaming: <b>${TWEAKS.length} tweaks</b> matched to your PC, <b>Max FPS mode</b>, <b>Game Booster</b> and <b>Ping Booster</b>. Sign in with Discord, no keys. Every change can be undone.</p>
-        <div class="hero-cta reveal" style="--d:3">
-          <button type="button" class="btn btn-primary btn-lg" data-nav="plans">See plans — from $${PLANS[0].price}${svg('arrow')}</button>
+    <section class="hero" id="top">
+      <div class="hero-bg" aria-hidden="true"><i class="hb-dots"></i><i class="hb-glow"></i></div>
+      <div class="wrap hero-in">
+        <button type="button" class="pill-new ld" style="--i:0" data-nav="features"><span class="pn-tag">New</span>Ego Tweaks 3.0${svg('arrow')}</button>
+        <h1 class="h1 hero-h"><span class="l1">${words('More FPS. Less lag.', 1)}</span><span class="l2">${words('Undo anything.', 5)}</span></h1>
+        <p class="lede ld" style="--i:8">Ego Tweaks tunes Windows for gaming: <b>${TWEAKS.length} tweaks</b> matched to your PC, <b>Max FPS mode</b>, <b>Game Booster</b> and <b>Ping Booster</b>. Sign in with Discord, no keys. Every change can be undone.</p>
+        <div class="hero-cta ld" style="--i:9">
+          <button type="button" class="btn btn-primary btn-lg btn-tile" data-nav="plans">See plans — from $${PLANS[0].price}<span class="tile">${svg('upright')}</span></button>
           <button type="button" class="btn btn-line btn-lg" data-nav="download">${svg('download')}Download free</button>
         </div>
-        <div class="hero-note reveal" style="--d:4"><span>${svg('card')}One-time payment</span><span>${svg('ban')}No subscription</span><span>${svg('windows')}Windows 10 &amp; 11</span></div>
-        <div class="reveal" style="--d:5">${dcLiveBadge()}</div>
-      </div>
-      <div class="stage reveal" style="--d:2">
-        <div class="frame"><img class="shot" src="${shot('overview')}" width="1600" height="1000" alt="The Ego Tweaks 3.0 app: the Overview page" fetchpriority="high"></div>
-        <div class="tag b"><span class="ic">${svg('bolt')}</span><span><b>Max FPS mode</b><br>one click</span></div>
-        <div class="tag a"><span class="ic">${svg('undo')}</span><span><b>Undo anything</b><br>every change is backed up</span></div>
+        <div class="hero-note ld" style="--i:10"><span>${svg('card')}One-time payment</span><span>${svg('ban')}No subscription</span><span>${svg('windows')}Windows 10 &amp; 11</span></div>
+        <div class="ld" style="--i:11">${dcLiveBadge()}</div>
       </div>
     </section>
 
-    <section class="wrap reveal" aria-label="Ego Tweaks in numbers">
+    <section class="showcase" aria-label="The Ego Tweaks app">
+      <div class="wrap">
+        <div class="show-stage" id="show-stage">
+          <div class="show-glow" aria-hidden="true"></div>
+          <div class="show-frame" id="show-frame">
+            <div class="frame"><img class="shot" src="${shot('overview')}" width="1600" height="1000" alt="The Ego Tweaks 3.0 app: the Overview page" fetchpriority="high"></div>
+            <div class="tag b"><span class="ic">${svg('bolt')}</span><span><b>Max FPS mode</b><br>one click</span></div>
+            <div class="tag a"><span class="ic">${svg('undo')}</span><span><b>Undo anything</b><br>every change is backed up</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap stats-wrap reveal" aria-label="Ego Tweaks in numbers">
       <div class="stats">
-        <div><b>${TWEAKS.length}</b><span>tweaks in ${CATEGORIES.length} sections</span></div>
-        <div><b>4</b><span>one-time plans, from $${PLANS[0].price}</span></div>
+        <div><b data-count="${TWEAKS.length}">${TWEAKS.length}</b><span>tweaks in ${CATEGORIES.length} sections</span></div>
+        <div><b data-count="${PLANS.length}">${PLANS.length}</b><span>one-time plans, from $${PLANS[0].price}</span></div>
         <div><b>1<em>×</em></b><span>pay once, keep it for good</span></div>
         <div><b>0</b><span>tweaks that can lower your FPS</span></div>
       </div>
     </section>
 
+    <section class="sec statement-sec" aria-label="What Ego Tweaks is">
+      <div class="wrap">
+        <span class="eyebrow pill reveal">In one paragraph</span>
+        <p class="statement" id="statement">${words(statement)}</p>
+      </div>
+    </section>
+
     <section class="sec" id="features">
       <div class="wrap">
-        ${secHd('What’s new in 3.0', 'Built for <em>frames</em>, not fluff.', 'A brand-new app with everything aimed at higher, steadier FPS and lower ping, and nothing that could make a PC slower. Tweaks that could lower FPS or add stutter on some PCs were taken out.')}
-        <div class="grid g3">
-          <article class="card feat big reveal">
-            <div><span class="ic">${svg('bolt')}</span><h3>Max FPS mode</h3><p>One click: every FPS tweak for this PC, full CPU speed, and Game Booster with every option. Undo it any time from Recovery.</p><p style="margin-top:14px">${tierTag(4)}</p></div>
-            <img src="${shot('booster')}" width="1600" height="1000" alt="Max FPS mode and Game Booster in the app" loading="lazy">
-          </article>
-          ${FEATURES.map((f, i) => `<article class="card feat reveal" style="--d:${(i % 3) + 1}"><span class="ic">${svg(f.ic)}</span><h3>${f.t}${f.n ? tierTag(f.n) : '<span class="tier t0">Every plan</span>'}</h3><p>${f.p}</p></article>`).join('')}
-        </div>
+        ${secHd('What’s new in 3.0', 'Built for <em>frames</em>, not fluff.', 'A brand-new app with everything aimed at higher, steadier FPS and lower ping, and nothing that could make a PC slower. Tweaks that could lower FPS or add stutter on some PCs were taken out.', true)}
+        ${bento()}
       </div>
     </section>
 
     <section class="sec tint" id="tour">
       <div class="wrap">
-        ${secHd('The app', 'Easy to use. <em>Easy to undo.</em>', 'Bigger text, plain-English descriptions, and a Start here card that walks you through your first run.')}
+        ${secHd('The app', 'Easy to use. <em>Easy to undo.</em>', 'Bigger text, plain-English descriptions, and a Start here card that walks you through your first run.', true)}
         <div class="tour reveal">
           <div class="tour-tabs" role="tablist" aria-label="App pages">
             ${TOUR.map((x) => `<button type="button" role="tab" data-tour="${x.id}" aria-selected="${x.id === t.id}"><b>${svg(x.ic)}${x.t}</b><small>${x.p}</small></button>`).join('')}
@@ -351,18 +376,19 @@
       </div>
     </section>
 
-    <section class="sec" id="plans">
+    <section class="sec" id="how">
+      <div class="wrap how">
+        <div class="how-hd">${secHd('How it works', 'Three steps. <em>No keys.</em>', 'Pay once through Payhip, download the app, and sign in with the same Discord account.')}
+          <div class="reveal"><button type="button" class="btn btn-primary btn-tile" data-nav="plans">See plans<span class="tile">${svg('upright')}</span></button></div></div>
+        ${timeline()}
+      </div>
+    </section>
+
+    <section class="sec tint" id="plans">
       <div class="wrap">
         ${secHd('Plans', 'Pay once. <em>Keep it.</em>', 'Four one-time plans. Each one includes everything in the plans before it. No subscription: it never expires and nothing renews.', true)}
         ${plansGrid()}
         ${plansNote()}
-      </div>
-    </section>
-
-    <section class="sec tint">
-      <div class="wrap">
-        ${secHd('How it works', 'Three steps. <em>No keys.</em>', '', true)}
-        ${howSteps()}
       </div>
     </section>
 
@@ -387,23 +413,74 @@
     </section>
 
     <section class="sec tint">
-      <div class="wrap">
-        ${secHd('FAQ', 'Questions, <em>answered.</em>', '', true)}
-        <div class="faq center reveal">${FAQ.slice(0, 6).map(([q, a]) => faq(q, a)).join('')}</div>
-        <div class="center-row reveal"><button type="button" class="btn btn-line" data-nav="faq">All questions${svg('arrow')}</button></div>
+      <div class="wrap faq-split">
+        <div>${secHd('FAQ', 'Questions, <em>answered.</em>', `Can’t find yours? Ask in the ${DISCORD ? `<a href="${esc(DISCORD)}" target="_blank" rel="noopener">Discord</a>` : 'Discord'}.`)}
+          <div class="reveal"><button type="button" class="btn btn-line" data-nav="faq">All questions${svg('arrow')}</button></div></div>
+        <div class="faq reveal">${FAQ.slice(0, 6).map(([q, a]) => faq(q, a)).join('')}</div>
       </div>
     </section>
 
     <section class="sec">
       <div class="wrap">
         <div class="finale reveal">
-          <span class="eyebrow">Ego Tweaks 3.0</span>
+          <div class="fin-bg" aria-hidden="true"></div>
+          <span class="eyebrow pill">Ego Tweaks 3.0</span>
           <h2>Your PC, at its <em>fastest.</em></h2>
           <p>Pick a plan, sign in with Discord, and Ego Tweaks does the rest. Pay once and it’s yours.</p>
-          <div class="hero-cta"><button type="button" class="btn btn-primary btn-lg" data-nav="plans">See plans${svg('arrow')}</button><button type="button" class="btn btn-line btn-lg" data-nav="download">${svg('download')}Free download</button></div>
+          <div class="hero-cta"><button type="button" class="btn btn-primary btn-lg btn-tile" data-nav="plans">See plans<span class="tile">${svg('upright')}</span></button><button type="button" class="btn btn-line btn-lg" data-nav="download">${svg('download')}Free download</button></div>
         </div>
       </div>
     </section>`;
+  }
+
+  // Bento feature cards, each with a small live mock-up of that part of the app (HTML + CSS, real names only).
+  function bento() {
+    const every = '<span class="tier t0">Every plan</span>';
+    const card = (cls, mock, title, tag, text, i) => `<article class="card bento ${cls} reveal" style="--d:${i}">
+        <div class="mock" aria-hidden="true">${mock}</div>
+        <div class="bento-tx"><h3>${title}${tag}</h3><p>${text}</p></div></article>`;
+    const sw = (cls = '') => `<span class="m-sw ${cls}"><i></i></span>`;
+    const li = (txt, k, extra = '') => `<li style="--k:${k}">${svg('check')}<span>${esc(txt)}</span>${extra}</li>`;
+    const mMax = `<div class="m-win"><div class="m-row m-head"><span class="m-title">${svg('bolt')}Max FPS mode</span>${sw('m-on')}</div>
+        <ul class="m-list">${li('Every FPS tweak for this PC', 0)}${li('Full CPU speed', 1)}${li('Game Booster, every option', 2)}</ul>
+        <div class="m-bar"><i></i></div></div>`;
+    const mBoost = `<div class="m-win"><div class="m-row m-head"><span class="m-chip"><i class="dot live"></i>Game running</span></div>
+        <ul class="m-list">${li('High priority for the game', 0)}${li('Background apps calmed', 1)}${li('Update downloads paused', 2)}${li('0.5 ms timer held', 3)}</ul></div>`;
+    const ys = [38, 34, 40, 30, 36, 26, 33, 29, 37, 31, 35, 27, 34, 30, 38], pts = [];
+    for (let k = 0; k < 2; k++) ys.forEach((y, i) => { if (!(k && !i)) pts.push(`${(k * 200 + (i * 200) / 14).toFixed(1)} ${y}`); });
+    const mPing = `<div class="m-win m-pingw"><div class="m-row"><span class="m-k">Ping · jitter · spikes</span><span class="m-chip m-soft">live</span></div>
+        <div class="m-spark"><svg viewBox="0 0 400 60" preserveAspectRatio="none"><path d="M${pts.join(' L')}"/></svg></div>
+        <div class="m-row m-chips"><span class="m-chip m-soft">Game traffic first</span><span class="m-chip m-soft">Uploads capped</span></div></div>`;
+    const xh = (c) => `<svg class="m-xh ${c}" viewBox="0 0 40 40"><path d="M20 6v9M20 25v9M6 20h9M25 20h9"/><circle cx="20" cy="20" r="1.6"/></svg>`;
+    const mCross = `<div class="m-game"><span class="m-fps">FPS</span>${xh('x1')}${xh('x2')}${xh('x3')}<span class="m-gtag">Separate window · never touches the game</span></div>`;
+    const mQuick = `<div class="m-win"><div class="m-row"><span class="m-k">Scanning this PC</span></div><div class="m-bar m-scan"><i></i></div>
+        <ul class="m-list m-rec">${QO_SAMPLE.map((x, i) => li(x.name, i, tierTag(x.tier))).join('')}</ul></div>`;
+    const mUndo = `<div class="m-win"><div class="m-row m-undo"><span class="m-title">${esc(UNDO_SAMPLE.name)}</span>${sw('m-flip')}</div>
+        <div class="m-row"><span class="m-chip m-a">${svg('save')}Backed up</span><span class="m-chip m-b">${svg('undo')}Old value back</span></div></div>`;
+    const mDisc = `<div class="m-win m-center"><span class="m-dbtn">${DISCORD_SVG}Sign in with Discord</span><span class="m-ok">${svg('check')}Plan unlocked on this PC</span></div>`;
+    const mUpd = `<div class="m-win"><div class="m-row"><span class="m-ver">v${esc(APP.version)}</span><span class="m-k">Update</span></div><div class="m-bar m-dl"><i></i></div>
+        <span class="m-ok m-ok2">${svg('shield')}Genuine Ego Tweaks build</span></div>`;
+    return `<div class="bento-grid">
+      ${card('span2', mMax, 'Max FPS mode', tierTag(4), 'One click: every FPS tweak for this PC, full CPU speed, and Game Booster with every option. Undo it any time from Recovery.', 0)}
+      ${card('', mBoost, 'Game Booster', tierTag(2), feat('Game Booster').p, 1)}
+      ${card('', mPing, 'Ping Booster', tierTag(3), feat('Ping Booster').p, 0)}
+      ${card('', mQuick, 'Quick Optimize', tierTag(1), feat('Quick Optimize').p, 1)}
+      ${card('', mCross, 'Crosshair &amp; overlay', tierTag(1), feat('Crosshair & overlay').p, 2)}
+      ${card('', mUndo, 'Undo anything', every, feat('Undo anything').p, 0)}
+      ${card('', mDisc, 'Sign in with Discord', every, feat('Sign in with Discord').p, 1)}
+      ${card('', mUpd, 'Updates itself', every, feat('Updates itself').p, 2)}
+    </div>`;
+  }
+  // "How it works" as a timeline whose line fills as you scroll.
+  function timeline() {
+    const steps = [
+      ['Pick a plan', 'Continue with Discord, then pay once through Payhip’s secure checkout. Your card details never touch this site.'],
+      ['Download the app', 'Payhip gives you the download straight away and emails it to you, or get it from the Download page here. It’s the same app. Open EgoTweaks.exe. Nothing to install.'],
+      ['Sign in with Discord', 'Use the same Discord account you bought with and your plan unlocks. It also unlocks on any other PC you sign in on.'],
+    ];
+    return `<ol class="timeline" id="timeline"><span class="tl-line" aria-hidden="true"><i id="tl-fill"></i></span>
+      ${steps.map(([h, p], i) => `<li class="tl-step"><span class="tl-dot">${i + 1}</span><div class="tl-body"><span class="tl-k">Step ${i + 1}</span><h3>${h}</h3><p>${p}</p></div></li>`).join('')}
+    </ol>`;
   }
   function setTour(id) {
     const t = TOUR.find((x) => x.id === id);
@@ -704,23 +781,29 @@
   const reviewList = () => S.reviews || [];
   const reviewDate = (r) => { try { return new Date(r.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (_) { return ''; } };
   const stars = (n) => (n >= 1 && n <= 5 ? `<span class="stars" aria-label="${n} out of 5 stars">${svg('star').repeat(n)}</span>` : '');
-  const reviewAv = (r) => (r.avatar ? `<img src="${esc(r.avatar)}" data-fb="${esc(avPlaceholder(r.name))}" alt="" width="32" height="32" loading="lazy" referrerpolicy="no-referrer">` : `<span class="av">${esc((r.name || '?')[0].toUpperCase())}</span>`);
+  const reviewAv = (r) => (r.avatar ? `<img src="${esc(r.avatar)}" data-fb="${esc(avPlaceholder(r.name))}" alt="" width="32" height="32" loading="lazy" referrerpolicy="no-referrer">` : `<span class="av">${esc(firstChar(r.name))}</span>`);
   const reviewCard = (r, hidden = false) => `<figure class="card rv-card"${hidden ? ' aria-hidden="true"' : ''}>
       ${stars(Number(r.stars))}<blockquote>${esc(r.text)}</blockquote>
       <figcaption>${reviewAv(r)}<b>${esc(r.name)}</b>${r.at ? `<time datetime="${new Date(r.at).toISOString()}">${esc(reviewDate(r))}</time>` : ''}</figcaption>
     </figure>`;
-  function reviewTrack() {
-    const list = reviewList().slice(0, 24), loop = [];
+  // Home: a wall of the real #reviews messages in slowly drifting columns that fade at the edges. Link-only
+  // messages are left off the wall (the Reviews page shows everything). Fewer than 6: a still grid.
+  const wallList = () => reviewList().filter((r) => !/^https?:\/\/\S+$/.test(String(r.text).trim())).slice(0, 24);
+  function reviewWall() {
+    const list = wallList();
     if (!list.length) return '';
-    while (loop.length < 6) loop.push(...list);
-    return loop.map((r, i) => reviewCard(r, i >= list.length)).join('') + loop.map((r) => reviewCard(r, true)).join('');
+    if (list.length < 6 || REDUCED) return `<div class="wall-static">${list.slice(0, 9).map((r) => reviewCard(r)).join('')}</div>`;
+    const cols = [[], [], []];
+    list.forEach((r, i) => cols[i % 3].push(r));
+    return `<div class="wall">${cols.map((c, i) => `<div class="wall-col"><div class="wall-track" style="--dur:${Math.max(28, c.length * 7) + i * 6}s">${c.map((r) => reviewCard(r)).join('')}${c.map((r) => reviewCard(r, true)).join('')}</div></div>`).join('')}</div>`;
   }
   function reviewSection() {
     if (!REVIEWS_CHANNEL) return '';
-    return `<section class="sec tint" id="reviews"${reviewList().length ? '' : ' hidden'}>
-      <div class="wrap">${secHd('Reviews', 'Straight from <em>the Discord.</em>', 'Every message in our #reviews channel, live.')}</div>
-      <div class="marquee reveal"><div class="marquee-track" id="rv-track" style="--dur:${Math.max(40, reviewList().slice(0, 24).length * 8)}s">${reviewTrack()}</div></div>
-      <div class="center-row reveal"><button type="button" class="btn btn-line" data-nav="reviews">All <span data-rv-n>${reviewList().length}</span> reviews${svg('arrow')}</button></div>
+    return `<section class="sec tint" id="reviews"${wallList().length ? '' : ' hidden'}>
+      <div class="wrap">${secHd('Reviews', 'Straight from <em>the Discord.</em>', 'Every message in our #reviews channel, live.', true)}
+        <div class="wall-box reveal" id="rv-wall">${reviewWall()}</div>
+        <div class="center-row reveal"><button type="button" class="btn btn-line" data-nav="reviews">All <span data-rv-n>${reviewList().length}</span> reviews${svg('arrow')}</button></div>
+      </div>
     </section>`;
   }
   const REVIEWS_PAGE = 30;
@@ -775,9 +858,9 @@
       if (box) box.innerHTML = reviewGrid();
     }
     if (S.page === 'home') {
-      const sec = $('#reviews'), track = $('#rv-track');
-      if (sec) sec.hidden = !reviewList().length;
-      if (track) { track.innerHTML = reviewTrack(); track.style.setProperty('--dur', Math.max(40, reviewList().slice(0, 24).length * 8) + 's'); }
+      const sec = $('#reviews'), wall = $('#rv-wall');
+      if (sec) sec.hidden = !wallList().length;
+      if (wall) wall.innerHTML = reviewWall();
       if (sec) $$('.reveal', sec).forEach((e) => e.classList.add('in'));
     }
   }
@@ -974,7 +1057,7 @@
   function fillDiscord() {
     const d = DC.data;
     if (!d) return;
-    $$('[data-dc]').forEach((el) => { el.textContent = Number(d[el.dataset.dc] || 0).toLocaleString(); });
+    $$('[data-dc]').forEach((el) => { el.textContent = Number(d[el.dataset.dc] || 0).toLocaleString(); countUp(el, Number(d[el.dataset.dc] || 0)); });
     $$('[data-dc-wrap]').forEach((el) => (el.hidden = false));
   }
 
@@ -1332,6 +1415,176 @@
     host.classList.remove('loading');
   }
 
+  // ───────────── motion ─────────────
+  // One rAF-throttled scroll pass reads every rect first, then writes transforms/opacity only. IntersectionObserver
+  // starts the CSS loops (mock-ups, review wall) and count-ups only while they're on screen. Phones get the light
+  // version (no 3D tilt, no parallax, no cursor effects); reduced motion gets none of it.
+  const HOVER = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const small = () => innerWidth < 760;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const M = { frame: null, stage: null, bg: null, words: [], statement: null, lit: -1, tl: null, fill: null, steps: [], io: null };
+  function countUp(el, to) {
+    if (REDUCED || !to || el.dataset.counted === String(to)) return;
+    el.dataset.counted = String(to);
+    const t0 = performance.now(), dur = 1300;
+    const step = (now) => { const p = Math.min(1, (now - t0) / dur); el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))).toLocaleString(); if (p < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  function setupMotion(view) {
+    M.frame = $('#show-frame', view); M.stage = $('#show-stage', view); M.bg = $('.hero-bg', view);
+    M.statement = $('#statement', view); M.words = $$('#statement .w', view); M.lit = -1;
+    M.tl = $('#timeline', view); M.fill = $('#tl-fill', view); M.steps = $$('.tl-step', view);
+    if (M.io) M.io.disconnect();
+    const live = $$('.mock, #rv-wall, .stats [data-count]', view);
+    if (REDUCED || !('IntersectionObserver' in window)) { live.forEach((e) => e.classList.add('live')); }
+    else {
+      M.io = new IntersectionObserver((list) => list.forEach((en) => {
+        en.target.classList.toggle('live', en.isIntersecting);
+        if (en.isIntersecting && en.target.dataset.count) countUp(en.target, Number(en.target.dataset.count));
+      }), { rootMargin: '0px 0px -10% 0px' });
+      live.forEach((e) => M.io.observe(e));
+    }
+    if (REDUCED) { M.words.forEach((w) => w.classList.add('lit')); M.steps.forEach((s) => s.classList.add('on')); if (M.fill) M.fill.style.transform = 'none'; }
+    motionFrame();
+  }
+  function motionFrame() {
+    if (REDUCED) return;
+    const vh = innerHeight, y = scrollY, phone = small();
+    // read
+    const sr = M.stage && M.stage.isConnected ? M.stage.getBoundingClientRect() : null;
+    const st = M.statement && M.statement.isConnected ? M.statement.getBoundingClientRect() : null;
+    const tr = M.tl && M.tl.isConnected ? M.tl.getBoundingClientRect() : null;
+    const stepTops = tr ? M.steps.map((s) => s.getBoundingClientRect().top) : [];
+    // write
+    if (sr && M.frame) {
+      const p = clamp((vh - sr.top) / (vh * 0.8), 0, 1), e = 1 - Math.pow(1 - p, 3);
+      M.frame.style.transform = phone ? `translate3d(0,${((1 - e) * 36).toFixed(1)}px,0)`
+        : `perspective(1800px) translate3d(0,${((1 - e) * 90).toFixed(1)}px,0) rotateX(${((1 - e) * 24).toFixed(2)}deg) scale(${(0.88 + 0.12 * e).toFixed(4)})`;
+      M.stage.style.setProperty('--show', e.toFixed(3));
+    }
+    if (M.bg && y < vh * 1.5) {
+      M.bg.style.transform = phone ? '' : `translate3d(0,${(y * 0.35).toFixed(1)}px,0)`;
+      M.bg.style.opacity = String(clamp(1 - y / (vh * 0.95), 0, 1).toFixed(3));
+    }
+    if (st && M.words.length) {
+      const p = clamp((vh * 0.82 - st.top) / (st.height + vh * 0.25), 0, 1);
+      const n = Math.round(p * M.words.length);
+      if (n !== M.lit) { M.words.forEach((w, i) => w.classList.toggle('lit', i < n)); M.lit = n; }
+    }
+    if (tr && M.fill) {
+      const line = vh * 0.62;
+      M.fill.style.transform = `scaleY(${clamp((line - tr.top) / tr.height, 0, 1).toFixed(4)})`;
+      M.steps.forEach((s, i) => s.classList.toggle('on', stepTops[i] < line));
+    }
+  }
+  window.addEventListener('resize', () => requestAnimationFrame(motionFrame), { passive: true });
+  // Cards light up where the cursor is (CSS reads --mx/--my).
+  if (HOVER && !REDUCED) {
+    document.addEventListener('pointermove', (e) => {
+      const c = e.target instanceof Element && e.target.closest('.bento, .plan, .dc-band, .finale');
+      if (!c) return;
+      const r = c.getBoundingClientRect();
+      c.style.setProperty('--mx', `${(e.clientX - r.left).toFixed(0)}px`);
+      c.style.setProperty('--my', `${(e.clientY - r.top).toFixed(0)}px`);
+    }, { passive: true });
+  }
+  // FAQ: smooth open and close (height + fade), still a real <details> for keyboards and screen readers.
+  document.addEventListener('click', (e) => {
+    const sum = e.target instanceof Element && e.target.closest('.faq summary');
+    if (!sum || REDUCED) return;
+    const d = sum.parentElement, a = $('.a', d);
+    if (!a || !a.animate) return;
+    e.preventDefault();
+    if (d.dataset.anim) return;
+    d.dataset.anim = '1';
+    const ease = 'cubic-bezier(.2,.8,.2,1)';
+    if (!d.open) {
+      d.open = true;
+      const h = a.scrollHeight;
+      a.animate({ height: ['0px', h + 'px'], opacity: [0, 1] }, { duration: 320, easing: ease }).finished.catch(() => {}).then(() => { delete d.dataset.anim; });
+    } else {
+      const an = a.animate({ height: [a.offsetHeight + 'px', '0px'], opacity: [1, 0] }, { duration: 240, easing: ease, fill: 'forwards' });
+      an.finished.catch(() => {}).then(() => { d.open = false; an.cancel(); delete d.dataset.anim; });
+    }
+  });
+
+  // The big dot-matrix "EGO" above the footer: dots sampled from the word, drawn on a canvas. Dots near the cursor
+  // swell and take the accent colour; the loop runs only while the cursor is over it and settles itself.
+  const MX = { c: null, box: null, dots: [], dpr: 1, w: 0, h: 0, tx: -1e4, ty: -1e4, x: -1e4, y: -1e4, amp: 0, target: 0, raf: 0, built: false };
+  const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function buildMatrix() {
+    const c = $('#matrix'), box = $('#matrix-box');
+    if (!c || !box) return;
+    MX.c = c; MX.box = box;
+    const W = Math.round(box.clientWidth), H = Math.round(box.clientHeight);
+    if (!W || !H) return;
+    MX.dpr = Math.min(2, window.devicePixelRatio || 1); MX.w = W; MX.h = H;
+    c.width = W * MX.dpr; c.height = H * MX.dpr; c.style.width = W + 'px'; c.style.height = H + 'px';
+    const off = document.createElement('canvas'); off.width = W; off.height = H;
+    const o = off.getContext('2d', { willReadFrequently: true });
+    let size = H * 1.18;
+    const font = (px) => `800 ${px}px Geist, 'Segoe UI', system-ui, sans-serif`;
+    o.font = font(size);
+    let m = o.measureText('EGO');
+    if (m.width > W * 0.96) { size *= (W * 0.96) / m.width; o.font = font(size); m = o.measureText('EGO'); }
+    const asc = m.actualBoundingBoxAscent || size * 0.72;
+    o.fillStyle = '#000';
+    o.fillText('EGO', (W - m.width) / 2, (H + asc) / 2);
+    const data = o.getImageData(0, 0, W, H).data, step = W < 640 ? 6 : 9;
+    MX.step = step; MX.dots = [];
+    for (let yy = step / 2; yy < H; yy += step) for (let xx = step / 2; xx < W; xx += step) {
+      const a = data[(Math.floor(yy) * W + Math.floor(xx)) * 4 + 3];
+      if (a > 90) MX.dots.push(xx, yy);
+    }
+    MX.built = true;
+    drawMatrix();
+  }
+  function drawMatrix() {
+    if (!MX.c) return;
+    const ctx = MX.c.getContext('2d'), d = MX.dots, R = 140, base = MX.step * 0.24;
+    ctx.setTransform(MX.dpr, 0, 0, MX.dpr, 0, 0);
+    ctx.clearRect(0, 0, MX.w, MX.h);
+    ctx.fillStyle = cssVar('--matrix-dot') || '#888';
+    ctx.beginPath();
+    const hot = [];
+    for (let i = 0; i < d.length; i += 2) {
+      const dx = d[i] - MX.x, dy = d[i + 1] - MX.y, dist = Math.sqrt(dx * dx + dy * dy);
+      const k = MX.amp > 0.01 && dist < R ? (1 - dist / R) * MX.amp : 0;
+      if (k > 0.04) { hot.push(d[i] + (dx / (dist || 1)) * k * 3, d[i + 1] + (dy / (dist || 1)) * k * 3, k); continue; }
+      ctx.moveTo(d[i] + base, d[i + 1]); ctx.arc(d[i], d[i + 1], base, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    if (hot.length) {
+      ctx.fillStyle = cssVar('--accent') || '#7b6cff';
+      for (let i = 0; i < hot.length; i += 3) { const k = hot[i + 2]; ctx.globalAlpha = 0.35 + 0.65 * k; ctx.beginPath(); ctx.arc(hot[i], hot[i + 1], base + k * MX.step * 0.32, 0, Math.PI * 2); ctx.fill(); }
+      ctx.globalAlpha = 1;
+    }
+  }
+  function matrixLoop() {
+    MX.raf = 0;
+    MX.x += (MX.tx - MX.x) * 0.22; MX.y += (MX.ty - MX.y) * 0.22; MX.amp += (MX.target - MX.amp) * 0.12;
+    drawMatrix();
+    if (Math.abs(MX.target - MX.amp) > 0.01 || Math.abs(MX.tx - MX.x) > 0.5 || Math.abs(MX.ty - MX.y) > 0.5) MX.raf = requestAnimationFrame(matrixLoop);
+  }
+  function setupMatrix() {
+    buildMatrix();
+    const box = $('#matrix-box');
+    if (!box || REDUCED || !HOVER || box.dataset.wired) return;
+    box.dataset.wired = '1';
+    box.addEventListener('pointermove', (e) => {
+      const r = MX.c.getBoundingClientRect();
+      MX.tx = e.clientX - r.left; MX.ty = e.clientY - r.top;
+      if (MX.amp < 0.02) { MX.x = MX.tx; MX.y = MX.ty; }
+      MX.target = 1;
+      if (!MX.raf) MX.raf = requestAnimationFrame(matrixLoop);
+    }, { passive: true });
+    box.addEventListener('pointerleave', () => { MX.target = 0; if (!MX.raf) MX.raf = requestAnimationFrame(matrixLoop); });
+  }
+  let mxResize = 0;
+  window.addEventListener('resize', () => { clearTimeout(mxResize); mxResize = setTimeout(buildMatrix, 150); }, { passive: true });
+  window.addEventListener('ego-mode', () => drawMatrix());
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (MX.built) buildMatrix(); });
+
   // ───────────── scroll ─────────────
   let ticking = false;
   function onScroll() {
@@ -1343,6 +1596,7 @@
       $('#nav').classList.toggle('scrolled', y > 20);
       $('#dock').classList.toggle('on', y > 560 && !['plans', 'thanks', 'admin'].includes(S.page));
       spyJump();
+      motionFrame();
     });
   }
   window.addEventListener('scroll', onScroll, { passive: true });
