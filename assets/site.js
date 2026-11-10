@@ -265,6 +265,11 @@
     const m = location.hash.match(/^#\/?([a-z]+)/);
     const sec = m && SCROLL[m[1]];
     closeMenu();
+    if (page === 'admin' && S.page === 'admin' && !force) {
+      const t = ownerTabFromHash(true);
+      if (t !== OWN.tab) { OWN.tab = t; try { localStorage.setItem('ego-owner-tab', t); } catch (_) { /* storage blocked */ } paintOwner(); }
+    }
+    if (page !== 'admin') OWN.tabPicked = false;
     if (page !== S.page || force) {
       closeModal();
       S.page = page;
@@ -1264,7 +1269,7 @@
   // ───────────── admin page (#/admin, the © in the footer) ─────────────
   // Revenue, downloads and people on each plan, from the Ego Tweaks bot. The bot checks the Discord login with
   // Discord and only answers its admin accounts, so nothing here is secret.
-  const OWN = { data: null, err: '', busy: false, timer: 0 };
+  const OWN = { data: null, err: '', busy: false, timer: 0, tab: 'overview', tabPicked: false };
   // 'ego-owner' = '1' once the bot has said this Discord login is an admin. countdown.js reads it and lets the owner
   // see the real site before launch. It's a convenience, not security: the admin data still needs the bot's OK.
   const ownerFlag = (on) => { try { if (on) localStorage.setItem('ego-owner', '1'); else localStorage.removeItem('ego-owner'); } catch (_) { /* storage blocked */ } };
@@ -1296,16 +1301,49 @@
     paintOwner();
     OWN.timer = setInterval(() => { if (S.page === 'admin' && !document.hidden) loadOwner(); else if (S.page !== 'admin') clearInterval(OWN.timer); }, 60000);
   }
-  function paintOwner() { const el = $('#owner'); if (el) el.innerHTML = ownerBody(); }
+  // On the Money tab a refresh repaints only the income half, so a half-typed subscription or an open file
+  // picker isn't wiped every minute.
+  function paintOwner() {
+    const el = $('#owner'); if (!el) return;
+    const inc = $('#own-income', el), top = $('.own-top', el);
+    if (OWN.data && OWN.tab === 'money' && inc && top && $('#own-subs', el)) {
+      top.outerHTML = ownerHead(OWN.data, ownerUpdated(OWN.data));
+      inc.innerHTML = moneyIncome(OWN.data);
+      drawCharts();
+      return;
+    }
+    el.innerHTML = ownerBody();
+    if (OWN.data && OWN.tab === 'money') drawCharts();
+  }
   function pageAdmin() {
+    if (!OWN.tabPicked) { OWN.tab = ownerTabFromHash(false); OWN.tabPicked = true; ownerTabUrl(); }
+    if (OWN.data && OWN.tab === 'money') requestAnimationFrame(drawCharts);
     return `<div class="wrap page own-page"><div id="owner">${ownerBody()}</div></div>`;
   }
+  // Tabs: #/admin (or the tab used last time, when arriving from elsewhere) and #/admin/money.
+  const ownerTabStored = () => { try { return localStorage.getItem('ego-owner-tab') === 'money' ? 'money' : 'overview'; } catch (_) { return 'overview'; } };
+  const ownerTabFromHash = (within) => { const m = location.hash.match(/^#\/?admin\/(money|overview)\b/); return m ? m[1] : within ? 'overview' : ownerTabStored(); };
+  function ownerTabUrl() {
+    const want = OWN.tab === 'money' ? '#/admin/money' : null;
+    if (want && location.hash !== want && !/^#\/?admin\/money\b/.test(location.hash)) { try { history.replaceState(null, '', location.pathname + location.search + want); } catch (_) { /* old browser */ } }
+  }
+  // the hash change does the switch (route → paintOwner), so Back and Forward move between the tabs too
+  function setOwnerTab(t) {
+    t = t === 'money' ? 'money' : 'overview';
+    try { localStorage.setItem('ego-owner-tab', t); } catch (_) { /* storage blocked */ }
+    const hash = t === 'money' ? '#/admin/money' : '#/admin';
+    if (location.hash !== hash) location.hash = hash; else if (OWN.tab !== t) { OWN.tab = t; paintOwner(); }
+  }
+  const ownerTabs = () => `<div class="own-tabs" role="tablist" aria-label="Admin sections">${[['overview', 'Overview'], ['money', 'Money']].map(([k, n]) =>
+    `<button type="button" role="tab" id="own-tab-${k}" aria-controls="own-panel" aria-selected="${OWN.tab === k}" tabindex="${OWN.tab === k ? 0 : -1}" data-act="owner-tab" data-tab="${k}">${n}</button>`).join('')}</div>`;
+  const ownerUpdated = (d) => `Updated ${esc(new Date(d.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))} · refreshes every minute`;
+  const ownerHead = (d, sub) => `<div class="own-top"><div><span class="eyebrow">Ego Tweaks · Admin</span><h1 class="own-h">${d && OWN.tab === 'money' ? 'Money' : 'Business overview'}</h1><p class="own-sub">${sub}</p></div>
+      ${d ? `<div class="own-acts"><button type="button" class="btn btn-line ${OWN.busy ? 'busy' : ''}" data-act="owner-refresh">${svg('refresh')}Refresh</button></div>` : ''}</div>`;
   const money = (v) => '$' + Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 });
   const num = (v) => Number(v || 0).toLocaleString();
   function ownerBody() {
     const d = OWN.data;
-    const head = (sub) => `<div class="own-top"><div><span class="eyebrow">Ego Tweaks · Admin</span><h1 class="own-h">Business overview</h1><p class="own-sub">${sub}</p></div>
-      ${d ? `<div class="own-acts"><button type="button" class="btn btn-line ${OWN.busy ? 'busy' : ''}" data-act="owner-refresh">${svg('refresh')}Refresh</button></div>` : ''}</div>`;
+    const head = (sub) => ownerHead(d, sub);
     if (!d && OWN.err === 'login') {
       return `${head('Log in with the Discord account that owns Ego Tweaks.')}
         <div class="card own-gate"><div class="mark">${svg('lock')}</div><h2>Owner login</h2><p>Only Discord accounts on the bot’s admin list can see this page. Everyone else gets nothing.</p>
@@ -1317,7 +1355,9 @@
     }
     if (!d) return `${head(OWN.err ? esc(OWN.err) : 'Loading…')}<div class="own-skel">${'<i></i>'.repeat(8)}</div>
       ${OWN.err ? '<div class="center-row"><button type="button" class="btn btn-line" data-act="owner-refresh">Try again</button></div>' : ''}`;
-
+    return `${head(ownerUpdated(d))}${ownerTabs()}<div id="own-panel" role="tabpanel" aria-labelledby="own-tab-${OWN.tab}">${OWN.tab === 'money' ? moneyPanel(d) : ownerOverview(d)}</div>`;
+  }
+  function ownerOverview(d) {
     const plans = [{ n: 0, name: 'Free', price: 0 }, ...PLANS];
     const owners = d.owners || [0, 0, 0, 0, 0];
     const people = owners.reduce((a, b) => a + b, 0);
@@ -1337,8 +1377,7 @@
     };
     const versions = Object.entries(d.versions || {}).sort((a, b) => b[1] - a[1]);
     const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
-    return `${head(`Updated ${esc(new Date(d.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))} · refreshes every minute`)}
-      ${d.backup && d.backup.ready ? `<p class="own-saved">${svg('check')}Backed up to Discord${d.backup.last ? ` at ${esc(new Date(d.backup.last).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))}` : ''} · totals carry over every bot update</p>`
+    return `${d.backup && d.backup.ready ? `<p class="own-saved">${svg('check')}Backed up to Discord${d.backup.last ? ` at ${esc(new Date(d.backup.last).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))}` : ''} · totals carry over every bot update</p>`
         : d.storageWarning ? `<div class="own-warn">${svg('alert')}<span><b>Data isn’t being saved.</b> ${esc(d.storageWarning)}</span></div>` : ''}
       <section class="own-kpis">
         <div class="own-kpi big"><span>Total revenue</span><b>${money(d.revenue)}</b><small>${num(d.sales)} sale${d.sales === 1 ? '' : 's'} · ${num(d.refunds)} refund${d.refunds === 1 ? '' : 's'}</small></div>
@@ -1380,6 +1419,489 @@
       </section>
       <p class="own-note center">Sales and revenue come from Payhip orders the bot received. Site downloads are counted from 3.0.12 on; older clicks are in <button type="button" class="link" data-act="admin-legacy">the Supabase counter</button>.</p>`;
   }
+
+  // ───────────── admin › Money tab ─────────────
+  // Income from the bot (OWN.data.money) plus a subscription tracker that lives only in this browser. Every Ego sale
+  // is a one-time payment, so "run-rate" figures are recent sales scaled to a year, never recurring revenue.
+  // The Cash App CSV is read here and never sent anywhere; only each recurring charge's name, amount and dates are kept.
+  const VIZ = {}; // chart id → what drawCharts() draws there
+  const dayKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const dnum = (k) => { const [y, m, d] = k.split('-').map(Number); return Math.round(Date.UTC(y, m - 1, d) / 864e5); };
+  const dkey = (n) => new Date(n * 864e5).toISOString().slice(0, 10);
+  const kDate = (k, o) => new Date(k + 'T12:00:00').toLocaleDateString(undefined, o || { month: 'short', day: 'numeric' });
+  const kDateY = (k) => kDate(k, { month: 'short', day: 'numeric', year: 'numeric' });
+  const mName = (k, long) => new Date(k + '-15T12:00:00').toLocaleDateString(undefined, long ? { month: 'long', year: 'numeric' } : { month: 'short' });
+  const mTick = (k) => `${mName(k)} ’${k.slice(2, 4)}`;
+  const usd = (v) => (v < 0 ? '−' : '') + money(Math.abs(Math.round(v * 100) / 100));
+  const usd0 = (v) => (v < 0 ? '−$' : '$') + Math.round(Math.abs(v)).toLocaleString();
+  const CYCLES = { weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly' };
+  const perMonth = (s) => (s.cycle === 'weekly' ? (s.amount * 52) / 12 : s.cycle === 'quarterly' ? s.amount / 3 : s.cycle === 'yearly' ? s.amount / 12 : s.amount);
+  // k cycles after day key `from` (months keep the day, clamped to short months)
+  function addCycle(from, cycle, k = 1) {
+    if (cycle === 'weekly') return dkey(dnum(from) + 7 * k);
+    const [y, m, d] = from.split('-').map(Number);
+    const months = cycle === 'yearly' ? 12 * k : cycle === 'quarterly' ? 3 * k : k;
+    const t = new Date(Date.UTC(y, m - 1 + months, 1)), last = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate();
+    return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(Math.min(d, last)).padStart(2, '0')}`;
+  }
+  // the first charge on or after `today`
+  function nextDue(s, today) {
+    const base = s.next || (s.last ? addCycle(s.last, s.cycle) : today);
+    if (base >= today) return base;
+    for (let k = 1; k < 2000; k++) { const d = addCycle(base, s.cycle, k); if (d >= today) return d; }
+    return today;
+  }
+
+  // ── subscriptions: storage (localStorage only) ──
+  const SUBS_KEY = 'ego-owner-subs';
+  const SUBS = { list: null, maybe: [], edit: '', msg: '' };
+  const cleanStr = (v, n) => String(v ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
+  function cleanSub(x) {
+    if (!x || typeof x !== 'object') return null;
+    const amount = Math.round(Number(x.amount) * 100) / 100, name = cleanStr(x.name, 60);
+    if (!name || !(amount > 0 && amount < 1e6) || !CYCLES[x.cycle]) return null;
+    const date = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : '');
+    return { id: cleanStr(x.id, 40) || 's' + Math.random().toString(36).slice(2, 10), name, amount, cycle: x.cycle, next: date(x.next), cat: cleanStr(x.cat, 30),
+      src: x.src === 'cashapp' ? 'cashapp' : 'manual', key: cleanStr(x.key, 80), last: date(x.last), count: Math.max(0, Math.min(9999, Number(x.count) || 0)),
+      p2p: !!x.p2p, ended: !!x.ended, on: x.on !== false };
+  }
+  const cleanMaybe = (x) => { const s = cleanSub({ ...x, cycle: 'monthly', src: 'cashapp' }); return s && { key: s.key, name: s.name, amount: s.amount, last: s.last }; };
+  function subsList() {
+    if (SUBS.list) return SUBS.list;
+    let j = null;
+    try { j = JSON.parse(localStorage.getItem(SUBS_KEY) || 'null'); } catch (_) { /* storage blocked or bad JSON */ }
+    SUBS.list = (Array.isArray(j && j.subs) ? j.subs : []).map(cleanSub).filter(Boolean);
+    SUBS.maybe = (Array.isArray(j && j.maybe) ? j.maybe : []).map(cleanMaybe).filter(Boolean);
+    return SUBS.list;
+  }
+  function subsSave() {
+    try { localStorage.setItem(SUBS_KEY, JSON.stringify({ v: 1, saved: new Date().toISOString(), subs: SUBS.list, maybe: SUBS.maybe })); }
+    catch (_) { toast('This browser won’t save it (storage is blocked). Export a backup to keep it.', { bad: true }); }
+  }
+  function subsTotals() {
+    const on = subsList().filter((s) => s.on), month = on.reduce((a, s) => a + perMonth(s), 0);
+    return { on, month, year: month * 12 };
+  }
+  function subsChanged(msg) { subsSave(); paintSubs(); if (msg) toast(msg); }
+  function paintSubs() {
+    const el = $('#own-subs'); if (!el) return;
+    el.innerHTML = subsSection();
+    const inc = $('#own-income'); if (inc && OWN.data) { inc.innerHTML = moneyIncome(OWN.data); drawCharts(); }
+  }
+  function subsToggle(id, on) { const s = subsList().find((x) => x.id === id); if (s) { s.on = on; subsChanged(); } }
+  function subsDelete(id) {
+    const i = subsList().findIndex((x) => x.id === id); if (i < 0) return;
+    const [s] = SUBS.list.splice(i, 1); if (SUBS.edit === id) SUBS.edit = '';
+    subsChanged(`Deleted ${s.name}`);
+  }
+  function subsTrackMaybe(key) {
+    const i = SUBS.maybe.findIndex((m) => m.key === key); if (i < 0) return;
+    const [m] = SUBS.maybe.splice(i, 1), s = cleanSub({ ...m, cycle: 'monthly', next: addCycle(m.last, 'monthly'), count: 1, src: 'cashapp' });
+    if (s) subsList().push(s);
+    subsChanged(`Tracking ${m.name} as monthly`);
+  }
+  function subsDropMaybe(key) { SUBS.maybe = SUBS.maybe.filter((m) => m.key !== key); subsChanged(); }
+  function subsSubmit(f) {
+    const err = $('#own-sub-err', f);
+    const x = cleanSub({ name: f.elements.name.value, amount: String(f.elements.amount.value).replace(/[$,\s]/g, ''), cycle: f.elements.cycle.value, next: f.elements.next.value, cat: f.elements.cat.value, src: 'manual' });
+    if (!x) { err.textContent = 'Add a name and an amount above $0.'; return; }
+    const old = SUBS.edit && subsList().find((s) => s.id === SUBS.edit);
+    if (old) { Object.assign(old, { name: x.name, amount: x.amount, cycle: x.cycle, next: x.next, cat: x.cat }); SUBS.edit = ''; subsChanged(`Saved ${x.name}`); }
+    else { subsList().push(x); subsChanged(`Added ${x.name}`); }
+  }
+  function subsExport() {
+    const blob = new Blob([JSON.stringify({ app: 'ego-owner-subs', v: 1, saved: new Date().toISOString(), subs: subsList(), maybe: SUBS.maybe }, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `ego-subscriptions-${dayKey()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  async function subsRestore(file) {
+    let j = null;
+    try { j = JSON.parse(await file.text()); } catch (_) { /* not JSON */ }
+    const arr = Array.isArray(j) ? j : j && Array.isArray(j.subs) ? j.subs : null;
+    if (!arr) { toast('That file isn’t an Ego subscriptions backup.', { bad: true }); return; }
+    SUBS.list = arr.map(cleanSub).filter(Boolean); SUBS.edit = '';
+    SUBS.maybe = (Array.isArray(j && j.maybe) ? j.maybe : []).map(cleanMaybe).filter(Boolean);
+    subsChanged(`Restored ${SUBS.list.length} subscription${SUBS.list.length === 1 ? '' : 's'}`);
+  }
+
+  // ── Cash App CSV → recurring charges (all in this browser) ──
+  function parseCsv(text) {
+    const rows = []; let row = [], f = '', q = false;
+    text = String(text).replace(/^﻿/, '');
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+      else if (c === '"') q = true;
+      else if (c === ',') { row.push(f); f = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(f); f = ''; if (row.some((x) => x.trim())) rows.push(row); row = []; }
+      else f += c;
+    }
+    row.push(f); if (row.some((x) => x.trim())) rows.push(row);
+    return rows;
+  }
+  const csvDate = (v) => {
+    v = String(v || '').trim();
+    let m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+    m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if (m) return `${m[3].length === 2 ? '20' + m[3] : m[3]}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+    const t = Date.parse(v.replace(/\s+[A-Z]{2,4}$/, ''));
+    return Number.isFinite(t) ? dayKey(new Date(t)) : '';
+  };
+  const csvAmount = (v) => {
+    let s = String(v || '').replace(/[\s,]|USD/gi, '');
+    let neg = /^\(.*\)$/.test(s) || s.includes('-') || s.includes('−');
+    s = s.replace(/[()$\-−+]/g, '');
+    const n = parseFloat(s);
+    return Number.isFinite(n) ? (neg ? -n : n) : NaN;
+  };
+  // Merchant name as the statement shows it, tidied so one subscription's charges group together:
+  // "$20.00 PAYMENT AT ANTHROPIC* CLAUDE SUB" → "ANTHROPIC *CLAUDE SUB"; "APPLE COM BILL 866-712-7753 CA" → "APPLE.COM/BILL"
+  const STATES = new Set('AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC PR'.split(' '));
+  function merchantKey(raw) {
+    let s = String(raw || '').toUpperCase().replace(/\s+/g, ' ').trim();
+    s = s.replace(/^\$?\s?[\d,]+(\.\d+)?\s+PAYMENT AT\s+/, '');
+    s = s.replace(/\bAPPLE[\s.]*COM[\s/]*BILL\b/g, 'APPLE.COM/BILL');
+    s = s.replace(/\s*\*\s*/g, ' *').replace(/#\S*/g, ' ').replace(/\s+/g, ' ').trim();
+    const w = s.split(' ').filter(Boolean);
+    while (w.length > 1 && (/\d{3,}/.test(w[w.length - 1]) || /^[\d\-().\/]+$/.test(w[w.length - 1]) || STATES.has(w[w.length - 1]))) w.pop();
+    return w.join(' ').replace(/\s\*$/, '').slice(0, 60);
+  }
+  // [cycle, days, ± tolerance, fewest charges], tried in this order
+  const CYC = [['weekly', 7, 2, 3], ['monthly', 30.44, 5, 2], ['quarterly', 91.31, 10, 2], ['yearly', 365.25, 15, 2]];
+  // A cluster (one merchant, one steady price, one charge per day) is a subscription when every gap is close to
+  // 1–4 whole cycles (skipped months allowed) and the charges cover at least half the cycles from first to last.
+  function cycleOf(run) {
+    for (const [cycle, len, tol, need] of CYC) {
+      if (run.length < need) continue;
+      let ok = true;
+      for (let i = 1; i < run.length && ok; i++) { const g = run[i].n - run[i - 1].n, k = Math.round(g / len); ok = k >= 1 && k <= 4 && Math.abs(g - k * len) <= tol; }
+      if (!ok) continue;
+      const cycles = Math.round((run[run.length - 1].n - run[0].n) / len) + 1;
+      if (run.length / cycles >= 0.5) return { cycle, len };
+    }
+    return null;
+  }
+  const SUBBY = /(^|[^A-Z])(SUB|SUBSCRIPTION|PREMIUM|PLUS|PRO|MEMBER|MEMBERSHIP|MONTHLY|CLAUDE|ANTHROPIC|OPENAI|CHATGPT|SPOTIFY|NETFLIX|DISCORD|NITRO|XBOX|PLAYSTATION|YOUTUBE|ICLOUD|ADOBE|TWITCH|X)([^A-Z]|$)/;
+  function detectRecurring(text) {
+    const rows = parseCsv(text);
+    if (rows.length < 2) return { error: 'That file has no rows.' };
+    const h = rows[0].map((x) => x.toLowerCase().replace(/[^a-z]/g, ''));
+    const col = (...names) => { for (const n of names) { const i = h.indexOf(n); if (i >= 0) return i; } return -1; };
+    const C = { date: col('date', 'datetime', 'transactiondate', 'createdat'), type: col('transactiontype', 'type'), amount: col('amount', 'netamount', 'total'),
+      status: col('status'), notes: col('notes', 'note', 'description', 'memo'), name: col('nameofsenderreceiver', 'name', 'counterparty', 'recipient', 'merchant'), asset: col('assettype') };
+    if (C.date < 0 || C.amount < 0 || (C.name < 0 && C.notes < 0)) return { error: 'That doesn’t look like a Cash App export (it needs Date, Amount and Notes or Name columns).' };
+    const groups = new Map(); let pay = 0, skipped = 0, newest = 0;
+    for (const r of rows.slice(1)) {
+      const get = (i) => (i >= 0 ? String(r[i] || '').trim() : '');
+      const type = get(C.type).toLowerCase(), status = get(C.status), asset = get(C.asset);
+      const amt = csvAmount(get(C.amount)), day = csvDate(get(C.date));
+      if (day) newest = Math.max(newest, dnum(day));
+      // only COMPLETE money going out by card, Cash App Pay or to a person — never savings, bitcoin, stock or failed rows
+      if ((C.type >= 0 && !/^(cash card|cash app pay|p2p)/.test(type)) || (C.status >= 0 && !/^complete/i.test(status)) || (asset && !/^(usd|cash)?$/i.test(asset)) || !(amt < 0) || !day) { skipped++; continue; }
+      // a card purchase names the merchant in Notes; a person or Cash App Pay merchant is in Name (fall back to the other)
+      const who = type.startsWith('cash card') ? get(C.notes) || get(C.name) : get(C.name) || get(C.notes), key = merchantKey(who);
+      if (!key) { skipped++; continue; }
+      pay++;
+      const p2p = type.startsWith('p2p'), gk = (p2p ? 'P2P:' : '') + key;
+      if (!groups.has(gk)) groups.set(gk, { key: gk, name: key, p2p, list: [] });
+      groups.get(gk).list.push({ n: dnum(day), day, amt: Math.round(-amt * 100) / 100 });
+    }
+    const found = [], maybe = [];
+    for (const g of groups.values()) {
+      // clusters of one price (±3% or ±$0.25), so a $12.99 sub still shows up among one-off purchases at the same merchant
+      const clusters = [];
+      for (const x of [...g.list].sort((a, b) => a.amt - b.amt)) { const c = clusters[clusters.length - 1]; if (c && x.amt - c[0].amt <= Math.max(0.25, c[0].amt * 0.03)) c.push(x); else clusters.push([x]); }
+      const hits = [];
+      for (const c of clusters) {
+        const byDay = new Map(); for (const x of c) if (!byDay.has(x.n)) byDay.set(x.n, x);
+        const run = [...byDay.values()].sort((a, b) => a.n - b.n), cy = cycleOf(run);
+        if (cy) hits.push({ run, cy });
+      }
+      for (const { run, cy } of hits) {
+        const amts = run.map((x) => x.amt).sort((a, b) => a - b), amount = amts[Math.floor(amts.length / 2)], last = run[run.length - 1].day;
+        found.push({ key: `${g.key}|${cy.cycle}|${amount.toFixed(2)}`, name: g.name, p2p: g.p2p, cycle: cy.cycle, amount, last, next: addCycle(last, cy.cycle),
+          count: run.length, ended: newest - dnum(last) > cy.len * 1.6 });
+      }
+      // seen once in the file's last 35 days and named like a subscription: offer it, don't assume it
+      const recent = g.list.filter((x) => newest - x.n <= 35);
+      if (!g.p2p && recent.length === 1 && SUBBY.test(g.name) && !hits.some((hh) => hh.run.some((x) => x.n === recent[0].n))) maybe.push({ key: `${g.key}|monthly|${recent[0].amt.toFixed(2)}`, name: g.name, amount: recent[0].amt, last: recent[0].day });
+    }
+    return { rows: rows.length - 1, payments: pay, skipped, newest: newest ? dkey(newest) : '', found: found.sort((a, b) => a.ended - b.ended || perMonth(b) - perMonth(a)), maybe };
+  }
+  async function subsImportCsv(file) {
+    const msg = (t, bad) => { SUBS.msg = `<p class="own-csv-msg${bad ? ' bad' : ''}" role="status">${t}</p>`; paintSubs(); };
+    if (file.size > 25 * 1024 * 1024) return msg('That file is too big to be a Cash App statement.', true);
+    let res;
+    try { res = detectRecurring(await file.text()); } catch (_) { return msg('Couldn’t read that file.', true); }
+    if (res.error) return msg(esc(res.error), true);
+    const list = subsList(); let added = 0;
+    for (const f of res.found) {
+      const old = list.find((s) => s.src === 'cashapp' && s.key === f.key);
+      if (old) { if (f.last >= (old.last || '')) Object.assign(old, { amount: f.amount, cycle: f.cycle, last: f.last, next: f.next, count: Math.max(f.count, old.count), ended: f.ended }); }
+      else { const s = cleanSub({ ...f, src: 'cashapp', on: !f.ended && !f.p2p }); if (s) { list.push(s); added++; } }
+    }
+    SUBS.maybe = res.maybe.filter((m) => !list.some((s) => s.key === m.key)).map(cleanMaybe).filter(Boolean);
+    subsSave();
+    const act = res.found.filter((f) => !f.ended).length;
+    msg(`Read ${num(res.rows)} rows${res.newest ? ` (newest ${esc(kDateY(res.newest))})` : ''}: ${num(res.payments)} completed payments out, ${num(res.skipped)} skipped (failed, money in, savings, bitcoin, stock…). Found <b>${act}</b> active recurring charge${act === 1 ? '' : 's'} and ${res.found.length - act} that ended${added ? ` · ${added} new` : ''}${SUBS.maybe.length ? ` · ${SUBS.maybe.length} possible new` : ''}. Nothing was uploaded.`);
+  }
+
+  // ── Money tab markup ──
+  function moneyPanel(d) {
+    return `<div class="own-money"><div id="own-income">${moneyIncome(d)}</div><div id="own-subs">${subsSection()}</div></div>`;
+  }
+  const legend = (items) => `<div class="vz-legend">${items.map(([k, t]) => `<span><i class="vz-key ${k}"></i>${t}</span>`).join('')}</div>`;
+  const table = (caption, head, rows) => `<details class="vz-table"><summary>Show as a table</summary><div class="vz-scroll"><table><caption class="sr">${caption}</caption>
+    <thead><tr>${head.map((x, i) => `<th scope="col"${i ? ' class="r"' : ''}>${x}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((x, i) => (i ? `<td class="r">${x}</td>` : `<th scope="row">${x}</th>`)).join('')}</tr>`).join('')}</tbody></table></div></details>`;
+  const kpi = (label, value, small, cls = '') => `<div class="own-kpi ${cls}"><span>${label}</span><b>${value}</b>${small}</div>`;
+  const hbars = (rows, cls) => {
+    const max = Math.max(...rows.map((r) => r.v), 0.01);
+    return `<div class="vz-hbars ${cls}">${rows.map((r) => `<div class="vz-hbar" tabindex="0" data-tip="${esc(r.name)}" data-tip-rows="${esc(JSON.stringify(r.tip))}">
+      <span class="n">${esc(r.name)}</span><i><b style="width:${Math.max(0.6, (r.v / max) * 100).toFixed(2)}%"></b></i><span class="v">${r.label}</span></div>`).join('')}</div>`;
+  };
+  function moneyIncome(d) {
+    const m = d.money, t = subsTotals();
+    const r30 = m ? m.revenue30 : d.revenue30 || 0, net = r30 - t.month;
+    const subsKpi = kpi('Subscriptions per month', usd(t.month), `<small>${usd(t.year)} a year · ${t.on.length} tracked</small>`);
+    const netKpi = kpi('Net per month (estimate)', usd(net), `<small>Last 30 days’ sales − subscriptions</small>`, net < 0 ? 'neg' : '');
+    if (!m) {
+      return `<section class="own-mkpis">${kpi('Last 30 days', usd(r30), '<small>from the overview</small>')}${subsKpi}${netKpi}</section>
+        <div class="own-card own-empty"><b>The bot isn’t sending sales history yet.</b><p>Update the Ego Tweaks bot on Railway to get monthly and daily revenue, products and run-rate here. The subscription tracker below works already.</p></div>`;
+    }
+    const months = m.months || [], days = m.days || [], prods = Object.entries(m.byProduct || {}).map(([name, p]) => ({ name, sales: p.sales || 0, revenue: p.revenue || 0 })).sort((a, b) => b.revenue - a.revenue || b.sales - a.sales);
+    const anySales = months.some((x) => x.revenue > 0 || x.sales > 0) || days.some((x) => x.revenue > 0);
+    const curM = months[months.length - 1], prevM = months[months.length - 2];
+    const tm = m.thisMonth || 0, lm = m.lastMonth || 0;
+    const now = new Date(), dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(), pace = (tm / now.getDate()) * dim;
+    const delta = lm > 0 ? (tm - lm) / lm * 100 : null;
+    const dTxt = delta === null ? (tm > 0 ? `<em class="up">New · no sales in ${prevM ? mName(prevM.month) : 'last month'}</em>` : '<em>No sales either month</em>')
+      : `<em class="${delta >= 0 ? 'up' : 'down'}">${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta) >= 10 ? Math.round(Math.abs(delta)) : Math.abs(delta).toFixed(1)}%</em> vs ${usd(lm)} in ${prevM ? mName(prevM.month) : 'last month'}`;
+    const salesYr = months.slice(-12).reduce((a, x) => a + (x.sales || 0), 0);
+    const kpis = `<section class="own-mkpis">
+      ${kpi('Last 12 months', usd(m.revenue365), `<small>${num(salesYr)} sale${salesYr === 1 ? '' : 's'}${m.firstSale ? ` · first sale ${esc(kDateY(dayKey(new Date(m.firstSale))))}` : ''}</small>`, 'big')}
+      ${kpi('Annualized run-rate <i class="own-hint">≈ ARR</i>', usd0(m.runRate30), `<small>Last 30 days × 12 — one-time sales, not recurring</small><small>90-day pace: ${usd0(m.runRate90)} a year</small>`)}
+      ${kpi(`${curM ? mName(curM.month) : 'This month'} so far`, usd(tm), `<small class="own-delta">${dTxt}</small>${tm > 0 && now.getDate() < dim ? `<small>On pace for ${usd0(pace)}</small>` : ''}`)}
+      ${kpi('Average order', usd(m.avgOrder), `<small>Refund rate ${Number(m.refundRate || 0)}%${m.bestDay ? ` · best day ${esc(kDate(m.bestDay.day))} (${usd(m.bestDay.revenue)})` : ''}</small>`)}
+      ${subsKpi}${netKpi}</section>`;
+    // chart specs (drawn after the markup is in the page, at the card's real width)
+    let cum = 0; const cumV = months.map((x) => (cum += x.revenue || 0));
+    const ma = days.map((x, i) => (i < 6 ? null : days.slice(i - 6, i + 1).reduce((a, y) => a + (y.revenue || 0), 0) / 7));
+    VIZ.monthly = { n: months.length, label: `Monthly revenue for the last ${months.length} months`, labelW: 58, tick: (i) => mTick(months[i].month),
+      bars: months.map((x) => x.revenue || 0), barCls: 'rev', lines: t.month > 0 ? [{ flat: t.month, cls: 'cost' }] : [],
+      tip: (i) => { const x = months[i]; return { title: mName(x.month, true), rows: [['rev', usd(x.revenue), `Revenue · ${num(x.sales)} sale${x.sales === 1 ? '' : 's'}`], ...(t.month > 0 ? [['cost', usd(t.month), 'Subscriptions (today’s rate)'], ['', usd(x.revenue - t.month), 'Left over']] : []), ...(x.refunds ? [['', usd(x.refunded), `Refunded · ${num(x.refunds)}`]] : [])] }; } };
+    VIZ.daily = { n: days.length, label: `Daily revenue for the last ${days.length} days with a 7-day average`, labelW: 50, tick: (i) => kDate(days[i].day),
+      bars: days.map((x) => x.revenue || 0), barCls: 'soft', lines: [{ vals: ma, cls: 'ma' }],
+      tip: (i) => { const x = days[i]; return { title: kDate(x.day, { weekday: 'short', month: 'short', day: 'numeric' }), rows: [['soft', usd(x.revenue), `Revenue · ${num(x.sales)} sale${x.sales === 1 ? '' : 's'}`], ...(ma[i] !== null ? [['ma', usd(ma[i]), '7-day average']] : [])] }; } };
+    VIZ.cumulative = { n: months.length, label: `Cumulative revenue over the last ${months.length} months`, labelW: 58, tick: (i) => mTick(months[i].month),
+      lines: [{ vals: cumV, cls: 'rev', area: true, endLabel: usd0(cum) }],
+      tip: (i) => ({ title: mName(months[i].month, true), rows: [['rev', usd(cumV[i]), 'Total so far'], ['', usd(months[i].revenue), 'That month']] }) };
+    const empty = '<div class="vz-empty">No sales yet. This fills in after the first Payhip order.</div>';
+    const prodTotal = prods.reduce((a, p) => a + p.revenue, 0);
+    return `${kpis}
+      <section class="own-card vz-card"><div class="own-sec-h"><h2>Monthly revenue</h2><span>last ${months.length} months · ${usd(months.reduce((a, x) => a + (x.revenue || 0), 0))}</span></div>
+        ${anySales ? `${t.month > 0 ? legend([['bar rev', 'Revenue'], ['line cost', `Subscriptions now (${usd(t.month)}/mo)`]]) : ''}<div class="vz-plot tall" data-chart="monthly"></div>
+        ${table('Monthly revenue', ['Month', 'Revenue', 'Sales', 'Refunds', 'Refunded'], [...months].reverse().map((x) => [mName(x.month, true), usd(x.revenue), num(x.sales), num(x.refunds), usd(x.refunded || 0)]))}` : empty}</section>
+      <section class="own-card vz-card"><div class="own-sec-h"><h2>Daily revenue</h2><span>last ${days.length} days · ${usd(days.reduce((a, x) => a + (x.revenue || 0), 0))}</span></div>
+        ${anySales ? `${legend([['bar soft', 'Revenue that day'], ['line ma', '7-day average']])}<div class="vz-plot" data-chart="daily"></div>
+        ${table('Daily revenue', ['Day', 'Revenue', 'Sales', '7-day average'], days.map((x, i) => [x, i]).reverse().map(([x, i]) => [kDateY(x.day), usd(x.revenue), num(x.sales), ma[i] === null ? '—' : usd(ma[i])]))}` : empty}</section>
+      <section class="own-grid vz-pair">
+        <div class="own-card vz-card"><div class="own-sec-h"><h2>Revenue by product</h2><span>all time · ${usd(prodTotal)}</span></div>
+          ${prods.length && prodTotal > 0 ? hbars(prods.map((p) => ({ name: p.name, v: p.revenue, label: `${usd(p.revenue)} <small>${num(p.sales)} sale${p.sales === 1 ? '' : 's'}</small>`,
+            tip: [['rev', usd(p.revenue), 'Revenue'], ['', num(p.sales), 'Sales'], ['', `${Math.round((p.revenue / prodTotal) * 100)}%`, 'Share']] })), 'rev') : empty}</div>
+        <div class="own-card vz-card"><div class="own-sec-h"><h2>Cumulative revenue</h2><span>last ${months.length} months</span></div>
+          ${anySales ? `<div class="vz-plot" data-chart="cumulative"></div>${table('Cumulative revenue', ['Month', 'Total so far'], months.map((x, i) => [mName(x.month, true), usd(cumV[i])]).reverse())}` : empty}</div>
+      </section>`;
+  }
+  function subsSection() {
+    const list = subsList(), today = dayKey(), t = subsTotals(), edit = SUBS.edit && list.find((s) => s.id === SUBS.edit);
+    const end = dkey(dnum(today) + 14), soon = [];
+    for (const s of t.on) { for (let d = nextDue(s, today), k = 0; d <= end && k < 4; d = addCycle(d, s.cycle), k++) soon.push({ s, d }); }
+    soon.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : b.s.amount - a.s.amount));
+    const soonTotal = soon.reduce((a, x) => a + x.s.amount, 0);
+    const rel = (d) => { const n = dnum(d) - dnum(today); return n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`; };
+    const sorted = [...list].sort((a, b) => (b.on - a.on) || perMonth(b) - perMonth(a));
+    const live = sorted.filter((s) => !s.ended), ended = sorted.filter((s) => s.ended).sort((a, b) => (a.last < b.last ? 1 : -1));
+    const row = (s) => {
+      const next = s.ended ? '' : nextDue(s, today);
+      const tags = [s.src === 'cashapp' ? `Cash App · ${num(s.count)} charge${s.count === 1 ? '' : 's'}` : 'Added by hand', s.p2p ? 'Person (P2P)' : '', s.cat].filter(Boolean).map(esc).join(' · ');
+      return `<div class="own-srow${s.on ? '' : ' off'}${s.ended ? ' ended' : ''}">
+        <label class="own-sub-on" title="Count it in the totals"><input type="checkbox" data-sub-on="${esc(s.id)}"${s.on ? ' checked' : ''}><span class="sr">Track ${esc(s.name)}</span></label>
+        <div class="own-sub-n"><b>${esc(s.name)}</b><small>${tags}</small>${s.ended ? `<small class="own-stale">Ended — last charged ${esc(kDateY(s.last))}</small>` : ''}</div>
+        <div><span>Cycle</span>${CYCLES[s.cycle]}</div><div class="r"><span>Amount</span>${usd(s.amount)}</div>
+        <div><span>Last charge</span>${s.last ? esc(kDate(s.last)) : '—'}</div><div><span>Next charge</span>${next ? esc(kDate(next)) : '—'}</div>
+        <div class="r"><span>Per month</span><b>${usd(perMonth(s))}</b></div>
+        <div class="own-sub-acts"><button type="button" class="btn btn-line btn-xs" data-act="sub-edit" data-id="${esc(s.id)}" aria-label="Edit ${esc(s.name)}">Edit</button><button type="button" class="btn btn-line btn-xs danger" data-act="sub-del" data-id="${esc(s.id)}" aria-label="Delete ${esc(s.name)}">Delete</button></div></div>`;
+    };
+    const v = edit || { name: '', amount: '', cycle: 'monthly', next: '', cat: '' };
+    return `<section class="own-sec own-subsec">
+      <div class="own-sec-h"><h2>Subscriptions &amp; bills</h2><span>${svg('lock')}Saved in this browser only</span></div>
+      <div class="own-card own-import">
+        <div><b>Import a Cash App CSV</b><p>In Cash App: Activity → Statements → Export CSV. <strong>Your file never leaves this browser</strong> — it’s read here, recurring charges are picked out, and only their name, amount and dates are kept. Transaction IDs and account numbers are never stored.</p></div>
+        <div class="own-import-acts"><button type="button" class="btn btn-primary" data-act="subs-csv">${svg('download')}Import Cash App CSV</button><input type="file" id="own-csv" accept=".csv,text/csv" hidden></div>
+        ${SUBS.msg}
+      </div>
+      <div class="own-mkpis three">
+        ${kpi('Per month', usd(t.month), `<small>${t.on.length} tracked${list.length > t.on.length ? ` · ${list.length - t.on.length} ignored` : ''}</small>`)}
+        ${kpi('Per year', usd(t.year), '<small>weekly × 52, monthly × 12, quarterly × 4, yearly × 1</small>')}
+        ${kpi('Next 14 days', usd(soonTotal), `<small>${soon.length} charge${soon.length === 1 ? '' : 's'} coming</small>`)}
+      </div>
+      <div class="own-card own-sublist"><div class="own-sec-h"><h2>Your subscriptions</h2><span>tick to count it · amounts are typical charges</span></div>
+        ${live.length ? `<div class="own-srow head" aria-hidden="true"><span></span><span>Name</span><span>Cycle</span><span class="r">Amount</span><span>Last charge</span><span>Next charge</span><span class="r">Per month</span><span></span></div>${live.map(row).join('')}`
+        : `<p class="own-note">${list.length ? 'No active subscriptions found.' : 'Nothing yet. Import a Cash App CSV or add one below (Railway, your domain, Payhip…).'}</p>`}
+        ${SUBS.maybe.length ? `<div class="own-maybe"><h3>Possible new subscriptions</h3><p class="own-note">Charged once in the last 35 days and named like a subscription. Track it if it repeats.</p>
+          ${SUBS.maybe.map((m) => `<div class="own-maybe-r"><div><b>${esc(m.name)}</b><small>${usd(m.amount)} on ${esc(kDateY(m.last))}</small></div><button type="button" class="btn btn-line btn-xs" data-act="maybe-track" data-key="${esc(m.key)}">${svg('plus')}Track this</button><button type="button" class="btn btn-ghost btn-xs" data-act="maybe-drop" data-key="${esc(m.key)}" aria-label="Dismiss ${esc(m.name)}">Dismiss</button></div>`).join('')}</div>` : ''}
+        ${ended.length ? `<details class="own-ended"${ended.some((s) => s.on) ? ' open' : ''}><summary>Ended (${ended.length}) — recurring charges that stopped</summary>${ended.map(row).join('')}</details>` : ''}</div>
+      <div class="own-grid">
+        <div class="own-card"><div class="own-sec-h"><h2>Coming up in the next 14 days</h2><span>${usd(soonTotal)}</span></div>
+          ${soon.length ? `<ul class="own-soon">${soon.map(({ s, d }) => `<li><span class="d">${esc(kDate(d, { weekday: 'short', month: 'short', day: 'numeric' }))}<small>${rel(d)}</small></span><b>${esc(s.name)}</b><span class="a">${usd(s.amount)}</span></li>`).join('')}</ul>` : '<p class="own-note">Nothing due in the next two weeks.</p>'}</div>
+        <div class="own-card"><div class="own-sec-h"><h2>Cost by subscription</h2><span>per month</span></div>
+          ${t.on.length ? hbars([...t.on].sort((a, b) => perMonth(b) - perMonth(a)).map((s) => ({ name: s.name, v: perMonth(s), label: usd(perMonth(s)),
+            tip: [['cost', usd(perMonth(s)), 'Per month'], ['', `${usd(s.amount)} ${CYCLES[s.cycle].toLowerCase()}`, 'Charge'], ['', `${Math.round((perMonth(s) / t.month) * 100)}%`, 'Share']] })), 'cost') : '<p class="own-note">Tick a subscription to see it here.</p>'}</div>
+      </div>
+      <form class="own-card own-subform" id="own-sub-form" novalidate>
+        <div class="own-sec-h"><h2>${edit ? `Edit ${esc(edit.name)}` : 'Add one by hand'}</h2><span>for things not paid with Cash App</span></div>
+        <div class="own-fields">
+          <label class="f-name">Name<input name="name" required maxlength="60" placeholder="Railway" value="${esc(v.name)}" autocomplete="off"></label>
+          <label>Amount ($)<input name="amount" required inputmode="decimal" placeholder="5.00" value="${v.amount === '' ? '' : esc(v.amount.toFixed(2))}" autocomplete="off"></label>
+          <label>Cycle<select name="cycle">${Object.entries(CYCLES).map(([k, n]) => `<option value="${k}"${v.cycle === k ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+          <label>Next charge<input name="next" type="date" value="${esc(v.next)}"></label>
+          <label>Category<input name="cat" maxlength="30" placeholder="Optional, e.g. Hosting" value="${esc(v.cat)}" autocomplete="off"></label>
+        </div>
+        <div class="form-err" id="own-sub-err" role="alert"></div>
+        <div class="own-form-acts"><button type="submit" class="btn btn-primary">${edit ? 'Save changes' : `${svg('plus')}Add`}</button>${edit ? '<button type="button" class="btn btn-ghost" data-act="sub-cancel">Cancel</button>' : ''}</div>
+      </form>
+      <div class="own-backup"><span>Back up the list (it only lives in this browser):</span>
+        <button type="button" class="btn btn-line btn-sm" data-act="subs-export"${list.length ? '' : ' disabled'}>${svg('save')}Export backup</button>
+        <button type="button" class="btn btn-line btn-sm" data-act="subs-restore">${svg('undo')}Import backup</button><input type="file" id="own-restore" accept=".json,application/json" hidden></div>
+    </section>`;
+  }
+
+  // ── charts: inline SVG at the card's real width ──
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  function niceTicks(max, want) {
+    const raw = (max > 0 ? max : 1) / want, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+    const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p, top = Math.ceil((max > 0 ? max : 1) / step - 1e-9) * step;
+    const ticks = []; for (let i = 0; i * step <= top + step / 2; i++) ticks.push(Math.round(i * step * 100) / 100);
+    return { top, ticks };
+  }
+  function drawCharts() {
+    $$('[data-chart]').forEach((el) => { const s = VIZ[el.dataset.chart]; if (s && s.n) drawX(el, s); });
+  }
+  function drawX(el, s) {
+    const W = Math.max(200, Math.floor(el.clientWidth)), H = Math.max(140, Math.floor(el.clientHeight || 220));
+    const vals = [...(s.bars || []), ...s.lines.flatMap((l) => (l.flat != null ? [l.flat] : l.vals.filter((x) => x !== null)))];
+    const { top, ticks } = niceTicks(Math.max(...vals, 0), H < 200 ? 3 : 4);
+    const compact = top >= 10000, tf = (v) => (compact ? '$' + +(v / 1000).toFixed(1) + 'K' : '$' + v.toLocaleString());
+    const L = 12 + Math.max(...ticks.map((x) => tf(x).length)) * 6.4, R = s.lines.some((l) => l.endLabel) ? 14 : 6, T = 22, B = 26;
+    const pw = W - L - R, ph = H - T - B, n = s.n, band = pw / n;
+    const X = (i) => L + band * (i + 0.5), Y = (v) => T + ph - (Math.max(0, v) / top) * ph, f1 = (v) => v.toFixed(1);
+    let g = '';
+    ticks.forEach((x) => { g += `<line class="vz-grid" x1="${L}" x2="${W - R}" y1="${f1(Y(x))}" y2="${f1(Y(x))}"/><text class="vz-tick" x="${L - 8}" y="${f1(Y(x) + 3.5)}" text-anchor="end">${tf(x)}</text>`; });
+    const k = Math.max(1, Math.ceil((s.labelW || 56) / band));
+    // right to left from the newest; a label that would touch the one after it is skipped
+    for (let i = n - 1, room = Infinity; i >= 0; i -= k) {
+      const label = s.tick(i), w = label.length * 6.4, x = X(i);
+      const anchor = x + w / 2 > W - 2 ? 'end' : x - w / 2 < 2 ? 'start' : 'middle', lx = anchor === 'end' ? W - 2 : anchor === 'start' ? 2 : x;
+      const left = anchor === 'end' ? lx - w : anchor === 'start' ? lx : lx - w / 2;
+      if (left + w > room - 8) continue;
+      room = left;
+      g += `<text class="vz-tick" x="${f1(lx)}" y="${H - 8}" text-anchor="${anchor}">${esc(label)}</text>`;
+    }
+    if (s.bars) {
+      const bw = Math.min(24, Math.max(1, band - 2)), y0 = Y(0);
+      s.bars.forEach((v, i) => {
+        if (!(v > 0)) return;
+        const x = X(i) - bw / 2, y = Math.min(Y(v), y0 - 1), r = Math.min(4, bw / 2, y0 - y);
+        g += `<path class="vz-bar ${s.barCls}" data-i="${i}" d="M${f1(x)},${f1(y0)}V${f1(y + r)}Q${f1(x)},${f1(y)} ${f1(x + r)},${f1(y)}H${f1(x + bw - r)}Q${f1(x + bw)},${f1(y)} ${f1(x + bw)},${f1(y + r)}V${f1(y0)}Z"/>`;
+      });
+    }
+    g += `<line class="vz-axis" x1="${L}" x2="${W - R}" y1="${f1(Y(0))}" y2="${f1(Y(0))}"/>`;
+    for (const l of s.lines) {
+      if (l.flat != null) { g += `<line class="vz-line ${l.cls}" x1="${L}" x2="${W - R}" y1="${f1(Y(l.flat))}" y2="${f1(Y(l.flat))}"/>`; continue; }
+      let d = '', on = false;
+      l.vals.forEach((v, i) => { if (v === null) { on = false; return; } d += `${on ? 'L' : 'M'}${f1(X(i))},${f1(Y(v))}`; on = true; });
+      if (l.area) g += `<path class="vz-area ${l.cls}" d="M${f1(X(0))},${f1(Y(0))}${d.replace(/^M/, 'L')}L${f1(X(n - 1))},${f1(Y(0))}Z"/>`;
+      g += `<path class="vz-line ${l.cls}" d="${d}"/>`;
+      if (l.endLabel) { const lv = l.vals[n - 1]; g += `<circle class="vz-dot ${l.cls}" cx="${f1(X(n - 1))}" cy="${f1(Y(lv))}" r="4"/><text class="vz-val" x="${f1(X(n - 1))}" y="${f1(Math.max(12, Y(lv) - 10))}" text-anchor="end">${esc(l.endLabel)}</text>`; }
+    }
+    el.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${g}<line class="vz-cross" x1="0" x2="0" y1="${T}" y2="${f1(Y(0))}" visibility="hidden"/><g class="vz-hl"></g></svg>`;
+    el._vz = { s, X, Y, L, band, n, T };
+    if (!el._bound) bindChart(el);
+  }
+  function bindChart(el) {
+    el._bound = true;
+    el.tabIndex = 0;
+    el.setAttribute('role', 'img');
+    el.setAttribute('aria-label', `${el._vz.s.label}. Use the left and right arrow keys to read each value, or open the table below.`);
+    const at = (e) => { const z = el._vz, r = el.getBoundingClientRect(); return Math.max(0, Math.min(z.n - 1, Math.floor((e.clientX - r.left - z.L) / z.band))); };
+    el.addEventListener('pointermove', (e) => vzShow(el, at(e)));
+    el.addEventListener('pointerdown', (e) => vzShow(el, at(e)));
+    el.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') vzHide(el); });
+    el.addEventListener('focus', () => vzShow(el, el._i ?? el._vz.n - 1));
+    el.addEventListener('blur', () => vzHide(el));
+    el.addEventListener('keydown', (e) => {
+      const z = el._vz, i = el._i ?? z.n - 1;
+      const j = e.key === 'ArrowLeft' ? i - 1 : e.key === 'ArrowRight' ? i + 1 : e.key === 'Home' ? 0 : e.key === 'End' ? z.n - 1 : null;
+      if (j === null) return;
+      e.preventDefault(); vzShow(el, Math.max(0, Math.min(z.n - 1, j)));
+    });
+  }
+  function vzShow(el, i) {
+    const z = el._vz, svgEl = $('svg', el); if (!z || !svgEl) return;
+    el._i = i;
+    const x = z.X(i), cross = $('.vz-cross', svgEl);
+    cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.setAttribute('visibility', 'visible');
+    svgEl.classList.add('hov');
+    $$('.vz-bar', svgEl).forEach((b) => b.classList.toggle('on', Number(b.dataset.i) === i));
+    const hl = $('.vz-hl', svgEl); hl.textContent = '';
+    let topY = z.Y(0);
+    for (const l of z.s.lines) {
+      const v = l.flat != null ? l.flat : l.vals[i]; if (v === null || v === undefined) continue;
+      const c = document.createElementNS(SVGNS, 'circle');
+      c.setAttribute('class', `vz-dot ${l.cls}`); c.setAttribute('cx', x); c.setAttribute('cy', z.Y(v)); c.setAttribute('r', 4); hl.appendChild(c);
+      topY = Math.min(topY, z.Y(v));
+    }
+    if (z.s.bars && z.s.bars[i] > 0) topY = Math.min(topY, z.Y(z.s.bars[i]));
+    const r = el.getBoundingClientRect();
+    tipShow(z.s.tip(i), r.left + x, r.top + topY);
+  }
+  function vzHide(el) {
+    const svgEl = $('svg', el); if (svgEl) { svgEl.classList.remove('hov'); const c = $('.vz-cross', svgEl); if (c) c.setAttribute('visibility', 'hidden'); const hl = $('.vz-hl', svgEl); if (hl) hl.textContent = ''; $$('.vz-bar.on', svgEl).forEach((b) => b.classList.remove('on')); }
+    tipHide();
+  }
+  // one tooltip for every chart; text goes in with textContent (product and merchant names are data)
+  function tipShow(t, x, y) {
+    let tip = $('#vz-tip');
+    if (!tip) { tip = document.createElement('div'); tip.id = 'vz-tip'; tip.className = 'vz-tip'; tip.setAttribute('role', 'status'); document.body.appendChild(tip); }
+    tip.textContent = '';
+    const h = document.createElement('div'); h.className = 'vz-tip-h'; h.textContent = t.title; tip.appendChild(h);
+    for (const [cls, v, label] of t.rows) {
+      const row = document.createElement('div'); row.className = 'vz-tip-r';
+      const key = document.createElement('i'); key.className = 'vz-key line ' + (cls || 'none');
+      const b = document.createElement('b'); b.textContent = v;
+      const sp = document.createElement('span'); sp.textContent = label;
+      row.append(key, b, sp); tip.appendChild(row);
+    }
+    tip.hidden = false;
+    const w = tip.offsetWidth, hh = tip.offsetHeight, vw = document.documentElement.clientWidth;
+    let left = x + 14; if (left + w > vw - 8) left = x - w - 14; if (left < 8) left = Math.max(8, Math.min(vw - w - 8, x - w / 2));
+    let topPx = y - hh - 10; if (topPx < 8) topPx = y + 16;
+    tip.style.left = `${Math.round(left)}px`; tip.style.top = `${Math.round(topPx)}px`;
+  }
+  function tipHide() { const tip = $('#vz-tip'); if (tip) tip.hidden = true; }
+  // horizontal bars (products, cost by subscription): the row is the hit target
+  const hbarTip = (row) => { let rows = []; try { rows = JSON.parse(row.dataset.tipRows || '[]'); } catch (_) { /* bad data */ } const r = $('i', row).getBoundingClientRect(); tipShow({ title: row.dataset.tip, rows }, r.left + Math.min(r.width, $('i b', row).getBoundingClientRect().width), r.top); };
+  document.addEventListener('pointerover', (e) => { const row = e.target instanceof Element && e.target.closest('.vz-hbar'); if (row) hbarTip(row); });
+  document.addEventListener('pointerout', (e) => { const row = e.target instanceof Element && e.target.closest('.vz-hbar'); if (row && !row.contains(e.relatedTarget) && e.pointerType === 'mouse') tipHide(); });
+  document.addEventListener('focusin', (e) => { const row = e.target instanceof Element && e.target.closest('.vz-hbar'); if (row) hbarTip(row); });
+  document.addEventListener('focusout', (e) => { if (e.target instanceof Element && e.target.closest('.vz-hbar')) tipHide(); });
+  document.addEventListener('pointerdown', (e) => { if (!(e.target instanceof Element && e.target.closest('[data-chart], .vz-hbar'))) tipHide(); }, { passive: true });
+  window.addEventListener('scroll', () => { if (!$('[data-chart]:focus')) tipHide(); }, { passive: true });
+  let vzResize = 0, vzW = innerWidth;
+  window.addEventListener('resize', () => { if (innerWidth === vzW) return; vzW = innerWidth; clearTimeout(vzResize); vzResize = setTimeout(() => { if (S.page === 'admin' && OWN.tab === 'money') { tipHide(); drawCharts(); } }, 120); });
 
   // ───────────── hidden admin panel (Supabase registrations + downloads) ─────────────
   const ADM = { timer: 0, data: null };
@@ -1660,6 +2182,13 @@
   document.addEventListener('submit', (e) => {
     if (e.target.id === 'auth-form') { e.preventDefault(); if (!S.busy) submitAuth(e.target); }
     if (e.target.id === 'admin-form') { e.preventDefault(); submitAdmin(e.target); }
+    if (e.target.id === 'own-sub-form') { e.preventDefault(); subsSubmit(e.target); }
+  });
+  document.addEventListener('change', (e) => {
+    const t = e.target;
+    if (t.id === 'own-csv' && t.files && t.files[0]) { subsImportCsv(t.files[0]); t.value = ''; }
+    else if (t.id === 'own-restore' && t.files && t.files[0]) { subsRestore(t.files[0]); t.value = ''; }
+    else if (t.dataset && t.dataset.subOn) subsToggle(t.dataset.subOn, t.checked);
   });
   document.addEventListener('input', (e) => {
     if (e.target.id === 'xp-q') { S.xq = e.target.value; S.xshow = 60; filterXp(); }
@@ -1706,6 +2235,15 @@
       case 'admin-legacy': openAdmin(); break;
       case 'owner-login': discordConnect('admin'); break;
       case 'owner-refresh': loadOwner(true); break;
+      case 'owner-tab': setOwnerTab(el.dataset.tab); break;
+      case 'subs-csv': $('#own-csv') && $('#own-csv').click(); break;
+      case 'subs-restore': $('#own-restore') && $('#own-restore').click(); break;
+      case 'subs-export': subsExport(); break;
+      case 'sub-edit': SUBS.edit = el.dataset.id; paintSubs(); { const f = $('#own-sub-form'); if (f) { f.scrollIntoView({ block: 'nearest', behavior: REDUCED ? 'auto' : 'smooth' }); f.elements.name.focus(); } } break;
+      case 'sub-cancel': SUBS.edit = ''; paintSubs(); break;
+      case 'sub-del': subsDelete(el.dataset.id); break;
+      case 'maybe-track': subsTrackMaybe(el.dataset.key); break;
+      case 'maybe-drop': subsDropMaybe(el.dataset.key); break;
       case 'admin-refresh': loadAdmin(); break;
       case 'admin-lock': clearInterval(ADM.timer); AUTH.signOut().catch(() => {}); closeModal(); toast('Admin signed out'); break;
     }
@@ -1728,7 +2266,7 @@
       return;
     }
     if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
-    const tab = e.target instanceof Element && e.target.closest('.tour-tabs [role="tab"]');
+    const tab = e.target instanceof Element && e.target.closest('.tour-tabs [role="tab"], .own-tabs [role="tab"]');
     if (!tab) return;
     const tabs = $$('[role="tab"]', tab.parentElement), i = tabs.indexOf(tab);
     const j = (i + (e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
