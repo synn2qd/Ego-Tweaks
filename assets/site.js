@@ -88,10 +88,10 @@
     perks: ['In-game looks: cursor, sounds and font mods on your PC', 'A game overlay: crosshair, clock and time in game', 'Launcher themes and the EGO+ badge', 'Every boost, the auto clicker, games, friends and the Discord status stay free'] };
   const KEYS = { n: 'keys', id: 'keys', name: 'Ego Keys', price: 7, payhip: '02ImW',
     perks: ['Remap any key, on any keyboard', 'Macro editor: record, edit and play macros on a hotkey', 'Profiles that switch by themselves for each app or game', 'Lighting effects', 'The key tester stays free'] };
-  // The Add-on Bundle: every add-on above in one $10 purchase. The bot unlocks them all for a product with
-  // "Bundle" in its Payhip name (or listed as KEY=bundle). payhip: '' shows "Coming soon" until the product exists.
-  const BUNDLE = { n: 'bundle', id: 'bundle', name: 'Add-on Bundle', price: 10, payhip: '',
-    perks: [`Project Retrac ($${RETRAC.price})`, `Console Tweaks ($${CONSOLE.price})`, `Ego Keys ($${KEYS.price})`, `Ego+ for Roblox ($${ROBLOXPLUS.price})`, 'Ego Mouse ($5), when it launches'] };
+  // The Everything Bundle: Ultimate plus every add-on in one $10 purchase. The bot gives Ultimate and every add-on for
+  // a product with "Bundle" in its Payhip name (or listed as KEY=bundle). payhip: '' shows "Coming soon" until it exists.
+  const BUNDLE = { n: 'bundle', id: 'bundle', name: 'Everything Bundle', price: 10, payhip: '',
+    perks: ['Ego Tweaks Ultimate: every tweak card, Max FPS mode, Full CPU speed, BIOS guide ($20)', `Project Retrac ($${RETRAC.price})`, `Console Tweaks ($${CONSOLE.price})`, `Ego Keys ($${KEYS.price})`, `Ego+ for Roblox ($${ROBLOXPLUS.price})`, 'Ego Mouse ($5), when it launches'] };
   const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE, roblox: ROBLOXPLUS, keys: KEYS, bundle: BUNDLE }[key] || planOf(Number(key)));
   // The other Ego apps: same Discord sign-in, downloaded straight from this site.
   const MORE_APPS = [
@@ -579,9 +579,9 @@
   function addonCard() {
     return `<article class="card addon addon-bundle reveal jump-target" id="plan-bundle">
       <div class="addon-main">
-        <span class="eyebrow">Best value · every add-on, works with any plan, Free included</span>
-        <h3>Add-on Bundle <span class="addon-pr">$${BUNDLE.price}<small>one-time</small></span></h3>
-        <p>Every add-on in the store in one purchase: $27 of add-ons for $${BUNDLE.price}. Sign in to each app with the same Discord account and they unlock. Pro and Ultimate are separate plans.</p>
+        <span class="eyebrow">Best value · the whole store</span>
+        <h3>Everything Bundle <span class="addon-pr">$${BUNDLE.price}<small>one-time</small></span></h3>
+        <p>Everything in the store in one purchase: Ego Tweaks Ultimate and every add-on, $47 of products for $${BUNDLE.price}. Sign in to each app with the same Discord account and it all unlocks.</p>
         <ul>${BUNDLE.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
       </div>
       <div class="buy" data-plan="bundle">${buyArea(BUNDLE)}</div>
