@@ -1,48 +1,50 @@
-/* Ego Tweaks — website 8.0 (Ego Tweaks 4.0: Free plus two one-time plans, Pro and Ultimate, sign in with Discord; Nov 2026 brand, light + dark,
+/* Ego Tweaks — website 8.0 (Ego Tweaks 4.0: Free, or Ultimate for everything at $10 one-time, sign in with Discord; Nov 2026 brand, light + dark,
    scroll-linked motion in plain JS: IntersectionObserver + one rAF loop, transform/opacity only, static under reduced motion) */
 (() => {
   'use strict';
 
   // ───────────── settings you may want to change ─────────────
   // The free download on the Download page: Ego Tweaks 4.0 itself. It runs the Free plan until the user signs in
-  // with Discord, and every plan unlocks in this same app. After that it updates itself, so only swap these when
+  // with Discord, and Ultimate unlocks in this same app. After that it updates itself, so only swap these when
   // you want the site's download to be a newer build (the same file as the bot's updates/EgoTweaks.exe).
   const BUILD = {
     name: 'Ego Tweaks',
     file: 'EgoTweaks.exe',
     href: 'downloads/EgoTweaks.exe',
-    version: '4.0.0',
-    bytes: 2429952,
-    sha256: 'f5daaf4d9ab4015cdbf0ac8ae722750966ad48955a1d7b26b3f40607e956c86b',
+    version: '4.0.1',
+    bytes: 2440192,
+    sha256: '4690a7a9c9e74ca1d099c9cb86caae6a5ccba5e75d58ed5d72c1694224db5b5a',
   };
-  // What the Free plan includes (the app's own list).
-  const FREE = ['9 free tweak cards: Game Mode, GPU scheduling, raw mouse input, no ads and more', 'Home with live CPU, GPU and RAM', 'Network diagnostics: ping, regions, speed and route', 'Benchmarks', 'Recovery: undo everything, restore points'];
+  // What the Free plan includes (the app's own list). The tweak count comes from assets/catalog.js (tier 0 cards).
+  const FREE_CARDS = window.EGO_SITE_CATALOG.tweaks.filter((t) => !t.tier).length;
+  const FREE = [`${FREE_CARDS} free tweak cards: Game Mode, GPU scheduling, raw mouse input, no ads and more`, 'Home with live CPU, GPU and RAM', 'Network diagnostics: ping, regions, speed and route', 'Benchmarks', 'Recovery: undo everything, restore points'];
   // The current app, shown in the hero and the footer.
-  const APP = { version: '4.0.0' };
+  const APP = { version: '4.0.1' };
   // '4.0': the version shown in the nav chip, titles and copy that names the current app.
   const APP_MAJOR = APP.version.replace(/^(\d+\.\d+).*$/, '$1');
   // Paste your links here and they show up in the nav, footer and menu. Leave '' to hide.
   const LINKS = { discord: 'https://discord.gg/gtPggZ9zpz', x: '' };
-  // The two paid plans (Free is the FREE list above). Each is a one-time payment: nothing renews and it never expires.
-  //   n is the tier the app and the bot use: 0 Free, 3 Pro, 4 Ultimate. Tiers 1 and 2 were Starter and Premium, which
-  //   are no longer sold: everyone who bought them is Pro now (the bot treats them as Pro).
-  //   payhip: the Payhip product key (payhip.com/b/AbC12 → 'AbC12'). '' = that plan's Buy button says
-  //           "Coming soon" and points to the Discord instead. Each plan needs its own Payhip product.
+  // The one paid plan (Free is the FREE list above): Ultimate, everything for one one-time payment. Nothing renews
+  // and it never expires. What it includes is listed in ULTIMATE_LIST below (after the add-ons).
+  //   n is the tier the app and the bot use: 0 Free, 4 Ultimate. Tier 3 (Pro) is no longer sold, and tiers 1 and 2
+  //   (Starter and Premium) were retired before it: everyone who bought one keeps it (the bot treats 1-2 as Pro).
+  //   payhip: the Payhip product key (payhip.com/b/AbC12 → 'AbC12'). '' = the Buy button says "Coming soon" and
+  //           points to the Discord instead.
+  //   value:  what everything in it costs on its own, for the "Over $47 of products" line.
   //   The bot reads the plan from the product (PAYHIP_TIERS on Railway) or, failing that, from the price.
   const PLANS = [
-    { n: 3, id: 'pro', name: 'Pro', price: 10, payhip: '20cFf', flag: 'Most popular', sub: 'Higher FPS and lower ping: the tweak cards and the tools that go with them.',
-      perks: ['78 more tweak cards across performance, gaming, network, input, debloat, privacy, services and Windows', 'Optimize: everything picked for your PC in one click', 'Game Booster, process killer and per-game settings', 'Ping Booster and DNS switching', 'Crosshair and overlay, KBM Lab', 'Startup apps, deep clean and memory clearing', 'Profiles, setup codes, session reports and Ego Security Check'] },
-    { n: 4, id: 'ultimate', name: 'Ultimate', price: 20, payhip: 'Ayl9C', flag: 'Everything', sub: 'The whole thing: every tweak card, Max FPS mode and Full CPU speed.',
-      perks: ['6 Ultimate cards: CPU limits, boost, hybrid cores, GPU power, instant packet delivery', 'Max FPS mode', 'Full CPU speed', 'BIOS guide', 'Keyboard overclock', 'The Retrac and Console Tweaks add-ons included'] },
+    { n: 4, id: 'ultimate', name: 'Ultimate', price: 10, payhip: 'Ayl9C', flag: 'Everything', value: 47,
+      sub: 'Every tweak, every tool and every add-on, for one payment. Pay once and it’s yours for good.' },
   ];
+  const ULT = PLANS[0];
   // Every tier the bot has ever sold, for the admin page only: its sales and revenue arrays are indexed by tier
-  // (0..4) and still hold the old Starter and Premium sales, so these stay listed there even though they aren't sold.
+  // (0..4) and still hold the old Starter, Premium and Pro sales, so these stay listed there even though they aren't sold.
   const ADMIN_TIERS = [
     { n: 0, name: 'Free', price: 0 },
-    { n: 1, name: 'Starter', price: 5, retired: true },
-    { n: 2, name: 'Premium', price: 10, retired: true },
-    { n: 3, name: 'Pro', price: 10 },
-    { n: 4, name: 'Ultimate', price: 20 },
+    { n: 1, name: 'Starter', price: 5, retired: 'no longer sold, counts as Pro' },
+    { n: 2, name: 'Premium', price: 10, retired: 'no longer sold, counts as Pro' },
+    { n: 3, name: 'Pro', price: 10, retired: 'no longer sold, owners keep it' },
+    { n: 4, name: 'Ultimate', price: 10 },
   ];
   // "Continue with Discord": visitors log in with Discord to download and to buy (so the purchase is tied to
   // their Discord account and the bot can DM them). The bot then adds them to the Discord server.
@@ -71,6 +73,8 @@
   const { categories: CATEGORIES, tweaks: TWEAKS } = window.EGO_SITE_CATALOG;
   const perCat = (id) => TWEAKS.filter((t) => t.cat === id).length;
   const upTo = (n) => TWEAKS.filter((t) => t.tier <= n).length;
+  // Every card that isn't free (catalog tier 3 or 4) comes with Ultimate, the only paid plan.
+  const ULT_CARDS = TWEAKS.filter((t) => t.tier > 0).length;
   const planOf = (n) => PLANS.find((p) => p.n === n) || PLANS[0];
   // A tier's name, old tiers included (the admin page's sign-in list can still show Starter or Premium).
   const tierName = (n) => (PLANS.find((p) => p.n === n) || ADMIN_TIERS.find((p) => p.n === n) || PLANS[0]).name;
@@ -79,7 +83,7 @@
   const RETRAC = { n: 'retrac', id: 'retrac', name: 'Retrac', price: 5, payhip: 'Xvbc1',
     perks: ['One-click Boost Retrac: every Retrac setting and Retrac Booster at once', 'Fullscreen optimizations off, high CPU priority, sharp at any display scaling, never power-throttled', 'Retrac Booster with 6 options: high priority, calm background apps, 0.5 ms timer, clear memory, pause updates, max-performance power plan', 'Your recent Retrac sessions'],
     free: 'Free for everyone: Retrac found on your PC, the high-performance GPU setting and in-game settings for the Chapter 2 Season 4 build.' };
-  // The Console Tweaks add-on. (Ego Security Check now comes with Pro and Ultimate.)
+  // The Console Tweaks add-on. (Ego Security Check comes with Ultimate.)
   // payhip:'' shows "Coming soon" — put each product's Payhip key here when it's on sale.
   const CONSOLE = { n: 'console', id: 'console', name: 'Console Tweaks', price: 5, payhip: 'NABdR',
     perks: ['Lowest-lag TV and console settings for PS5 and Xbox', 'Performance mode, 120 Hz, VRR and ALLM set up right', 'Wired network, audio and controller setup', 'Per-game frame-rate picks'] };
@@ -88,11 +92,21 @@
     perks: ['In-game looks: cursor, sounds and font mods on your PC', 'A game overlay: crosshair, clock and time in game', 'Launcher themes and the EGO+ badge', 'Every boost, the auto clicker, games, friends and the Discord status stay free'] };
   const KEYS = { n: 'keys', id: 'keys', name: 'Ego Keys', price: 7, payhip: '02ImW',
     perks: ['Remap any key, on any keyboard', 'Macro editor: record, edit and play macros on a hotkey', 'Profiles that switch by themselves for each app or game', 'Lighting effects', 'The key tester stays free'] };
-  // The Everything Bundle: Ultimate plus every add-on in one $10 purchase. The bot gives Ultimate and every add-on for
-  // a product with "Bundle" in its Payhip name (or listed as KEY=bundle). payhip: '' shows "Coming soon" until it exists.
-  const BUNDLE = { n: 'bundle', id: 'bundle', name: 'Everything Bundle', price: 10, payhip: '',
-    perks: ['Ego Tweaks Ultimate: every tweak card, Max FPS mode, Full CPU speed, BIOS guide ($20)', `Project Retrac ($${RETRAC.price})`, `Console Tweaks ($${CONSOLE.price})`, `Ego Keys ($${KEYS.price})`, `Ego+ for Roblox ($${ROBLOXPLUS.price})`, 'Ego Mouse ($5), when it launches'] };
-  const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE, roblox: ROBLOXPLUS, keys: KEYS, bundle: BUNDLE }[key] || planOf(Number(key)));
+  // Ego Mouse: not on sale yet; listed in Ultimate only ("when it launches"). No add-on card until it has a Payhip product.
+  const MOUSE = { name: 'Ego Mouse', price: 5 };
+  // Everything in Ultimate, grouped for the Ultimate card on the Plans page. Facts only: keep it to what the app does.
+  // The first group (every tweak card) is built from the catalog in ultimateCard(), so its counts stay right.
+  const ULTIMATE_LIST = [
+    { ic: 'bolt', t: 'One click', items: ['Optimize: everything picked for your PC in one click', 'Max FPS mode: every FPS card and Game Booster setting in one click', 'Full CPU speed'] },
+    { ic: 'rocket', t: 'Game Booster and games', items: ['Game Booster: high priority, precise timer, clean memory, calm background apps, and update downloads paused while you play', 'Process killer', 'Per-game settings for your installed games', 'Stutter checklist'] },
+    { ic: 'signal', t: 'Ping', items: ['Ping Booster: game traffic marked first, upload hogs throttled, Wi-Fi scans paused while you play', 'DNS switching'] },
+    { ic: 'cross', t: 'Aim and input', items: ['Crosshair and FPS-style overlay', 'KBM Lab: mouse polling, clicks, keys and a sensitivity calculator', 'Keyboard overclock: faster key repeat'] },
+    { ic: 'refresh', t: 'Clean up', items: ['Startup apps', 'Deep clean', 'Standby memory clearing, by hand or automatic'] },
+    { ic: 'gauge', t: 'Hardware', items: ['BIOS guide for your board', 'Hardware checks'] },
+    { ic: 'save', t: 'Your setup', items: ['Profiles and setup codes', 'Session reports', 'Ego Security Check: a read-only check that Defender, firewall, SmartScreen, UAC and updates are on'] },
+  ];
+  const ULT_ADDONS = [[`Project Retrac`, RETRAC.price], ['Console Tweaks', CONSOLE.price], ['Ego Keys, the keyboard app', KEYS.price], ['Ego+ for Roblox', ROBLOXPLUS.price], [`${MOUSE.name}, when it launches`, MOUSE.price]];
+  const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE, roblox: ROBLOXPLUS, keys: KEYS }[key] || planOf(Number(key)));
   // The other Ego apps: same Discord sign-in, downloaded straight from this site.
   const MORE_APPS = [
     { id: 'roblox', name: 'Ego for Roblox', version: '0.7.0', file: 'EgoRoblox.exe', bytes: 1463296, sha256: 'c678de0aaee2c9f54bf9360059598c559be9d0cf1f89224e61c0df205753235f',
@@ -210,7 +224,7 @@
         <button type="button" class="burger" style="display:grid" data-act="menu-close" aria-label="Close menu">${svg('x')}</button></div>
       <nav aria-label="Pages">${[['home', 'Home']].concat(NAV.filter(([id]) => id !== 'features')).map(([id, n]) => `<button type="button" data-nav="${id}"${navOn(id) && id !== 'features' ? ' aria-current="page"' : ''}>${n}${svg('arrow')}</button>`).join('')}</nav>
       <div class="acts">
-        <button type="button" class="btn btn-primary btn-lg" data-nav="plans">Get Ego Tweaks — from $${PLANS[0].price}</button>
+        <button type="button" class="btn btn-primary btn-lg" data-nav="plans">Get everything — $${ULT.price} once</button>
         ${DC_LOGIN ? `<button type="button" class="btn btn-line btn-lg" data-act="discord-me">${DISCORD_SVG}${S.dc ? '@' + esc(S.dc.username) : 'Log in with Discord'}</button>` : ''}
         ${DISCORD ? `<a class="btn btn-discord btn-lg" href="${esc(DISCORD)}" target="_blank" rel="noopener">${DISCORD_SVG}Join the Discord</a>` : ''}
       </div>`;
@@ -234,7 +248,7 @@
       <div class="matrix" id="matrix-box" aria-hidden="true"><canvas id="matrix"></canvas></div>
       <div class="foot-in">
         <div><a class="brand" href="#/" data-nav="home" aria-label="Ego Tweaks home">${LOGO()}</a>
-          <p>A Windows tweaking utility for gamers. ${TWEAKS.length} tweaks for FPS, input delay and ping, and every one can be undone. One-time plans from $${PLANS[0].price}.</p></div>
+          <p>A Windows tweaking utility for gamers. ${TWEAKS.length} tweaks for FPS, input delay and ping, and every one can be undone. Free, or everything for $${ULT.price} once.</p></div>
         <div><h4>Product</h4><ul><li><button type="button" data-nav="features">Features</button></li><li><button type="button" data-nav="tweaks">All tweaks</button></li><li><button type="button" data-nav="plans">Plans</button></li><li><button type="button" data-nav="download">Free download</button></li></ul></div>
         <div><h4>Help</h4><ul><li><button type="button" data-nav="faq">FAQ</button></li><li><button type="button" data-nav="reviews">Reviews</button></li>${DC_LOGIN ? `<li><button type="button" data-act="discord-me">${S.dc ? '@' + esc(S.dc.username) : 'Log in with Discord'}</button></li>` : ''}</ul></div>
         <div><h4>Community</h4><ul>${community}</ul></div>
@@ -262,7 +276,7 @@
     const id = m ? ALIAS[m[1]] || m[1] : 'home';
     return PAGES.includes(id) ? id : 'home';
   };
-  const TITLES = { home: `Ego Tweaks ${APP_MAJOR} — more FPS, less lag, undo anything`, tweaks: `All ${TWEAKS.length} tweaks · Ego Tweaks`, plans: 'Plans · Ego Tweaks', thanks: 'Thanks for buying · Ego Tweaks',
+  const TITLES = { home: `Ego Tweaks ${APP_MAJOR} — more FPS, less lag, undo anything`, tweaks: `All ${TWEAKS.length} tweaks · Ego Tweaks`, plans: `Plans: Free, or everything for $${ULT.price} · Ego Tweaks`, thanks: 'Thanks for buying · Ego Tweaks',
     download: 'Free download · Ego Tweaks', reviews: 'Reviews · Ego Tweaks', faq: 'FAQ · Ego Tweaks', admin: 'Admin · Ego Tweaks' };
   function go(target) {
     const page = ALIAS[target] || target;
@@ -320,6 +334,8 @@
   // In-page jump row for long pages (Plans, FAQ): buttons, not #anchors, because the hash is the page router.
   const jumpRow = (items) => `<nav class="jump" aria-label="On this page"><div class="jump-in">${items.map(([id, n]) => `<button type="button" data-jump="${id}">${n}</button>`).join('')}</div></nav>`;
   const tierTag = (n) => (n ? `<span class="tier t${n}">${esc(tierName(n))}</span>` : '<span class="tier t0">Free</span>');
+  // A tweak card's tag: Free, or Ultimate for any paid card (the catalog's old Pro tier 3 included).
+  const tweakTag = (tier) => tierTag(tier > 0 ? ULT.n : 0);
   const faq = (q, a) => `<details><summary>${q}${svg('plus')}</summary><div class="a">${a.split('\n').map((x) => `<p>${x}</p>`).join('')}</div></details>`;
   const dcLiveBadge = () => (DISCORD ? `<a class="dc-live" href="${esc(DISCORD)}" target="_blank" rel="noopener" data-dc-wrap hidden>${DISCORD_SVG}<span><i class="dot green live"></i><b data-dc="online">—</b> online</span><span><b data-dc="members">—</b> members</span></a>` : '');
 
@@ -348,7 +364,7 @@
   // Splits text into word spans (the hero load-in and the scroll-lit statement animate them one by one).
   const words = (text, from = 0) => esc(text).split(' ').map((w, i) => `<span class="w" style="--i:${from + i}">${w}</span>`).join(' ');
   // Real tweak names from the catalog for the little app mock-ups.
-  const QO_SAMPLE = TWEAKS.filter((t) => t.tier && t.tier <= 3 && t.name.length <= 30).slice(0, 3);
+  const QO_SAMPLE = TWEAKS.filter((t) => t.tier > 0 && t.name.length <= 30).slice(0, 3);
   const UNDO_SAMPLE = TWEAKS.find((t) => !t.tier && t.name.length <= 26) || TWEAKS[0];
 
   function pageHome() {
@@ -362,7 +378,7 @@
         <h1 class="h1 hero-h"><span class="l1">${words('More FPS. Less lag.', 1)}</span><span class="l2">${words('Undo anything.', 5)}</span></h1>
         <p class="lede ld" style="--i:8">Ego Tweaks tunes Windows for gaming: <b>${TWEAKS.length} tweak cards</b> matched to your PC, <b>Max FPS mode</b>, <b>Game Booster</b> and <b>Ping Booster</b>. Sign in with Discord, no keys. Every change can be undone.</p>
         <div class="hero-cta ld" style="--i:9">
-          <button type="button" class="btn btn-primary btn-lg btn-tile" data-nav="plans">See plans — from $${PLANS[0].price}<span class="tile">${svg('upright')}</span></button>
+          <button type="button" class="btn btn-primary btn-lg btn-tile" data-nav="plans">Get everything — $${ULT.price}<span class="tile">${svg('upright')}</span></button>
           <button type="button" class="btn btn-line btn-lg" data-nav="download">${svg('download')}Download free</button>
         </div>
         <div class="hero-note ld" style="--i:10"><span>${svg('card')}One-time payment</span><span>${svg('ban')}No subscription</span><span>${svg('windows')}Windows 10 &amp; 11</span></div>
@@ -386,7 +402,7 @@
     <section class="wrap stats-wrap reveal" aria-label="Ego Tweaks in numbers">
       <div class="stats">
         <div><b data-count="${TWEAKS.length}">${TWEAKS.length}</b><span>tweak cards in ${CATEGORIES.length} sections</span></div>
-        <div><b data-count="${PLANS.length}">${PLANS.length}</b><span>one-time plan${PLANS.length === 1 ? '' : 's'}, from $${PLANS[0].price}, plus Free</span></div>
+        <div><b>$${ULT.price}</b><span>once for everything, or start free</span></div>
         <div><b>1<em>×</em></b><span>pay once, keep it for good</span></div>
         <div><b>0</b><span>tweaks that can lower your FPS</span></div>
       </div>
@@ -428,7 +444,7 @@
 
     <section class="sec tint" id="plans">
       <div class="wrap">
-        ${secHd('Plans', 'Pay once. <em>Keep it.</em>', 'Start free, or pick Pro or Ultimate: one-time plans, and Ultimate includes everything in Pro. No subscription: it never expires and nothing renews.', true)}
+        ${secHd('Plans', 'Pay once. <em>Keep it.</em>', `Start free with ${upTo(0)} tweak cards, or get Ultimate: every tweak, every tool and every add-on for $${ULT.price} once. No subscription: it never expires and nothing renews.`, true)}
         ${plansGrid()}
         ${plansNote()}
       </div>
@@ -475,7 +491,7 @@
           <div class="fin-bg" aria-hidden="true"></div>
           <span class="eyebrow pill">Ego Tweaks ${esc(APP_MAJOR)}</span>
           <h2>Your PC, at its <em>fastest.</em></h2>
-          <p>Pick a plan, sign in with Discord, and Ego Tweaks does the rest. Pay once and it’s yours.</p>
+          <p>Start free or get everything for $${ULT.price}, sign in with Discord, and Ego Tweaks does the rest. Pay once and it’s yours.</p>
           <div class="hero-cta"><button type="button" class="btn btn-primary btn-lg btn-tile" data-nav="plans">See plans<span class="tile">${svg('upright')}</span></button><button type="button" class="btn btn-line btn-lg" data-nav="download">${svg('download')}Free download</button></div>
         </div>
       </div>
@@ -503,7 +519,7 @@
     const xh = (c) => `<svg class="m-xh ${c}" viewBox="0 0 40 40"><path d="M20 6v9M20 25v9M6 20h9M25 20h9"/><circle cx="20" cy="20" r="1.6"/></svg>`;
     const mCross = `<div class="m-game"><span class="m-fps">FPS</span>${xh('x1')}${xh('x2')}${xh('x3')}<span class="m-gtag">Separate window · never touches the game</span></div>`;
     const mQuick = `<div class="m-win"><div class="m-row"><span class="m-k">Scanning this PC</span></div><div class="m-bar m-scan"><i></i></div>
-        <ul class="m-list m-rec">${QO_SAMPLE.map((x, i) => li(x.name, i, tierTag(x.tier))).join('')}</ul></div>`;
+        <ul class="m-list m-rec">${QO_SAMPLE.map((x, i) => li(x.name, i, tweakTag(x.tier))).join('')}</ul></div>`;
     const mUndo = `<div class="m-win"><div class="m-row m-undo"><span class="m-title">${esc(UNDO_SAMPLE.name)}</span>${sw('m-flip')}</div>
         <div class="m-row"><span class="m-chip m-a">${svg('save')}Backed up</span><span class="m-chip m-b">${svg('undo')}Old value back</span></div></div>`;
     const mDisc = `<div class="m-win m-center"><span class="m-dbtn">${DISCORD_SVG}Sign in with Discord</span><span class="m-ok">${svg('check')}Plan unlocked on this PC</span></div>`;
@@ -511,10 +527,10 @@
         <span class="m-ok m-ok2">${svg('shield')}Genuine Ego Tweaks build</span></div>`;
     return `<div class="bento-grid">
       ${card('span2', mMax, 'Max FPS mode', tierTag(4), 'One click: every FPS tweak for this PC, full CPU speed, and Game Booster with every option. Undo it any time from Recovery.', 0)}
-      ${card('', mBoost, 'Game Booster', tierTag(3), feat('Game Booster').p, 1)}
-      ${card('', mPing, 'Ping Booster', tierTag(3), feat('Ping Booster').p, 0)}
-      ${card('', mQuick, 'Optimize', tierTag(3), feat('Optimize').p, 1)}
-      ${card('', mCross, 'Crosshair &amp; overlay', tierTag(3), feat('Crosshair & overlay').p, 2)}
+      ${card('', mBoost, 'Game Booster', tierTag(4), feat('Game Booster').p, 1)}
+      ${card('', mPing, 'Ping Booster', tierTag(4), feat('Ping Booster').p, 0)}
+      ${card('', mQuick, 'Optimize', tierTag(4), feat('Optimize').p, 1)}
+      ${card('', mCross, 'Crosshair &amp; overlay', tierTag(4), feat('Crosshair & overlay').p, 2)}
       ${card('', mUndo, 'Undo anything', every, feat('Undo anything').p, 0)}
       ${card('', mDisc, 'Sign in with Discord', every, feat('Sign in with Discord').p, 1)}
       ${card('', mUpd, 'Updates itself', every, feat('Updates itself').p, 2)}
@@ -523,7 +539,7 @@
   // "How it works" as a timeline whose line fills as you scroll.
   function timeline() {
     const steps = [
-      ['Pick a plan', 'Continue with Discord, then pay once through Payhip’s secure checkout. Your card details never touch this site.'],
+      ['Get Ultimate', 'Continue with Discord, then pay once through Payhip’s secure checkout. Your card details never touch this site.'],
       ['Download the app', 'Payhip gives you the download straight away and emails it to you, or get it from the Download page here. It’s the same app. Open EgoTweaks.exe. Nothing to install.'],
       ['Sign in with Discord', 'Use the same Discord account you bought with and your plan unlocks. It also unlocks on any other PC you sign in on.'],
     ];
@@ -544,7 +560,7 @@
 
   function howSteps() {
     return `<div class="steps">
-      <div class="card step reveal"><span class="n">1</span><h3>Pick a plan</h3><p>Continue with Discord, then pay once through Payhip’s secure checkout. Your card details never touch this site.</p></div>
+      <div class="card step reveal"><span class="n">1</span><h3>Get Ultimate</h3><p>Continue with Discord, then pay once through Payhip’s secure checkout. Your card details never touch this site.</p></div>
       <div class="card step reveal" style="--d:1"><span class="n">2</span><h3>Download the app</h3><p>Payhip gives you the download straight away and emails it to you, or get it from the Download page here. It’s the same app. Open EgoTweaks.exe. Nothing to install.</p></div>
       <div class="card step reveal" style="--d:2"><span class="n">3</span><h3>Sign in with Discord</h3><p>Use the same Discord account you bought with and your plan unlocks. It also unlocks on any other PC you sign in on.</p></div>
     </div>`;
@@ -562,31 +578,48 @@
           <div class="count"><b>${upTo(0)}</b> free tweak cards</div>
         </div>
         <ul>${FREE.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
-        <div class="pf-cta"><button type="button" class="btn btn-line btn-block" data-nav="download">${svg('download')}Download free</button><p class="why">Upgrade any time in the same app.</p></div>
+        <div class="pf-cta"><button type="button" class="btn btn-line btn-block" data-nav="download">${svg('download')}Download free</button><p class="why">Get Ultimate any time in the same app.</p></div>
       </article>
-      <div class="plans">${PLANS.map((p, i) => `
-      <article class="card plan t${p.n}${p.flag === 'Most popular' ? ' hot' : ''} reveal" style="--d:${i}" id="plan-${p.id}">
-        <div class="top"><span class="nm">${esc(p.name)}</span>${p.flag ? `<span class="flag">${esc(p.flag)}</span>` : ''}</div>
-        <div class="pr">$${p.price}<small>one-time</small></div>
-        <p class="sub">${esc(p.sub)}</p>
-        <div class="count"><b>${upTo(p.n)}</b> tweak cards in total</div>
-        <ul>${i > 0 ? `<li class="inc">${svg('check')}Everything in ${esc(PLANS[i - 1].name)}, plus:</li>` : ''}${p.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
-        <div class="buy" data-plan="${p.n}">${buyArea(p)}</div>
-      </article>`).join('')}
-      </div>
+      ${PLANS.map(ultimateCard).join('')}
       ${addonCard()}`;
   }
-  function addonCard() {
-    return `<article class="card addon addon-bundle reveal jump-target" id="plan-bundle">
-      <div class="addon-main">
-        <span class="eyebrow">Best value · the whole store</span>
-        <h3>Everything Bundle <span class="addon-pr">$${BUNDLE.price}<small>one-time</small></span></h3>
-        <p>Everything in the store in one purchase: Ego Tweaks Ultimate and every add-on, $47 of products for $${BUNDLE.price}. Sign in to each app with the same Discord account and it all unlocks.</p>
-        <ul>${BUNDLE.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
+  // The Ultimate card: the only paid plan, full width, with everything it includes in groups.
+  function ultimateCard(p) {
+    const cats = CATEGORIES.map((c) => `<li><b>${esc(c.name)}</b><span>${perCat(c.id)}</span></li>`).join('');
+    const group = (g) => `<section class="ult-g"><h4>${svg(g.ic)}${esc(g.t)}</h4>
+        <ul>${g.items.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul></section>`;
+    return `<article class="card plan plan-ult hot t${p.n} reveal jump-target" id="plan-${p.id}">
+      <div class="ult-head">
+        <div class="ult-id">
+          <div class="top"><span class="nm">${esc(p.name)}</span>${p.flag ? `<span class="flag">${esc(p.flag)}</span>` : ''}</div>
+          <div class="pr">$${p.price}<small>one-time</small></div>
+          <p class="sub">${esc(p.sub)}</p>
+        </div>
+        <div class="ult-value">
+          <p class="ult-worth">Over <b>$${p.value}</b> of products for <b>$${p.price}</b></p>
+          <p class="ult-sum">All <b>${TWEAKS.length}</b> tweak cards, every tool in the app and every add-on: Project Retrac, Console Tweaks, Ego Keys, Ego+ for Roblox and ${esc(MOUSE.name)}.</p>
+        </div>
+        <div class="buy" data-plan="${p.n}">${buyArea(p)}</div>
       </div>
-      <div class="buy" data-plan="bundle">${buyArea(BUNDLE)}</div>
-    </article>
-    <article class="card addon reveal" id="plan-retrac">
+      <div class="ult-k">Everything in ${esc(p.name)}</div>
+      <div class="ult-grid">
+        <section class="ult-g ult-tweaks"><h4>${svg('sliders')}Every tweak card</h4>
+          <p>All <b>${TWEAKS.length}</b> tweak cards: the ${upTo(0)} free ones plus ${ULT_CARDS} more, in ${CATEGORIES.length} sections.</p>
+          <ul class="ult-cats">${cats}</ul>
+          <button type="button" class="btn btn-ghost btn-sm" data-nav="tweaks">See every tweak${svg('arrow')}</button>
+        </section>
+        ${ULTIMATE_LIST.map(group).join('')}
+        <section class="ult-g ult-addons"><h4>${svg('layers')}Every add-on included</h4>
+          <ul>${ULT_ADDONS.map(([n, pr]) => `<li>${svg('check')}<span>${esc(n)}</span><s>$${pr}</s></li>`).join('')}</ul>
+        </section>
+      </div>
+      <ul class="ult-terms">
+        <li>${svg('card')}One-time payment</li><li>${svg('ban')}Never expires</li><li>${svg('user')}Tied to your Discord, works on any PC you sign in on</li><li>${svg('undo')}Every change can be undone</li>
+      </ul>
+    </article>`;
+  }
+  function addonCard() {
+    return `<article class="card addon reveal jump-target" id="plan-retrac">
       <div class="addon-main">
         <span class="eyebrow">Add-on · works with any plan, Free included</span>
         <h3>Project Retrac <span class="addon-pr">$${RETRAC.price}<small>one-time</small></span></h3>
@@ -624,9 +657,9 @@
       <div class="buy" data-plan="roblox">${buyArea(ROBLOXPLUS)}</div>
     </article>`;
   }
-  const plansNote = () => `<div class="plans-note reveal"><span>${svg('card')}One-time payment</span><span>${svg('ban')}Never expires, nothing renews</span><span>${svg('user')}Tied to your Discord, works on any PC</span><span>${svg('crown')}Upgrade any time: your highest plan counts</span></div>
-    <div class="card free-strip reveal"><div><b>Not ready to buy? Start free.</b><p>Download Ego Tweaks ${esc(APP_MAJOR)} free: ${upTo(0)} free tweak cards, plus Home with live CPU, GPU and RAM, network diagnostics, benchmarks and Recovery. Upgrade later in the same app.</p></div><button type="button" class="btn btn-line btn-sm" data-nav="download">${svg('download')}Download free</button></div>
-    <div class="card free-strip reveal" style="margin-top:10px"><div><b>Bought Starter or Premium before?</b><p>That’s Pro now — sign in with the same Discord and it unlocks.</p></div>${DISCORD ? `<a class="btn btn-line btn-sm" href="${esc(DISCORD)}" target="_blank" rel="noopener">${DISCORD_SVG}Ask in the Discord</a>` : ''}</div>`;
+  const plansNote = () => `<div class="plans-note reveal"><span>${svg('card')}One-time payment</span><span>${svg('ban')}Never expires, nothing renews</span><span>${svg('user')}Tied to your Discord, works on any PC</span><span>${svg('undo')}Every change can be undone</span></div>
+    <div class="card free-strip reveal"><div><b>Not ready to buy? Start free.</b><p>Download Ego Tweaks ${esc(APP_MAJOR)} free: ${upTo(0)} free tweak cards, plus Home with live CPU, GPU and RAM, network diagnostics, benchmarks and Recovery. Get Ultimate later in the same app.</p></div><button type="button" class="btn btn-line btn-sm" data-nav="download">${svg('download')}Download free</button></div>
+    <div class="card free-strip reveal" style="margin-top:10px"><div><b>Bought Pro, Starter or Premium before? You keep it.</b><p>Sign in with the same Discord and it unlocks. Want everything? Ultimate is $${ULT.price}.</p></div>${DISCORD ? `<a class="btn btn-line btn-sm" href="${esc(DISCORD)}" target="_blank" rel="noopener">${DISCORD_SVG}Ask in the Discord</a>` : ''}</div>`;
 
   // Who's buying: everyone continues with Discord first, so the purchase is tied to their Discord account.
   function whoBar() {
@@ -637,7 +670,7 @@
   }
   // checkout link: carries the buyer's Discord ID as Payhip metadata, which Payhip passes to the bot's webhook
   // Referral links (egotweaks.com/?ref=CODE): the code is kept for 30 days and rides along in the checkout, so the
-  // bot can pay the link's owner $5 for a Pro or Ultimate purchase.
+  // bot can pay the link's owner $5 for an Ultimate purchase.
   const REF_DAYS = 30;
   const refCode = () => { const r = keep.get('ego-ref'); return r && /^[A-Z0-9]{4,16}$/.test(r.code) && Date.now() - r.at < REF_DAYS * 864e5 ? r.code : ''; };
   const checkoutUrl = (p) => {
@@ -647,7 +680,7 @@
     return 'https://payhip.com/buy?' + q;
   };
   function buyArea(p) {
-    const cls = `btn ${p.n === 4 || p.n === 'retrac' || p.n === 'bundle' || p.flag === 'Most popular' ? 'btn-primary' : 'btn-line'} btn-block`;
+    const cls = `btn ${p.n === ULT.n || p.n === 'retrac' ? 'btn-primary' : 'btn-line'} btn-block`;
     if (!payhipKey(p)) return `<a class="btn soon btn-block" href="${esc(DISCORD || '#/plans')}" target="_blank" rel="noopener" data-act="buy-soon" data-plan="${p.n}">Coming soon</a><p class="why">Ask in the Discord to get ${esc(p.name)} now.</p>`;
     if (!DC_LOGIN) return `<a class="${cls}" href="${esc(checkoutUrl(p))}" target="_blank" rel="noopener" data-act="buy" data-plan="${p.n}">Buy ${esc(p.name)} — $${p.price}</a>`;
     if (S.dcBusy) return `<button class="${cls} busy" disabled>Connecting</button>`;
@@ -690,37 +723,42 @@
   }
 
   function compareTable() {
-    // n: the lowest tier that includes the row (0 = every plan, 3 = Pro, 4 = Ultimate).
+    // n: the lowest tier that includes the row (0 = Free too, 4 = Ultimate).
     const rows = [
       ['Tweaks'],
-      [`Pro tweak cards: performance, gaming, network, input, debloat, privacy, services and Windows (${upTo(3) - upTo(0)})`, 3],
-      [`Ultimate cards: CPU limits, boost, hybrid cores, GPU power, instant packet delivery (${upTo(4) - upTo(3)})`, 4],
-      ['Tools'],
-      ['Optimize: everything picked for your PC in one click', 3], ['Game Booster', 3], ['Process killer and per-game settings', 3],
-      ['Ping Booster', 3], ['DNS switching', 3], ['Crosshair and overlay', 3], ['KBM Lab', 3],
-      ['Startup apps, deep clean and memory clearing', 3], ['Profiles and setup codes', 3], ['Session reports', 3],
-      ['Ego Security Check: a read-only check of Defender, firewall and updates', 3],
-      ['Max FPS mode', 4], ['Full CPU speed', 4], ['BIOS guide', 4], ['Keyboard overclock', 4],
+      [`${upTo(0)} free tweak cards: Game Mode, GPU scheduling, raw mouse input, no ads and more`, 0],
+      [`${ULT_CARDS} more tweak cards in all ${CATEGORIES.length} sections: ${CATEGORIES.map((c) => c.name).join(', ').replace(/, ([^,]*)$/, ' and $1')}`, 4],
+      ['One click'],
+      ['Optimize: everything picked for your PC in one click', 4], ['Max FPS mode: every FPS card and Game Booster setting', 4], ['Full CPU speed', 4],
+      ['Games and ping'],
+      ['Game Booster', 4], ['Process killer', 4], ['Per-game settings for your installed games', 4], ['Stutter checklist', 4],
+      ['Ping Booster', 4], ['DNS switching', 4],
+      ['Aim, input and your PC'],
+      ['Crosshair and FPS-style overlay', 4], ['KBM Lab: mouse polling, clicks, keys, sensitivity calculator', 4], ['Keyboard overclock: faster key repeat', 4],
+      ['Startup apps, deep clean and standby memory clearing', 4], ['BIOS guide for your board', 4], ['Hardware checks', 4],
+      ['Profiles, setup codes and session reports', 4],
+      ['Ego Security Check: a read-only check of Defender, firewall, SmartScreen, UAC and updates', 4],
       ['Add-ons'],
-      [`Project Retrac add-on (or $${RETRAC.price} on its own)`, 4], [`Console Tweaks add-on (or $${CONSOLE.price} on its own)`, 4],
-      ['Every plan, Free included'],
-      [`${upTo(0)} free tweak cards: Game Mode, GPU scheduling, raw mouse input, no ads and more`, 0], ['Home with live CPU, GPU and RAM', 0],
+      ...ULT_ADDONS.map(([n, pr]) => [`${n} (or $${pr} on its own)`, 4]),
+      ['Free and Ultimate'],
+      ['Home with live CPU, GPU and RAM', 0],
       ['Network diagnostics: ping, regions, speed and route', 0], ['Benchmarks', 0], ['Undo and Recovery, restore points', 0],
       ['Automatic updates', 0], ['Sign in with Discord, on any PC', 0],
     ];
+    const cols = [{ n: 0, name: 'Free', label: '$0' }].concat(PLANS.map((p) => ({ n: p.n, name: p.name, label: `$${p.price} once` })));
     return `<div class="cmp-wrap reveal"><table class="cmp">
-      <thead><tr><th scope="col">What you get</th>${PLANS.map((p) => `<th scope="col" class="t${p.n}" style="color:var(--pc)">${esc(p.name)}<span>$${p.price} once</span></th>`).join('')}</tr></thead>
+      <thead><tr><th scope="col">What you get</th>${cols.map((c) => `<th scope="col" class="t${c.n}" style="color:var(--pc)">${esc(c.name)}<span>${esc(c.label)}</span></th>`).join('')}</tr></thead>
       <tbody>${rows.map(([name, n]) => (n === undefined
-        ? `<tr class="grp"><td colspan="${PLANS.length + 1}">${esc(name)}</td></tr>`
-        : `<tr><td>${esc(name)}</td>${PLANS.map((p) => (p.n >= n ? `<td aria-label="Included">${svg('check')}</td>` : '<td class="no" aria-label="Not included">—</td>')).join('')}</tr>`)).join('')}</tbody>
+        ? `<tr class="grp"><td colspan="${cols.length + 1}">${esc(name)}</td></tr>`
+        : `<tr><td>${esc(name)}</td>${cols.map((c) => (c.n >= n ? `<td aria-label="Included">${svg('check')}</td>` : '<td class="no" aria-label="Not included">—</td>')).join('')}</tr>`)).join('')}</tbody>
     </table></div>`;
   }
 
   function pagePlans() {
     return `<div class="wrap page">
       <header class="page-hd reveal"><span class="eyebrow">Plans</span><h1 class="h1">Pay once. <em>Keep it.</em></h1>
-        <p>Start free, or pick one of two one-time plans: Pro, or Ultimate with everything in Pro. No subscription: your plan never expires and nothing renews. It’s tied to your Discord account, so it works on any PC you sign in on.</p></header>
-      ${jumpRow([['plans-top', 'Plans'], ['plan-bundle', 'Add-ons'], ['free-apps', 'Free apps'], ['compare', 'Compare'], ['after', 'After you pay'], ['earn', 'Referrals'], ['plans-faq', 'Questions']])}
+        <p>Start free, or get Ultimate: every tweak, every tool and every add-on for $${ULT.price}, one time. No subscription: it never expires and nothing renews. It’s tied to your Discord account, so it works on any PC you sign in on.</p></header>
+      ${jumpRow([['plans-top', 'Plans'], ['plan-ultimate', 'What’s in Ultimate'], ['plan-retrac', 'Add-ons'], ['free-apps', 'Free apps'], ['compare', 'Compare'], ['after', 'After you pay'], ['earn', 'Referrals'], ['plans-faq', 'Questions']])}
       <div id="plans-top" class="jump-target"></div>
       ${plansGrid()}
       ${plansNote()}
@@ -737,11 +775,11 @@
         ${howSteps()}
       </section>
       <section class="sec jump-target" id="earn" style="padding-bottom:0">
-        ${secHd('Earn', 'Get <em>$5</em> for every friend.', 'Own Pro or Ultimate? You get your own link. Everyone who buys Pro or Ultimate through it earns you $5, paid to your PayPal.')}
+        ${secHd('Earn', 'Get <em>$5</em> for every friend.', 'Own Ultimate, or Pro from before? You have your own link, and it stays yours. Everyone who buys Ultimate through it earns you $5, paid to your PayPal.')}
         <div class="steps">
           <div class="card step reveal"><span class="n">1</span><h3>Get your link</h3><p>Type <b>/referral</b> in the Ego Tweaks Discord, or open Plans in the app. Your link looks like egotweaks.com/?ref=ABC123.</p></div>
           <div class="card step reveal" style="--d:1"><span class="n">2</span><h3>Share it</h3><p>TikTok, YouTube, your Discord, your friends. The link remembers them for 30 days.</p></div>
-          <div class="card step reveal" style="--d:2"><span class="n">3</span><h3>Get paid</h3><p>$5 for every Pro or Ultimate bought through it. From $10, press Request payout and we send it to your PayPal.</p></div>
+          <div class="card step reveal" style="--d:2"><span class="n">3</span><h3>Get paid</h3><p>$5 for every Ultimate bought through it. From $10, press Request payout and we send it to your PayPal.</p></div>
         </div>
       </section>
       <section class="sec jump-target" id="plans-faq" style="padding-bottom:0">
@@ -771,7 +809,7 @@
   function pageTweaks() {
     return `<div class="wrap page">
       <header class="page-hd reveal"><span class="eyebrow">Tweaks</span><h1 class="h1">All ${TWEAKS.length} <em>tweaks.</em></h1>
-        <p>Every tweak card in Ego Tweaks ${esc(APP_MAJOR)}, what it does, and which plan it comes with. Each one is backed up before it changes anything and can be switched off again.</p></header>
+        <p>Every tweak card in Ego Tweaks ${esc(APP_MAJOR)}, what it does, and whether it’s free or comes with Ultimate ($${ULT.price} once, every card). Each one is backed up before it changes anything and can be switched off again.</p></header>
       <div class="xp-bar">
         <div class="xp-row">
           <label class="search">${svg('search')}<input id="xp-q" type="search" placeholder="Search tweaks — try “mouse”, “ping” or “telemetry”" value="${esc(S.xq)}" autocomplete="off" spellcheck="false" aria-label="Search tweaks"></label>
@@ -794,13 +832,13 @@
     const list = $('#xp-list');
     if (!list) return;
     const q = S.xq.trim().toLowerCase();
-    const hits = TWEAKS.filter((t) => (S.xcat === 'all' || t.cat === S.xcat) && (S.xtier === -1 ? !t.tier : !S.xtier || t.tier <= S.xtier)
+    const hits = TWEAKS.filter((t) => (S.xcat === 'all' || t.cat === S.xcat) && (S.xtier === -1 ? !t.tier : !S.xtier || t.tier > 0)
       && (!q || t.name.toLowerCase().includes(q) || (t.desc || '').toLowerCase().includes(q)));
     const shown = hits.slice(0, S.xshow);
     const cat = CATEGORIES.find((c) => c.id === S.xcat);
-    $('#xp-sum').innerHTML = `<b>${hits.length}</b> tweak${hits.length === 1 ? '' : 's'}${cat ? ` in ${esc(cat.name)} <span class="muted">— ${esc(cat.blurb)}</span>` : ''}${S.xtier === -1 ? ' free, no plan needed' : S.xtier ? ` included with ${esc(planOf(S.xtier).name)}` : ''}`;
+    $('#xp-sum').innerHTML = `<b>${hits.length}</b> tweak${hits.length === 1 ? '' : 's'}${cat ? ` in ${esc(cat.name)} <span class="muted">— ${esc(cat.blurb)}</span>` : ''}${S.xtier === -1 ? ' free, no plan needed' : S.xtier ? ` that come with ${esc(planOf(S.xtier).name)}, along with the ${upTo(0)} free ones` : ''}`;
     list.innerHTML = shown.length ? shown.map((t) => `<article class="xp-item">
-        <div class="t"><b>${mark(t.name, q)}</b>${tierTag(t.tier)}</div>
+        <div class="t"><b>${mark(t.name, q)}</b>${tweakTag(t.tier)}</div>
         ${t.desc ? `<p>${mark(t.desc, q)}</p>` : ''}
         <span class="meta">${esc((CATEGORIES.find((c) => c.id === t.cat) || {}).name || t.cat)}</span>
       </article>`).join('') : '<div class="card rv-empty" style="grid-column:1/-1">No tweaks match that. Try another word, or pick All.</div>';
@@ -820,7 +858,7 @@
         + step(2, 'The download starts', `${esc(BUILD.file)}, ${fmtMB(BUILD.bytes)}.`);
     return `<div class="wrap page">
       <header class="page-hd reveal"><span class="eyebrow">Download</span><h1 class="h1">Download <em>free.</em></h1>
-        <p>Get Ego Tweaks ${esc(APP_MAJOR)} free for Windows 10 and 11. The Free plan checks your PC, ping and performance, and every paid plan unlocks in this same app: just sign in with Discord.</p></header>
+        <p>Get Ego Tweaks ${esc(APP_MAJOR)} free for Windows 10 and 11. The Free plan checks your PC, ping and performance, and Ultimate unlocks in this same app: just sign in with Discord.</p></header>
       <div class="dl">
         <div class="card dl-card main reveal">
           <span class="chip red">Free · v${esc(BUILD.version)}</span>
@@ -833,7 +871,7 @@
           <span class="chip">Free plan</span>
           <h2>What’s free</h2>
           <ul class="free-list">${FREE.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
-          <p>Want the rest? The other ${TWEAKS.length - upTo(0)} tweak cards, Game Booster, Ping Booster, the crosshair and Max FPS mode come with a plan, from $${PLANS[0].price} once. It unlocks in the app you download here.</p>
+          <p>Want everything? The other ${ULT_CARDS} tweak cards, Game Booster, Ping Booster, the crosshair, Max FPS mode and every add-on come with Ultimate, $${ULT.price} once. It unlocks in the app you download here.</p>
           <button type="button" class="btn btn-line btn-block" data-nav="plans">See plans${svg('arrow')}</button>
         </div>
       </div>
@@ -847,7 +885,7 @@
             <dt>.NET</dt><dd>.NET Framework 4.7.2 or later, built into Windows 10 (1803+) and 11</dd><dt>Access</dt><dd>Administrator: Windows asks when it opens</dd></dl>
           <p style="font-size:14.5px">If SmartScreen appears, choose <b>More info → Run anyway</b>. It shows for apps Windows hasn’t seen much yet.</p></div>
       </div>
-      <div style="margin-top:56px">${secHd('More apps', 'More from <em>Ego.</em>', 'Same Discord account, same one-time payments. Each app asks you to sign in with Discord when it opens.')}</div>
+      <div style="margin-top:56px">${secHd('More apps', 'More from <em>Ego.</em>', 'Same Discord account, same one-time payments, and Ultimate unlocks them all. Each app asks you to sign in with Discord when it opens.')}</div>
       ${appsBlock()}
     </div>`;
   }
@@ -965,21 +1003,22 @@
   // ───────────── FAQ ─────────────
   const FAQ = [
     ['What is Ego Tweaks?', `A Windows app that tunes your PC for gaming. It changes Windows settings (power, scheduling, services, network, input and more) for higher, steadier FPS, lower input delay and steadier ping. There are ${TWEAKS.length} tweak cards in ${CATEGORIES.length} sections, and every one can be undone.`, 'about'],
-    ['Is it a subscription?', 'No. Every plan is a one-time payment. It never expires and nothing renews or charges you again.', 'plans'],
+    ['Is it a subscription?', 'No. Ultimate, like every add-on, is a one-time payment. It never expires and nothing renews or charges you again.', 'plans'],
+    ['What’s in Ultimate?', `Everything, for $${ULT.price} once: all ${TWEAKS.length} tweak cards (the ${upTo(0)} free ones plus ${ULT_CARDS} more), Optimize, Max FPS mode, Full CPU speed, Game Booster, the process killer, per-game settings, Ping Booster, DNS switching, the crosshair and overlay, KBM Lab, keyboard overclock, startup apps, deep clean, memory clearing, the BIOS guide, hardware checks, profiles, setup codes, session reports and Ego Security Check. Every add-on is included too: Project Retrac, Console Tweaks, Ego Keys, Ego+ for Roblox, and ${MOUSE.name} when it launches. The Plans page lists it all.`, 'plans'],
     ['How do I get my plan after paying?', 'Payhip gives you the download straight away and emails it to you. Open Ego Tweaks, press Sign in with Discord, and use the same Discord account you bought with. Your plan unlocks right there. There’s no key to copy.\nAlready signed in when you bought? Go to Plans in the app and press Refresh.', 'plans'],
-    ['I bought Starter or Premium before. Do I keep it?', `Yes, for good, and it’s Pro now: Starter and Premium aren’t sold any more, and everyone who bought either one has Pro. Sign in to Ego Tweaks ${APP_MAJOR} with the Discord account you bought with and Pro unlocks. If it doesn’t, open a ticket in the Discord.`, 'plans'],
+    ['I bought Pro, Starter or Premium before. Do I keep it?', `Yes, for good. Pro, Starter and Premium aren’t sold any more (Starter and Premium count as Pro), but everyone who bought one keeps it. Sign in to Ego Tweaks ${APP_MAJOR} with the Discord account you bought with and it unlocks. Want everything? Ultimate is $${ULT.price}. If something doesn’t unlock, open a ticket in the Discord.`, 'plans'],
     ['Is it safe? Can I undo everything?', 'Yes. Before any tweak changes a setting, Ego Tweaks saves the value it replaces. Switch a tweak off to undo it, or press Undo all changes in Recovery. Undo works even when you’re signed out. Ego Tweaks never turns off Windows Defender, the firewall, UAC, Windows Update or CPU security protections.', 'about'],
     ['Can I get banned for using it?', 'Ego Tweaks changes Windows settings only. It doesn’t inject into games, read their memory or change their files, and the crosshair overlay is a separate window. You’re still responsible for following each game’s rules.', 'about'],
-    ['Can I upgrade later?', 'Yes. Buy Ultimate whenever you like. The highest plan you’ve bought is the one that counts.', 'plans'],
+    ['Can I upgrade later?', `Yes. Start free and get Ultimate whenever you like: it’s $${ULT.price} and unlocks in the same app. Own Pro from before? Ultimate gives you everything else. The highest plan you’ve bought is the one that counts.`, 'plans'],
     ['Does it work on more than one PC?', 'Your plan is tied to your Discord account, so it unlocks on any PC you sign in on.', 'plans'],
     ['What’s the Retrac add-on?', 'Every copy of Ego Tweaks has a Project Retrac section for free: it finds Retrac, sets it to the high-performance GPU and shows the best in-game settings for that build. The $5 one-time add-on unlocks the rest: one-click Boost Retrac, fullscreen optimizations off, high CPU priority, sharp at any display scaling, never power-throttled, and Retrac Booster with six options (high priority, calm background apps, 0.5 ms timer, clear memory, pause updates, max-performance power plan). It works with any plan, Free included, and only changes Retrac, never your real Fortnite. Ultimate already includes it.', 'plans'],
-    ['How do referral links work?', 'Own Ego Tweaks Pro or Ultimate and you get your own link: type /referral in the Ego Tweaks Discord, or open Plans in the app. Everyone who buys Pro or Ultimate through your link earns you $5. The Retrac add-on doesn’t count, and neither does buying through your own link. The link remembers people for 30 days. Your balance is shown in /referral; from $10, press Request payout and the team sends it to your PayPal. If a purchase is refunded, its $5 comes off your balance.', 'plans'],
+    ['How do referral links work?', 'Own Ego Tweaks Ultimate, or Pro from before, and you have your own link, and it stays yours: type /referral in the Ego Tweaks Discord, or open Plans in the app. Everyone who buys Ultimate through your link earns you $5. Add-ons bought on their own don’t count, and neither does buying through your own link. The link remembers people for 30 days. Your balance is shown in /referral; from $10, press Request payout and the team sends it to your PayPal. If a purchase is refunded, its $5 comes off your balance.', 'plans'],
     ['Why do I need to continue with Discord to buy?', 'So your purchase is tied to your Discord account. That’s how the app knows what you bought when you sign in, and how the bot gives you your role. Continuing with Discord also adds you to the server if you’re not in it yet.', 'plans'],
     ['How do updates work?', 'Ego Tweaks checks for updates when it starts and every 6 hours. When there’s a new version, an Update button appears at the top. Press it and it downloads, checks it’s a genuine Ego Tweaks build, and restarts on the new version. Your tweaks and settings stay as they are.', 'about'],
     ['What do I need to run it?', 'Windows 10 or 11 (64-bit). The window uses Microsoft Edge WebView2, which nearly every PC already has. Ego Tweaks asks for administrator access because it changes system settings.', 'about'],
     ['Windows says “Windows protected your PC”. What do I do?', 'Click More info, then Run anyway. SmartScreen shows this for apps Windows hasn’t seen much yet.', 'about'],
     ['Does it work offline?', 'Yes, for up to 3 days at a time. Then it checks in again by itself the next time you’re online.', 'about'],
-    ['Is there a free version?', `Yes. Download Ego Tweaks ${APP_MAJOR} free from the Download page. The Free plan includes ${upTo(0)} tweak cards (Game Mode, GPU scheduling, raw mouse input, no ads and more), Home with live CPU, GPU and RAM, network diagnostics (ping, regions, speed and route), benchmarks and Recovery. The other ${TWEAKS.length - upTo(0)} tweak cards, the boosters and Max FPS mode come with Pro or Ultimate, and they unlock in the same app when you sign in with Discord.`, 'about'],
+    ['Is there a free version?', `Yes. Download Ego Tweaks ${APP_MAJOR} free from the Download page. The Free plan includes ${upTo(0)} tweak cards (Game Mode, GPU scheduling, raw mouse input, no ads and more), Home with live CPU, GPU and RAM, network diagnostics (ping, regions, speed and route), benchmarks and Recovery. The other ${ULT_CARDS} tweak cards, the boosters, Max FPS mode and every add-on come with Ultimate ($${ULT.price} once), and they unlock in the same app when you sign in with Discord.`, 'about'],
   ];
   function pageFaq() {
     return `<div class="wrap page">
@@ -1275,7 +1314,7 @@
       <h2 class="h2">Your download has started</h2>
       <p>Look for <b>${esc(BUILD.file)}</b> in your downloads. If it didn’t start, use the button below.</p>
       <p class="muted" style="font-size:14px">If Windows SmartScreen appears, choose <b>More info → Run anyway</b>.</p>
-      <div class="note">${svg('crown')}<span>Open it and press <b>Sign in with Discord</b>, or <b>Continue with the free tools</b>. Want all ${TWEAKS.length} tweak cards, the boosters and Max FPS mode? Get a plan from $${PLANS[0].price} once and it unlocks right in the app.</span></div>
+      <div class="note">${svg('crown')}<span>Open it and press <b>Sign in with Discord</b>, or <b>Continue with the free tools</b>. Want all ${TWEAKS.length} tweak cards, the boosters, Max FPS mode and every add-on? Ultimate is $${ULT.price} once and it unlocks right in the app.</span></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-nav="plans">See plans</button>
         <a class="btn btn-primary" href="${BUILD.href}" download="${BUILD.file}" data-act="manual-dl">${svg('download')}Download again</a>
@@ -1400,7 +1439,7 @@
     const planCard = (p) => {
       const n = p.n, own = owners[n] || 0;
       return `<div class="own-plan p${n}"><div class="own-plan-h"><b>${esc(p.name)}</b><span>${n ? `$${p.price}${p.retired ? ' · retired' : ''}` : 'Free'}</span></div>
-        <div class="own-plan-n">${num(own)}</div><small>${n ? (own === 1 ? 'person owns it' : 'people own it') + (p.retired ? ' · no longer sold, counts as Pro' : '') : 'app users who never bought'}</small>
+        <div class="own-plan-n">${num(own)}</div><small>${n ? (own === 1 ? 'person owns it' : 'people own it') + (p.retired ? ` · ${esc(p.retired)}` : '') : 'app users who never bought'}</small>
         <div class="own-meter"><i style="width:${people ? ((own / people) * 100).toFixed(1) : 0}%"></i></div>
         <dl>${n ? `<div><dt>Sales</dt><dd>${num(d.salesByTier[n])}</dd></div><div><dt>Revenue</dt><dd>${money(d.revenueByTier[n])}</dd></div>` : `<div><dt>Share of users</dt><dd>${people ? Math.round((own / people) * 100) : 0}%</dd></div>`}</dl></div>`;
     };
