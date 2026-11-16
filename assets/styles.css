@@ -1053,3 +1053,5 @@ svg.b{width:20px;height:20px;flex:none;fill:currentColor}
   .own-soon li{grid-template-columns:7.2em minmax(0,1fr) auto}
 }
 @media (max-width:420px){.own-mkpis{grid-template-columns:minmax(0,1fr)}.own-fields{grid-template-columns:minmax(0,1fr)}}
+.addon-bundle{border-color:rgba(123,108,255,.45);box-shadow:0 0 0 1px rgba(123,108,255,.18),0 18px 50px -24px rgba(123,108,255,.7)}
+.addon-bundle .eyebrow{color:var(--accent,#7b6cff)}

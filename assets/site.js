@@ -88,7 +88,11 @@
     perks: ['In-game looks: cursor, sounds and font mods on your PC', 'A game overlay: crosshair, clock and time in game', 'Launcher themes and the EGO+ badge', 'Every boost, the auto clicker, games, friends and the Discord status stay free'] };
   const KEYS = { n: 'keys', id: 'keys', name: 'Ego Keys', price: 7, payhip: '02ImW',
     perks: ['Remap any key, on any keyboard', 'Macro editor: record, edit and play macros on a hotkey', 'Profiles that switch by themselves for each app or game', 'Lighting effects', 'The key tester stays free'] };
-  const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE, roblox: ROBLOXPLUS, keys: KEYS }[key] || planOf(Number(key)));
+  // The Add-on Bundle: every add-on above in one $10 purchase. The bot unlocks them all for a product with
+  // "Bundle" in its Payhip name (or listed as KEY=bundle). payhip: '' shows "Coming soon" until the product exists.
+  const BUNDLE = { n: 'bundle', id: 'bundle', name: 'Add-on Bundle', price: 10, payhip: '',
+    perks: [`Project Retrac ($${RETRAC.price})`, `Console Tweaks ($${CONSOLE.price})`, `Ego Keys ($${KEYS.price})`, `Ego+ for Roblox ($${ROBLOXPLUS.price})`, 'Ego Mouse ($5), when it launches'] };
+  const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE, roblox: ROBLOXPLUS, keys: KEYS, bundle: BUNDLE }[key] || planOf(Number(key)));
   // The other Ego apps: same Discord sign-in, downloaded straight from this site.
   const MORE_APPS = [
     { id: 'roblox', name: 'Ego for Roblox', version: '0.7.0', file: 'EgoRoblox.exe', bytes: 1463296, sha256: 'c678de0aaee2c9f54bf9360059598c559be9d0cf1f89224e61c0df205753235f',
@@ -573,7 +577,16 @@
       ${addonCard()}`;
   }
   function addonCard() {
-    return `<article class="card addon reveal jump-target" id="plan-retrac">
+    return `<article class="card addon addon-bundle reveal jump-target" id="plan-bundle">
+      <div class="addon-main">
+        <span class="eyebrow">Best value · every add-on, works with any plan, Free included</span>
+        <h3>Add-on Bundle <span class="addon-pr">$${BUNDLE.price}<small>one-time</small></span></h3>
+        <p>Every add-on in the store in one purchase: $27 of add-ons for $${BUNDLE.price}. Sign in to each app with the same Discord account and they unlock. Pro and Ultimate are separate plans.</p>
+        <ul>${BUNDLE.perks.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
+      </div>
+      <div class="buy" data-plan="bundle">${buyArea(BUNDLE)}</div>
+    </article>
+    <article class="card addon reveal" id="plan-retrac">
       <div class="addon-main">
         <span class="eyebrow">Add-on · works with any plan, Free included</span>
         <h3>Project Retrac <span class="addon-pr">$${RETRAC.price}<small>one-time</small></span></h3>
@@ -634,7 +647,7 @@
     return 'https://payhip.com/buy?' + q;
   };
   function buyArea(p) {
-    const cls = `btn ${p.n === 4 || p.n === 'retrac' || p.flag === 'Most popular' ? 'btn-primary' : 'btn-line'} btn-block`;
+    const cls = `btn ${p.n === 4 || p.n === 'retrac' || p.n === 'bundle' || p.flag === 'Most popular' ? 'btn-primary' : 'btn-line'} btn-block`;
     if (!payhipKey(p)) return `<a class="btn soon btn-block" href="${esc(DISCORD || '#/plans')}" target="_blank" rel="noopener" data-act="buy-soon" data-plan="${p.n}">Coming soon</a><p class="why">Ask in the Discord to get ${esc(p.name)} now.</p>`;
     if (!DC_LOGIN) return `<a class="${cls}" href="${esc(checkoutUrl(p))}" target="_blank" rel="noopener" data-act="buy" data-plan="${p.n}">Buy ${esc(p.name)} — $${p.price}</a>`;
     if (S.dcBusy) return `<button class="${cls} busy" disabled>Connecting</button>`;
@@ -707,7 +720,7 @@
     return `<div class="wrap page">
       <header class="page-hd reveal"><span class="eyebrow">Plans</span><h1 class="h1">Pay once. <em>Keep it.</em></h1>
         <p>Start free, or pick one of two one-time plans: Pro, or Ultimate with everything in Pro. No subscription: your plan never expires and nothing renews. It’s tied to your Discord account, so it works on any PC you sign in on.</p></header>
-      ${jumpRow([['plans-top', 'Plans'], ['plan-retrac', 'Add-ons'], ['free-apps', 'Free apps'], ['compare', 'Compare'], ['after', 'After you pay'], ['earn', 'Referrals'], ['plans-faq', 'Questions']])}
+      ${jumpRow([['plans-top', 'Plans'], ['plan-bundle', 'Add-ons'], ['free-apps', 'Free apps'], ['compare', 'Compare'], ['after', 'After you pay'], ['earn', 'Referrals'], ['plans-faq', 'Questions']])}
       <div id="plans-top" class="jump-target"></div>
       ${plansGrid()}
       ${plansNote()}
