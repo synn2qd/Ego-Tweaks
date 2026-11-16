@@ -9,8 +9,8 @@
 //   - a preview link (egotweaks.com/?preview), which lasts for that browser tab.
 // Downloads, the bot, Discord sign-in and the apps keep working: only this page is covered.
 (function () {
-  var DROP = Date.parse('2026-11-08T19:00:00Z'); // Sunday 11/8/2026, 2:00 PM EST (UTC-5)
-  var DROP_TEXT = 'Sunday, Nov 8 · 2:00 PM EST';
+  var DROP = Date.parse('2026-11-16T02:00:00Z'); // Sunday 11/15/2026, 9:00 PM EST (UTC-5): the $10 Ultimate launch
+  var DROP_TEXT = 'Tonight · 9:00 PM EST';
   var DISCORD = 'https://discord.gg/gtPggZ9zpz';
   if (!(Date.now() < DROP)) return;
   try {
@@ -92,9 +92,9 @@
     el.setAttribute('role', 'main');
     el.innerHTML = MODE_BTN + '<div class="in">' +
       '<div class="logo"><img class="mark" src="assets/logo-mark.svg?v=7" alt="" width="30" height="30"><span><span class="wm-ego">Ego</span> Tweaks</span></div>' +
-      '<span class="eyebrow"><i></i>Update incoming</span>' +
-      '<h1>The next update drops soon.</h1>' +
-      '<p>We’re getting the site ready for it. Everything comes back, with the update, when the timer hits zero.</p>' +
+      '<span class="eyebrow"><i></i>Launching tonight</span>' +
+      '<h1>Everything for $10. Tonight.</h1>' +
+      '<p>Ego Tweaks Ultimate: every tweak, every tool and every add-on, for $10 once. The site opens when the timer hits zero.</p>' +
       '<div class="clock" aria-live="off">' +
       '<div class="unit"><b data-u="h">00</b><small>Hours</small></div>' +
       '<div class="unit"><b data-u="m">00</b><small>Minutes</small></div>' +
