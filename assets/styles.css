@@ -548,6 +548,7 @@ svg.b{width:20px;height:20px;flex:none;fill:currentColor}
 .rv-card{width:340px;flex:none;margin:0;padding:20px;display:flex;flex-direction:column;gap:14px;border-radius:var(--r-lg)}
 .wall .rv-card,.wall-static .rv-card,.rv-grid .rv-card{width:auto}
 .rv-card blockquote{margin:0;color:var(--text);font-size:15px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line;overflow-wrap:anywhere}
+.rv-buyer{align-self:flex-start;margin-top:-6px;padding:2px 8px;border-radius:999px;background:var(--bg-muted);color:var(--text-muted);font-size:12px;font-weight:500}
 .rv-card figcaption{display:flex;align-items:center;gap:10px;margin-top:auto;font-size:14px;min-width:0}
 .rv-card figcaption b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2);font-weight:500}
 .rv-card figcaption img,.rv-card figcaption .av{width:30px;height:30px;border-radius:50%;flex:none}

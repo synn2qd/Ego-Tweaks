@@ -53,9 +53,10 @@
   //   botUrl:   your bot's Railway address. It adds people to the server and serves the live reviews.
   // This site's address (https://egotweaks.com/) must be listed under OAuth2 → Redirects.
   const DISCORD_LOGIN = { clientId: '1560070865599598804', guildId: '1560058897329426573', botUrl: 'https://ego-tweaks-bot-production.up.railway.app' };
-  // Live reviews: every message in the Discord's #reviews channel, served by the bot at botUrl + '/reviews'.
+  // Live reviews: the vouches people leave with the form in the Discord's #vouches channel, served by the bot at
+  // botUrl + '/reviews' (which also says where #vouches is: channelUrl).
   // REVIEWS_CHANNEL is where the "Post a review" buttons go; '' turns live reviews off.
-  const REVIEWS_CHANNEL = 'https://discord.com/channels/1560058897329426573/1561107128780070952';
+  let REVIEWS_CHANNEL = 'https://discord.gg/gtPggZ9zpz'; // until the bot says where #vouches is
   // Download counter for the hidden admin panel: put EgoTweaks.exe in a GitHub Release on the site's repo and
   // set this to 'your-username/your-repo'. '' = hand out downloads/EgoTweaks.exe (counted in Supabase).
   const GITHUB_REPO = '';
@@ -242,7 +243,7 @@
   }
   function renderFooter() {
     const community = [DISCORD && `<li><a href="${esc(DISCORD)}" target="_blank" rel="noopener">Discord</a></li>`,
-      REVIEWS_CHANNEL && `<li><a href="${esc(REVIEWS_CHANNEL)}" target="_blank" rel="noopener">Post a review</a></li>`,
+      REVIEWS_CHANNEL && `<li><a data-vouch href="${esc(REVIEWS_CHANNEL)}" target="_blank" rel="noopener">Leave a vouch</a></li>`,
       LINKS.x && `<li><a href="${esc(LINKS.x)}" target="_blank" rel="noopener">X (Twitter)</a></li>`].filter(Boolean).join('');
     $('#foot').innerHTML = `<div class="wrap">
       <div class="matrix" id="matrix-box" aria-hidden="true"><canvas id="matrix"></canvas></div>
@@ -900,10 +901,10 @@
   const stars = (n) => (n >= 1 && n <= 5 ? `<span class="stars" aria-label="${n} out of 5 stars">${svg('star').repeat(n)}</span>` : '');
   const reviewAv = (r) => (r.avatar ? `<img src="${esc(r.avatar)}" data-fb="${esc(avPlaceholder(r.name))}" alt="" width="32" height="32" loading="lazy" referrerpolicy="no-referrer">` : `<span class="av">${esc(firstChar(r.name))}</span>`);
   const reviewCard = (r, hidden = false) => `<figure class="card rv-card"${hidden ? ' aria-hidden="true"' : ''}>
-      ${stars(Number(r.stars))}<blockquote>${esc(r.text)}</blockquote>
+      ${stars(Number(r.stars))}${r.buyer ? '<span class="rv-buyer">✔ Verified buyer</span>' : ''}<blockquote>${esc(r.text)}</blockquote>
       <figcaption>${reviewAv(r)}<b>${esc(r.name)}</b>${r.at ? `<time datetime="${new Date(r.at).toISOString()}">${esc(reviewDate(r))}</time>` : ''}</figcaption>
     </figure>`;
-  // Home: a wall of the real #reviews messages in slowly drifting columns that fade at the edges. Link-only
+  // Home: a wall of the real #vouches in slowly drifting columns that fade at the edges. Link-only
   // messages are left off the wall (the Reviews page shows everything). Fewer than 6: a still grid.
   const wallList = () => reviewList().filter((r) => !/^https?:\/\/\S+$/.test(String(r.text).trim())).slice(0, 24);
   function reviewWall() {
@@ -917,7 +918,7 @@
   function reviewSection() {
     if (!REVIEWS_CHANNEL) return '';
     return `<section class="sec tint" id="reviews"${wallList().length ? '' : ' hidden'}>
-      <div class="wrap">${secHd('Reviews', 'Straight from <em>the Discord.</em>', 'Every message in our #reviews channel, live.', true)}
+      <div class="wrap">${secHd('Reviews', 'Straight from <em>the Discord.</em>', 'Every vouch from our #vouches channel, live.', true)}
         <div class="wall-box reveal" id="rv-wall">${reviewWall()}</div>
         <div class="center-row reveal"><button type="button" class="btn btn-line" data-nav="reviews">All <span data-rv-n>${reviewList().length}</span> reviews${svg('arrow')}</button></div>
       </div>
@@ -935,13 +936,13 @@
     return `<span><b>${S.reviews ? list.length : '—'}</b> reviews</span>${st.length ? `<span><b>${(st.reduce((a, b) => a + b, 0) / st.length).toFixed(1)}</b> average of ${st.length} star rating${st.length === 1 ? '' : 's'}</span>` : ''}<span><i class="dot green live"></i>Live from Discord</span>`;
   }
   function pageReviews() {
-    const post = REVIEWS_CHANNEL ? `<a href="${esc(REVIEWS_CHANNEL)}" target="_blank" rel="noopener">post yours in #reviews</a>` : 'post yours in our Discord';
+    const post = REVIEWS_CHANNEL ? `<a data-vouch href="${esc(REVIEWS_CHANNEL)}" target="_blank" rel="noopener">Leave a vouch in #vouches</a>` : 'leave a vouch in our Discord';
     return `<div class="wrap page">
       <header class="page-hd reveal"><span class="eyebrow">Reviews</span><h1 class="h1">Straight from <em>the Discord.</em></h1>
-        <p>Every message in our Discord’s #reviews channel, live. Bought a plan? ${post} and it shows up here in a couple of minutes.</p></header>
+        <p>Every vouch from our Discord’s #vouches channel, live. Used Ego Tweaks? ${post}: pick your stars, write a few words, and it shows up here in a couple of minutes.</p></header>
       <div class="rv-stats reveal" id="rv-stats">${reviewStats()}</div>
       <div id="rv-list" class="reveal">${reviewGrid()}</div>
-      ${REVIEWS_CHANNEL ? `<div class="center-row"><a class="btn btn-discord" href="${esc(REVIEWS_CHANNEL)}" target="_blank" rel="noopener">${DISCORD_SVG}Post a review</a></div>` : ''}
+      ${REVIEWS_CHANNEL ? `<div class="center-row"><a class="btn btn-discord" data-vouch href="${esc(REVIEWS_CHANNEL)}" target="_blank" rel="noopener">${DISCORD_SVG}Leave a vouch</a></div>` : ''}
     </div>`;
   }
   // fetch the reviews channel from the bot; repaint only what changed
@@ -957,7 +958,11 @@
       const res = await fetch(DISCORD_LOGIN.botUrl.replace(/\/+$/, '') + '/reviews', { cache: 'no-store' });
       const j = await res.json();
       if (!j || !j.ok || !Array.isArray(j.reviews)) throw new Error('not ready');
-      const list = j.reviews.filter((r) => r && r.text && r.name).map((r) => ({ id: r.id, name: String(r.name), text: String(r.text), avatar: /^https:\/\/cdn\.discordapp\.com\//.test(r.avatar || '') ? r.avatar : '', stars: r.stars, at: Number(r.at) || 0, edited: !!r.edited }));
+      if (/^https:\/\/discord\.com\/channels\/\d+\/\d+$/.test(j.channelUrl || '') && j.channelUrl !== REVIEWS_CHANNEL) {
+        REVIEWS_CHANNEL = j.channelUrl;
+        $$('a[data-vouch]').forEach((a) => { a.href = REVIEWS_CHANNEL; });
+      }
+      const list = j.reviews.filter((r) => r && r.text && r.name).map((r) => ({ id: r.id, name: String(r.name), text: String(r.text), avatar: /^https:\/\/cdn\.discordapp\.com\//.test(r.avatar || '') ? r.avatar : '', stars: r.stars, at: Number(r.at) || 0, edited: !!r.edited, buyer: !!r.buyer }));
       const sig = list.map((r) => r.id + (r.edited ? 'e' : '') + r.text.length).join(',');
       const first = S.reviews === null;
       S.reviews = list;
