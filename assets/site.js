@@ -91,6 +91,9 @@
   // Add-ons for the other Ego apps. The bot finds them by "Roblox" / "Keys" in the Payhip product name.
   const ROBLOXPLUS = { n: 'roblox', id: 'roblox', name: 'Ego+ for Roblox', price: 5, payhip: 'Q3c6h',
     perks: ['In-game looks: cursor, sounds and font mods on your PC', 'A game overlay: crosshair, clock and time in game', 'Launcher themes and the EGO+ badge', 'Every boost, the auto clicker, games, friends and the Discord status stay free'] };
+  // Ego Zero Delay: the lowest-latency app, sold on its own ($10 one-time, not part of Ultimate). The bot gives buyers
+  // the "zero" add-on, which unlocks the app when they sign in with the same Discord account.
+  const ZERO = { n: 'zero', id: 'zero', name: 'Ego Zero Delay', price: 10, payhip: 'c7jLy' };
   const KEYS = { n: 'keys', id: 'keys', name: 'Ego Keys', price: 7, payhip: '02ImW',
     perks: ['Remap any key, on any keyboard', 'Macro editor: record, edit and play macros on a hotkey', 'Profiles that switch by themselves for each app or game', 'Lighting effects', 'The key tester stays free'] };
   // Ego Mouse: not on sale yet; listed in Ultimate only ("when it launches"). No add-on card until it has a Payhip product.
@@ -107,7 +110,7 @@
     { ic: 'save', t: 'Your setup', items: ['Profiles and setup codes', 'Session reports', 'Ego Security Check: a read-only check that Defender, firewall, SmartScreen, UAC and updates are on'] },
   ];
   const ULT_ADDONS = [[`Project Retrac`, RETRAC.price], ['Console Tweaks', CONSOLE.price], ['Ego Keys, the keyboard app', KEYS.price], ['Ego+ for Roblox', ROBLOXPLUS.price], [`${MOUSE.name}, when it launches`, MOUSE.price]];
-  const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE, roblox: ROBLOXPLUS, keys: KEYS }[key] || planOf(Number(key)));
+  const productOf = (key) => ({ retrac: RETRAC, console: CONSOLE, roblox: ROBLOXPLUS, keys: KEYS, zero: ZERO }[key] || planOf(Number(key)));
   // The other Ego apps: same Discord sign-in, downloaded straight from this site.
   const MORE_APPS = [
     { id: 'roblox', name: 'Ego for Roblox', version: '0.7.0', file: 'EgoRoblox.exe', bytes: 1463296, sha256: 'c678de0aaee2c9f54bf9360059598c559be9d0cf1f89224e61c0df205753235f',
@@ -171,6 +174,7 @@
     plus: '<path d="M12 5v14M5 12h14"/>',
     alert: '<path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/>',
     arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    pulse: '<path d="M3 12h4l2.5-6 4 12 2.5-6H21"/>',
     download: '<path d="M12 4v11M7.5 10.5L12 15l4.5-4.5"/><path d="M5 19.5h14"/>',
     menu: '<path d="M4 8h16M4 16h16"/>',
     search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
@@ -320,6 +324,8 @@
     if (S.page === 'admin') loadOwner();
     loadDiscord();
     spyJump();
+    const sub = S.page === 'plans' && location.hash.match(/^#\/?plans\/([a-z]+)/);
+    if (sub && sub[1] !== 'thanks') setTimeout(() => scrollToId('plan-' + sub[1]), 80);
   }
   let io = null;
   function setupReveal(view) {
@@ -568,19 +574,37 @@
   }
 
   // ───────────── plans ─────────────
+  const TIER_COLS = () => [
+    { id: 'free', name: 'Free', price: 'Free', sub: 'The essentials of Ego Tweaks, free for good. The best way to try it first.',
+      cta: `<button type="button" class="btn btn-line btn-block" data-nav="download">Go to downloads${svg('arrow')}</button>`,
+      items: [`${upTo(0)} free tweak cards`, 'Home with live CPU, GPU and RAM', 'Network diagnostics: ping, speed and route', 'Benchmarks', 'Recovery: undo anything'] },
+    { id: 'ultimate', name: 'Ultimate', price: `$${ULT.price}`, was: 20, badge: 'Most value', hot: true, key: ULT.n,
+      sub: 'Everything in Ego Tweaks, every add-on included. Pay once and it’s yours for good.',
+      items: ['Everything in Free', `All ${TWEAKS.length} tweak cards`, 'Optimize and Max FPS in one click', 'Game Booster and Ping Booster', 'Crosshair overlay and KBM Lab', 'BIOS guide for your board',
+        'Add-ons: Project Retrac, Console Tweaks, Ego Keys, Ego+ for Roblox', `${MOUSE.name} when it launches`] },
+    { id: 'zero', name: 'Ego Zero Delay', price: `$${ZERO.price}`, sub: 'A separate app built for one thing: the lowest input delay Windows allows.', key: 'zero',
+      items: ['Go Zero: 21 latency tweaks in one press', 'Holds the 0.5 ms system timer', 'Game Booster for 9 games', 'Latency check: 60 Hz screens, Wi-Fi, RAM speed', 'Ping test to 17 game-server regions', 'DNS benchmark and one-click switch',
+        'Mouse polling-rate test', 'Lowest-latency settings for 8 games'],
+      note: 'Sold on its own: not part of Ultimate.' },
+  ];
+  function tiersRow() {
+    return `<div class="tiers reveal">${TIER_COLS().map((c) => `
+      <article class="tier-col${c.hot ? ' hot' : ''} jump-target" id="plan-${c.id}${c.id === 'ultimate' ? '-tier' : ''}">
+        <div class="tc-top"><h3>${esc(c.name)}</h3>${c.badge ? `<span class="tc-badge">${esc(c.badge)}</span>` : ''}</div>
+        <div class="tc-pr"><b>${esc(c.price)}</b>${c.price !== 'Free' ? '<small>one-time</small>' : ''}${c.was ? `<s>$${c.was}</s>` : ''}</div>
+        <p class="tc-sub">${esc(c.sub)}</p>
+        <div class="tc-cta${c.key != null ? ' buy' : ''}"${c.key != null ? ` data-plan="${c.key}"` : ''}>${c.key != null ? buyArea(productOf(c.key)) : c.cta}</div>
+        <ul>${c.items.map((x) => `<li>${svg('pulse')}${esc(x)}</li>`).join('')}</ul>
+        ${c.note ? `<p class="tc-note">${esc(c.note)}</p>` : ''}
+      </article>`).join('')}
+    </div>`;
+  }
+
   function plansGrid() {
     return `${refCode() ? `<p class="invited">${svg('spark')}You were invited by a friend: buying a plan here supports them.</p>` : ''}
       ${DC_LOGIN ? `<div class="who-wrap reveal">${whoBar()}</div>` : ''}
-      <article class="card plan-free t0 reveal" id="plan-free">
-        <div class="pf-head">
-          <div class="top"><span class="nm">Free</span><span class="flag">No card needed</span></div>
-          <div class="pr">$0<small>forever</small></div>
-          <p class="sub">Try Ego Tweaks first: the essentials, free for good.</p>
-          <div class="count"><b>${upTo(0)}</b> free tweak cards</div>
-        </div>
-        <ul>${FREE.map((x) => `<li>${svg('check')}${esc(x)}</li>`).join('')}</ul>
-        <div class="pf-cta"><button type="button" class="btn btn-line btn-block" data-nav="download">${svg('download')}Download free</button><p class="why">Get Ultimate any time in the same app.</p></div>
-      </article>
+      ${tiersRow()}
+      <h2 class="tiers-k" id="plan-ult-k">What’s in Ultimate</h2>
       ${PLANS.map(ultimateCard).join('')}
       ${addonCard()}`;
   }
@@ -759,7 +783,7 @@
     return `<div class="wrap page">
       <header class="page-hd reveal"><span class="eyebrow">Plans</span><h1 class="h1">Pay once. <em>Keep it.</em></h1>
         <p>Start free, or get Ultimate: every tweak, every tool and every add-on for $${ULT.price}, one time. No subscription: it never expires and nothing renews. It’s tied to your Discord account, so it works on any PC you sign in on.</p></header>
-      ${jumpRow([['plans-top', 'Plans'], ['plan-ultimate', 'What’s in Ultimate'], ['plan-retrac', 'Add-ons'], ['free-apps', 'Free apps'], ['compare', 'Compare'], ['after', 'After you pay'], ['earn', 'Referrals'], ['plans-faq', 'Questions']])}
+      ${jumpRow([['plans-top', 'Plans'], ['plan-ultimate', 'What’s in Ultimate'], ['plan-zero', 'Ego Zero Delay'], ['plan-retrac', 'Add-ons'], ['free-apps', 'Free apps'], ['compare', 'Compare'], ['after', 'After you pay'], ['earn', 'Referrals'], ['plans-faq', 'Questions']])}
       <div id="plans-top" class="jump-target"></div>
       ${plansGrid()}
       ${plansNote()}
